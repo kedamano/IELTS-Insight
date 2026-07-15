@@ -1,13 +1,15 @@
-import { type ScoreResult } from '../services/api';
+import { type ScoreResult, type WordScore } from '../services/api';
 import { SkeuoProgress, SkeuoLED } from './SkeuoUI';
 import { IconSparkle } from './icons/SkeuoIcons';
+import HeatmapScore from './HeatmapScore';
 
 interface ScorePanelProps {
   score: ScoreResult;
   originalText: string;
+  onWordClick?: (word: WordScore) => void;
 }
 
-export function ScorePanel({ score }: ScorePanelProps) {
+export function ScorePanel({ score, onWordClick }: ScorePanelProps) {
   return (
     <div className="skeuo-panel rounded-2xl p-5 space-y-4">
       {/* 标题栏 */}
@@ -47,25 +49,11 @@ export function ScorePanel({ score }: ScorePanelProps) {
         </div>
       </div>
 
-      {/* 逐词高亮 - LED 指示器 */}
+      {/* v1.1: 逐词热力图（替代旧版 LED 指示灯） */}
       {score.word_scores && score.word_scores.length > 0 && (
         <div className="space-y-2 pt-2 border-t border-amber-900/10">
-          <div className="text-xs text-stone-500 uppercase tracking-wider">逐词分析</div>
-          <div className="flex flex-wrap gap-1">
-            {score.word_scores.map((ws, idx) => (
-              <span
-                key={idx}
-                className={`skeuo-word-led ${ws.status}`}
-                title={
-                  ws.status === 'correct' ? '正确' :
-                  ws.status === 'wrong' ? '错误' :
-                  ws.status === 'missing' ? '缺失' : '多余'
-                }
-              >
-                {ws.word}
-              </span>
-            ))}
-          </div>
+          <div className="text-xs text-stone-500 uppercase tracking-wider">逐词热力图</div>
+          <HeatmapScore wordScores={score.word_scores} onWordClick={onWordClick} />
           <div className="flex gap-3 pt-1 text-[10px] text-stone-500 uppercase tracking-wider">
             <LegendItem colorClass="skeuo-word-led correct" label="正确" />
             <LegendItem colorClass="skeuo-word-led wrong" label="错误" />

@@ -6,7 +6,17 @@ import { ScorePanel } from './ScorePanel';
 import { SkeuoTab, SkeuoProgress, SkeuoLED } from './SkeuoUI';
 import { IconPlay, IconMic, IconStop, IconSpeaker, IconSparkle } from './icons/SkeuoIcons';
 
-export function DialogueArea({ sceneId }: { sceneId: string }) {
+export function DialogueArea({
+  sceneId,
+  onComplete,
+  onSentenceClick,
+  onWordClick,
+}: {
+  sceneId: string;
+  onComplete?: () => void;
+  onSentenceClick?: (sceneId: string, seq: number) => void;
+  onWordClick?: (word: string) => void;
+}) {
   const [scene, setScene] = useState<Scene | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(1);
@@ -67,6 +77,11 @@ export function DialogueArea({ sceneId }: { sceneId: string }) {
       const { text: userText } = await api.transcribe(blob);
       const result = await api.score(dialogueItem.en, userText, durationMs);
       setScoreResult(result);
+
+      // v1.1: 完成最后一句时触发 onComplete 刷新学习报告
+      if (onComplete && activeTab >= (scene?.dialogues.length || 0)) {
+        onComplete();
+      }
 
       if (result.overall_score >= 80) {
         setFeedback({ type: 'success', message: '🎉 发音很棒！继续保持！' });
@@ -161,8 +176,12 @@ export function DialogueArea({ sceneId }: { sceneId: string }) {
             )}
           </div>
 
-          {/* 英文内容 - 衬线大字 */}
-          <div className="skeuo-engrave-dark text-2xl leading-relaxed py-2 font-display">
+          {/* 英文内容 - 衬线大字（v1.5: 可点击触发句子解析） */}
+          <div
+            className="skeuo-engrave-dark text-2xl leading-relaxed py-2 font-display cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => onSentenceClick?.(sceneId, activeDialogue.seq)}
+            title="点击查看句子解析"
+          >
             "{activeDialogue.en}"
           </div>
 
@@ -254,7 +273,11 @@ export function DialogueArea({ sceneId }: { sceneId: string }) {
       {/* ===== 评分结果 ===== */}
       {scoreResult && activeDialogue && (
         <div className="flex-shrink-0">
-          <ScorePanel score={scoreResult} originalText={activeDialogue.en} />
+          <ScorePanel
+            score={scoreResult}
+            originalText={activeDialogue.en}
+            onWordClick={(ws) => onWordClick?.(ws.word)}
+          />
         </div>
       )}
     </div>
