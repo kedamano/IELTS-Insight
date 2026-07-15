@@ -1,0 +1,2354 @@
+{
+  "a": {
+    "phonetic": "/ə/",
+    "zh": "一个",
+    "difficulty": 1,
+    "examples": []
+  },
+  "aa": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "about": {
+    "phonetic": "/əˈbaʊt/",
+    "zh": "关于",
+    "difficulty": 1,
+    "examples": []
+  },
+  "account": {
+    "phonetic": "/əˈkaʊnt/",
+    "zh": "账户",
+    "difficulty": 2,
+    "examples": []
+  },
+  "achievement": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "address": {
+    "phonetic": "/əˈdres/",
+    "zh": "地址",
+    "difficulty": 2,
+    "examples": []
+  },
+  "afternoon": {
+    "phonetic": "/ˌɑːftərˈnuːn/",
+    "zh": "下午",
+    "difficulty": 1,
+    "examples": []
+  },
+  "agree": {
+    "phonetic": "/əˈɡriː/",
+    "zh": "同意",
+    "difficulty": 2,
+    "examples": []
+  },
+  "ai": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "air": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "alex": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "amazon": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "an": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "and": {
+    "phonetic": "/ænd/",
+    "zh": "和",
+    "difficulty": 1,
+    "examples": []
+  },
+  "any": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "apartment": {
+    "phonetic": "/əˈpɑːrtmənt/",
+    "zh": "公寓",
+    "difficulty": 2,
+    "examples": []
+  },
+  "are": {
+    "phonetic": "/ɑːr/",
+    "zh": "是",
+    "difficulty": 1,
+    "examples": []
+  },
+  "around": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "assist": {
+    "phonetic": "/əˈsɪst/",
+    "zh": "协助",
+    "difficulty": 3,
+    "examples": []
+  },
+  "at": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "awareness": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "bank": {
+    "phonetic": "/bæŋk/",
+    "zh": "银行",
+    "difficulty": 1,
+    "examples": []
+  },
+  "base": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "based": {
+    "phonetic": "/beɪst/",
+    "zh": "基于",
+    "difficulty": 2,
+    "examples": []
+  },
+  "basic": {
+    "phonetic": "/ˈbeɪsɪk/",
+    "zh": "基本的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "battery": {
+    "phonetic": "/ˈbætəri/",
+    "zh": "电池",
+    "difficulty": 2,
+    "examples": []
+  },
+  "be": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "bedroom": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "been": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "bend": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "big": {
+    "phonetic": "/bɪɡ/",
+    "zh": "大的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "bill": {
+    "phonetic": "/bɪl/",
+    "zh": "账单",
+    "difficulty": 1,
+    "examples": []
+  },
+  "bit": {
+    "phonetic": "/bɪt/",
+    "zh": "一点",
+    "difficulty": 1,
+    "examples": []
+  },
+  "blocks": {
+    "phonetic": "/blɒks/",
+    "zh": "街区",
+    "difficulty": 2,
+    "examples": []
+  },
+  "blue": {
+    "phonetic": "/bluː/",
+    "zh": "蓝色的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "brand": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "breakfast": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "briefly": {
+    "phonetic": "/ˈbriːfli/",
+    "zh": "简要地",
+    "difficulty": 3,
+    "examples": []
+  },
+  "brings": {
+    "phonetic": "/brɪŋz/",
+    "zh": "带来",
+    "difficulty": 2,
+    "examples": []
+  },
+  "business": {
+    "phonetic": "/ˈbɪznəs/",
+    "zh": "商务",
+    "difficulty": 2,
+    "examples": []
+  },
+  "but": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "by": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "calling": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "can": {
+    "phonetic": "/kæn/",
+    "zh": "能",
+    "difficulty": 1,
+    "examples": []
+  },
+  "can't": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "car": {
+    "phonetic": "/kɑːr/",
+    "zh": "汽车",
+    "difficulty": 1,
+    "examples": []
+  },
+  "cards": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "cash": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "check": {
+    "phonetic": "/tʃek/",
+    "zh": "检查",
+    "difficulty": 1,
+    "examples": []
+  },
+  "chen": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "classes": {
+    "phonetic": "/ˈklɑːsɪz/",
+    "zh": "课程",
+    "difficulty": 1,
+    "examples": []
+  },
+  "college": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "come": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "coming": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "compact": {
+    "phonetic": "/kəmˈpækt/",
+    "zh": "紧凑的",
+    "difficulty": 3,
+    "examples": []
+  },
+  "company": {
+    "phonetic": "/ˈkʌmpəni/",
+    "zh": "公司",
+    "difficulty": 2,
+    "examples": []
+  },
+  "confirm": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "connecting": {
+    "phonetic": "/kəˈnektɪŋ/",
+    "zh": "连接",
+    "difficulty": 2,
+    "examples": []
+  },
+  "connection": {
+    "phonetic": "/kəˈnekʃən/",
+    "zh": "连接",
+    "difficulty": 2,
+    "examples": []
+  },
+  "contact": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "contract": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "cough": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "could": {
+    "phonetic": "/kʊd/",
+    "zh": "可以",
+    "difficulty": 1,
+    "examples": []
+  },
+  "cracked": {
+    "phonetic": "/krækt/",
+    "zh": "破裂的",
+    "difficulty": 2,
+    "examples": []
+  },
+  "customer": {
+    "phonetic": "/ˈkʌstəmər/",
+    "zh": "顾客",
+    "difficulty": 2,
+    "examples": []
+  },
+  "damaged": {
+    "phonetic": "/ˈdæmɪdʒd/",
+    "zh": "损坏的",
+    "difficulty": 3,
+    "examples": []
+  },
+  "days": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "dell": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "deposit": {
+    "phonetic": "/dɪˈpɒzɪt/",
+    "zh": "押金",
+    "difficulty": 2,
+    "examples": []
+  },
+  "design": {
+    "phonetic": "/dɪˈzaɪn/",
+    "zh": "设计",
+    "difficulty": 2,
+    "examples": []
+  },
+  "did": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "difference": {
+    "phonetic": "/ˈdɪfrəns/",
+    "zh": "区别",
+    "difficulty": 2,
+    "examples": []
+  },
+  "different": {
+    "phonetic": "/ˈdɪfrənt/",
+    "zh": "不同的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "discuss": {
+    "phonetic": "/dɪˈskʌs/",
+    "zh": "讨论",
+    "difficulty": 2,
+    "examples": []
+  },
+  "distance": {
+    "phonetic": "/ˈdɪstəns/",
+    "zh": "距离",
+    "difficulty": 1,
+    "examples": []
+  },
+  "dizzy": {
+    "phonetic": "/ˈdɪzi/",
+    "zh": "头晕的",
+    "difficulty": 2,
+    "examples": []
+  },
+  "do": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "does": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "doesn't": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "dr": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "draft": {
+    "phonetic": "/dræft/",
+    "zh": "草案",
+    "difficulty": 3,
+    "examples": []
+  },
+  "drink": {
+    "phonetic": "/drɪŋk/",
+    "zh": "饮料",
+    "difficulty": 1,
+    "examples": []
+  },
+  "due": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "evening": {
+    "phonetic": "/ˈiːvnɪŋ/",
+    "zh": "晚上",
+    "difficulty": 1,
+    "examples": []
+  },
+  "examines": {
+    "phonetic": "/ɪɡˈzæmɪnz/",
+    "zh": "研究",
+    "difficulty": 3,
+    "examples": []
+  },
+  "excuse": {
+    "phonetic": "/ɪkˈskjuːz/",
+    "zh": "原谅",
+    "difficulty": 1,
+    "examples": []
+  },
+  "expand": {
+    "phonetic": "/ɪkˈspænd/",
+    "zh": "扩展",
+    "difficulty": 2,
+    "examples": []
+  },
+  "fair": {
+    "phonetic": "/fer/",
+    "zh": "公平的",
+    "difficulty": 2,
+    "examples": []
+  },
+  "favor": {
+    "phonetic": "/ˈfeɪvər/",
+    "zh": "有利",
+    "difficulty": 2,
+    "examples": []
+  },
+  "fee": {
+    "phonetic": "/fiː/",
+    "zh": "费用",
+    "difficulty": 1,
+    "examples": []
+  },
+  "feel": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "fi": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "find": {
+    "phonetic": "/faɪnd/",
+    "zh": "找到",
+    "difficulty": 1,
+    "examples": []
+  },
+  "finding": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "findings": {
+    "phonetic": "/ˈfaɪndɪŋz/",
+    "zh": "发现",
+    "difficulty": 2,
+    "examples": []
+  },
+  "first": {
+    "phonetic": "/fɜːrst/",
+    "zh": "第一",
+    "difficulty": 1,
+    "examples": []
+  },
+  "fitlife": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "fits": {
+    "phonetic": "/fɪts/",
+    "zh": "适合",
+    "difficulty": 2,
+    "examples": []
+  },
+  "fitting": {
+    "phonetic": "/ˈfɪtɪŋ/",
+    "zh": "试衣",
+    "difficulty": 2,
+    "examples": []
+  },
+  "five": {
+    "phonetic": "/faɪv/",
+    "zh": "五",
+    "difficulty": 1,
+    "examples": []
+  },
+  "flexible": {
+    "phonetic": "/ˈfleksəbl/",
+    "zh": "灵活的",
+    "difficulty": 3,
+    "examples": []
+  },
+  "floor": {
+    "phonetic": "/flɔːr/",
+    "zh": "楼层",
+    "difficulty": 1,
+    "examples": []
+  },
+  "for": {
+    "phonetic": "/fɔːr/",
+    "zh": "为了",
+    "difficulty": 1,
+    "examples": []
+  },
+  "forty": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "fourth": {
+    "phonetic": "/fɔːrθ/",
+    "zh": "第四",
+    "difficulty": 1,
+    "examples": []
+  },
+  "free": {
+    "phonetic": "/friː/",
+    "zh": "免费的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "from": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "frustrating": {
+    "phonetic": "/ˈfrʌstreɪtɪŋ/",
+    "zh": "令人沮丧的",
+    "difficulty": 3,
+    "examples": []
+  },
+  "future": {
+    "phonetic": "/ˈfjuːtʃər/",
+    "zh": "未来的",
+    "difficulty": 2,
+    "examples": []
+  },
+  "gas": {
+    "phonetic": "/ɡæs/",
+    "zh": "燃气",
+    "difficulty": 1,
+    "examples": []
+  },
+  "get": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "giving": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "glad": {
+    "phonetic": "/ɡlæd/",
+    "zh": "高兴的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "glass": {
+    "phonetic": "/ɡlæs/",
+    "zh": "杯子",
+    "difficulty": 1,
+    "examples": []
+  },
+  "go": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "going": {
+    "phonetic": "/ˈɡoʊɪŋ/",
+    "zh": "去",
+    "difficulty": 1,
+    "examples": []
+  },
+  "good": {
+    "phonetic": "/ɡʊd/",
+    "zh": "好的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "graduated": {
+    "phonetic": "/ˈɡrædʒueɪtɪd/",
+    "zh": "毕业",
+    "difficulty": 2,
+    "examples": []
+  },
+  "grand": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "great": {
+    "phonetic": "/ɡreɪt/",
+    "zh": "很好的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "gym": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "had": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "has": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "have": {
+    "phonetic": "/hæv/",
+    "zh": "有",
+    "difficulty": 1,
+    "examples": []
+  },
+  "having": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "headache": {
+    "phonetic": "/ˈhedeɪk/",
+    "zh": "头疼",
+    "difficulty": 1,
+    "examples": []
+  },
+  "hear": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "hello": {
+    "phonetic": "/həˈloʊ/",
+    "zh": "你好",
+    "difficulty": 1,
+    "examples": []
+  },
+  "help": {
+    "phonetic": "/help/",
+    "zh": "帮助",
+    "difficulty": 1,
+    "examples": []
+  },
+  "helped": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "here": {
+    "phonetic": "/hɪr/",
+    "zh": "这里",
+    "difficulty": 1,
+    "examples": []
+  },
+  "here's": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "hi": {
+    "phonetic": "/haɪ/",
+    "zh": "嗨",
+    "difficulty": 1,
+    "examples": []
+  },
+  "hotel": {
+    "phonetic": "/hoʊˈtel/",
+    "zh": "酒店",
+    "difficulty": 1,
+    "examples": []
+  },
+  "how": {
+    "phonetic": "/haʊ/",
+    "zh": "怎样",
+    "difficulty": 1,
+    "examples": []
+  },
+  "hurt": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "i": {
+    "phonetic": "/aɪ/",
+    "zh": "我",
+    "difficulty": 1,
+    "examples": []
+  },
+  "i'd": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "i'll": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "i'm": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "i've": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "id": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "if": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "impact": {
+    "phonetic": "/ˈɪmpækt/",
+    "zh": "影响",
+    "difficulty": 2,
+    "examples": []
+  },
+  "in": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "include": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "included": {
+    "phonetic": "/ɪnˈkluːdɪd/",
+    "zh": "包含",
+    "difficulty": 2,
+    "examples": []
+  },
+  "incomplete": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "increase": {
+    "phonetic": "/ɪnˈkriːs/",
+    "zh": "增加",
+    "difficulty": 2,
+    "examples": []
+  },
+  "instead": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "insurance": {
+    "phonetic": "/ɪnˈʃʊrəns/",
+    "zh": "保险",
+    "difficulty": 2,
+    "examples": []
+  },
+  "interested": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "internet": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "internship": {
+    "phonetic": "/ˈɪntɜːrnʃɪp/",
+    "zh": "实习",
+    "difficulty": 3,
+    "examples": []
+  },
+  "introduce": {
+    "phonetic": "/ˌɪntrəˈdjuːs/",
+    "zh": "介绍",
+    "difficulty": 2,
+    "examples": []
+  },
+  "is": {
+    "phonetic": "/ɪz/",
+    "zh": "是",
+    "difficulty": 1,
+    "examples": []
+  },
+  "it": {
+    "phonetic": "/ɪt/",
+    "zh": "它",
+    "difficulty": 1,
+    "examples": []
+  },
+  "it's": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "job": {
+    "phonetic": "/dʒɒb/",
+    "zh": "工作",
+    "difficulty": 1,
+    "examples": []
+  },
+  "joined": {
+    "phonetic": "/dʒɔɪnd/",
+    "zh": "加入",
+    "difficulty": 1,
+    "examples": []
+  },
+  "just": {
+    "phonetic": "/dʒʌst/",
+    "zh": "刚刚",
+    "difficulty": 1,
+    "examples": []
+  },
+  "key": {
+    "phonetic": "/kiː/",
+    "zh": "钥匙",
+    "difficulty": 1,
+    "examples": []
+  },
+  "know": {
+    "phonetic": "/noʊ/",
+    "zh": "知道",
+    "difficulty": 1,
+    "examples": []
+  },
+  "laptop": {
+    "phonetic": "/ˈlæptɒp/",
+    "zh": "笔记本电脑",
+    "difficulty": 2,
+    "examples": []
+  },
+  "last": {
+    "phonetic": "/læst/",
+    "zh": "上一个",
+    "difficulty": 1,
+    "examples": []
+  },
+  "lease": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "left": {
+    "phonetic": "/left/",
+    "zh": "左边",
+    "difficulty": 1,
+    "examples": []
+  },
+  "let": {
+    "phonetic": "/let/",
+    "zh": "让",
+    "difficulty": 1,
+    "examples": []
+  },
+  "let's": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "life": {
+    "phonetic": "/laɪf/",
+    "zh": "生活",
+    "difficulty": 1,
+    "examples": []
+  },
+  "lights": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "like": {
+    "phonetic": "/laɪk/",
+    "zh": "喜欢",
+    "difficulty": 1,
+    "examples": []
+  },
+  "limit": {
+    "phonetic": "/ˈlɪmɪt/",
+    "zh": "限制",
+    "difficulty": 2,
+    "examples": []
+  },
+  "limitations": {
+    "phonetic": "/ˌlɪmɪˈteɪʃənz/",
+    "zh": "局限性",
+    "difficulty": 3,
+    "examples": []
+  },
+  "long": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "looking": {
+    "phonetic": "/ˈlʊkɪŋ/",
+    "zh": "寻找",
+    "difficulty": 1,
+    "examples": []
+  },
+  "love": {
+    "phonetic": "/lʌv/",
+    "zh": "爱",
+    "difficulty": 1,
+    "examples": []
+  },
+  "macbook": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "major": {
+    "phonetic": "/ˈmeɪdʒər/",
+    "zh": "专业",
+    "difficulty": 2,
+    "examples": []
+  },
+  "make": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "many": {
+    "phonetic": "/ˈmeni/",
+    "zh": "许多",
+    "difficulty": 1,
+    "examples": []
+  },
+  "marketing": {
+    "phonetic": "/ˈmɑːrkɪtɪŋ/",
+    "zh": "市场营销",
+    "difficulty": 2,
+    "examples": []
+  },
+  "markets": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "may": {
+    "phonetic": "/meɪ/",
+    "zh": "可以",
+    "difficulty": 1,
+    "examples": []
+  },
+  "me": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "medium": {
+    "phonetic": "/ˈmiːdiəm/",
+    "zh": "中等的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "meet": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "membership": {
+    "phonetic": "/ˈmembərʃɪp/",
+    "zh": "会员",
+    "difficulty": 2,
+    "examples": []
+  },
+  "menu": {
+    "phonetic": "/ˈmenjuː/",
+    "zh": "菜单",
+    "difficulty": 1,
+    "examples": []
+  },
+  "methodology": {
+    "phonetic": "/ˌmeθəˈdɒlədʒi/",
+    "zh": "方法论",
+    "difficulty": 4,
+    "examples": []
+  },
+  "mileage": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "milestone": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "minute": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "minutes": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "miss": {
+    "phonetic": "/mɪs/",
+    "zh": "错过",
+    "difficulty": 1,
+    "examples": []
+  },
+  "mobile": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "month": {
+    "phonetic": "/mʌnθ/",
+    "zh": "月",
+    "difficulty": 1,
+    "examples": []
+  },
+  "monthly": {
+    "phonetic": "/ˈmʌnθli/",
+    "zh": "每月的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "more": {
+    "phonetic": "/mɔːr/",
+    "zh": "更多",
+    "difficulty": 1,
+    "examples": []
+  },
+  "morning": {
+    "phonetic": "/ˈmɔːrnɪŋ/",
+    "zh": "早晨",
+    "difficulty": 1,
+    "examples": []
+  },
+  "most": {
+    "phonetic": "/moʊst/",
+    "zh": "最",
+    "difficulty": 1,
+    "examples": []
+  },
+  "moved": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "much": {
+    "phonetic": "/mʌtʃ/",
+    "zh": "很多",
+    "difficulty": 1,
+    "examples": []
+  },
+  "my": {
+    "phonetic": "/maɪ/",
+    "zh": "我的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "name": {
+    "phonetic": "/neɪm/",
+    "zh": "名字",
+    "difficulty": 1,
+    "examples": []
+  },
+  "national": {
+    "phonetic": "/ˈnæʃənl/",
+    "zh": "国家的",
+    "difficulty": 2,
+    "examples": []
+  },
+  "nearest": {
+    "phonetic": "/ˈnɪrɪst/",
+    "zh": "最近的",
+    "difficulty": 2,
+    "examples": []
+  },
+  "need": {
+    "phonetic": "/niːd/",
+    "zh": "需要",
+    "difficulty": 1,
+    "examples": []
+  },
+  "network": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "new": {
+    "phonetic": "/njuː/",
+    "zh": "新的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "nice": {
+    "phonetic": "/naɪs/",
+    "zh": "好的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "nine": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "ninety": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "no": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "now": {
+    "phonetic": "/naʊ/",
+    "zh": "现在",
+    "difficulty": 1,
+    "examples": []
+  },
+  "number": {
+    "phonetic": "/ˈnʌmbər/",
+    "zh": "号码",
+    "difficulty": 1,
+    "examples": []
+  },
+  "of": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "on": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "one": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "open": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "opportunity": {
+    "phonetic": "/ˌɒpərˈtjuːnɪti/",
+    "zh": "机会",
+    "difficulty": 2,
+    "examples": []
+  },
+  "or": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "order": {
+    "phonetic": "/ˈɔːrdər/",
+    "zh": "订单",
+    "difficulty": 1,
+    "examples": []
+  },
+  "our": {
+    "phonetic": "/aʊr/",
+    "zh": "我们的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "over": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "package": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "partnership": {
+    "phonetic": "/ˈpɑːrtnərʃɪp/",
+    "zh": "合作关系",
+    "difficulty": 3,
+    "examples": []
+  },
+  "passport": {
+    "phonetic": "/ˈpæspɔːrt/",
+    "zh": "护照",
+    "difficulty": 2,
+    "examples": []
+  },
+  "payment": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "payments": {
+    "phonetic": "/ˈpeɪmənts/",
+    "zh": "付款",
+    "difficulty": 2,
+    "examples": []
+  },
+  "peking": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "people": {
+    "phonetic": "/ˈpiːpl/",
+    "zh": "人们",
+    "difficulty": 1,
+    "examples": []
+  },
+  "per": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "percent": {
+    "phonetic": "/pərˈsent/",
+    "zh": "百分之",
+    "difficulty": 1,
+    "examples": []
+  },
+  "perfect": {
+    "phonetic": "/ˈpɜːrfɪkt/",
+    "zh": "完美的",
+    "difficulty": 2,
+    "examples": []
+  },
+  "perfectly": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "personal": {
+    "phonetic": "/ˈpɜːrsənl/",
+    "zh": "个人的",
+    "difficulty": 2,
+    "examples": []
+  },
+  "photo": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "pick": {
+    "phonetic": "/pɪk/",
+    "zh": "取",
+    "difficulty": 1,
+    "examples": []
+  },
+  "picking": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "plan": {
+    "phonetic": "/plæn/",
+    "zh": "计划",
+    "difficulty": 1,
+    "examples": []
+  },
+  "plans": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "please": {
+    "phonetic": "/pliːz/",
+    "zh": "请",
+    "difficulty": 1,
+    "examples": []
+  },
+  "prefer": {
+    "phonetic": "/prɪˈfɜːr/",
+    "zh": "偏好",
+    "difficulty": 2,
+    "examples": []
+  },
+  "process": {
+    "phonetic": "/ˈprəʊses/",
+    "zh": "处理",
+    "difficulty": 2,
+    "examples": []
+  },
+  "processing": {
+    "phonetic": "/prəˈsesɪŋ/",
+    "zh": "处理中",
+    "difficulty": 2,
+    "examples": []
+  },
+  "product": {
+    "phonetic": "/ˈprɒdʌkt/",
+    "zh": "产品",
+    "difficulty": 2,
+    "examples": []
+  },
+  "profit": {
+    "phonetic": "/ˈprɒfɪt/",
+    "zh": "利润",
+    "difficulty": 2,
+    "examples": []
+  },
+  "project": {
+    "phonetic": "/ˈprɒdʒekt/",
+    "zh": "项目",
+    "difficulty": 2,
+    "examples": []
+  },
+  "projects": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "proof": {
+    "phonetic": "/pruːf/",
+    "zh": "证明",
+    "difficulty": 2,
+    "examples": []
+  },
+  "propose": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "proud": {
+    "phonetic": "/praʊd/",
+    "zh": "自豪的",
+    "difficulty": 2,
+    "examples": []
+  },
+  "quarterly": {
+    "phonetic": "/ˈkwɔːrtərli/",
+    "zh": "每季度",
+    "difficulty": 3,
+    "examples": []
+  },
+  "quite": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "rate": {
+    "phonetic": "/reɪt/",
+    "zh": "费率",
+    "difficulty": 1,
+    "examples": []
+  },
+  "really": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "received": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "recent": {
+    "phonetic": "/ˈriːsnt/",
+    "zh": "最近的",
+    "difficulty": 2,
+    "examples": []
+  },
+  "recommend": {
+    "phonetic": "/ˌrekəˈmend/",
+    "zh": "推荐",
+    "difficulty": 2,
+    "examples": []
+  },
+  "red": {
+    "phonetic": "/red/",
+    "zh": "红色的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "redesigning": {
+    "phonetic": "/ˌriːdɪˈzaɪnɪŋ/",
+    "zh": "重新设计",
+    "difficulty": 3,
+    "examples": []
+  },
+  "refund": {
+    "phonetic": "/ˈriːfʌnd/",
+    "zh": "退款",
+    "difficulty": 2,
+    "examples": []
+  },
+  "relatively": {
+    "phonetic": "/ˈrelətɪvli/",
+    "zh": "相对地",
+    "difficulty": 3,
+    "examples": []
+  },
+  "rent": {
+    "phonetic": "/rent/",
+    "zh": "租金",
+    "difficulty": 1,
+    "examples": []
+  },
+  "replacement": {
+    "phonetic": "/rɪˈpleɪsmənt/",
+    "zh": "替换",
+    "difficulty": 2,
+    "examples": []
+  },
+  "research": {
+    "phonetic": "/rɪˈsɜːrtʃ/",
+    "zh": "研究",
+    "difficulty": 2,
+    "examples": []
+  },
+  "reservation": {
+    "phonetic": "/ˌrezərˈveɪʃən/",
+    "zh": "预订",
+    "difficulty": 2,
+    "examples": []
+  },
+  "reserved": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "restarting": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "restaurant": {
+    "phonetic": "/ˈrestrɒnt/",
+    "zh": "餐厅",
+    "difficulty": 1,
+    "examples": []
+  },
+  "resume": {
+    "phonetic": "/rɪˈzjuːm/",
+    "zh": "简历",
+    "difficulty": 2,
+    "examples": []
+  },
+  "return": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "returned": {
+    "phonetic": "/rɪˈtɜːrnd/",
+    "zh": "退回的",
+    "difficulty": 2,
+    "examples": []
+  },
+  "reviewed": {
+    "phonetic": "/rɪˈvjuːd/",
+    "zh": "已审阅",
+    "difficulty": 2,
+    "examples": []
+  },
+  "right": {
+    "phonetic": "/raɪt/",
+    "zh": "右边",
+    "difficulty": 1,
+    "examples": []
+  },
+  "room": {
+    "phonetic": "/ruːm/",
+    "zh": "房间",
+    "difficulty": 1,
+    "examples": []
+  },
+  "router": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "sample": {
+    "phonetic": "/ˈsæmpl/",
+    "zh": "样本",
+    "difficulty": 2,
+    "examples": []
+  },
+  "sarah": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "savings": {
+    "phonetic": "/ˈseɪvɪŋz/",
+    "zh": "储蓄",
+    "difficulty": 2,
+    "examples": []
+  },
+  "screen": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "seat": {
+    "phonetic": "/siːt/",
+    "zh": "座位",
+    "difficulty": 1,
+    "examples": []
+  },
+  "security": {
+    "phonetic": "/sɪˈkjʊrɪti/",
+    "zh": "安全",
+    "difficulty": 2,
+    "examples": []
+  },
+  "see": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "sender": {
+    "phonetic": "/ˈsendər/",
+    "zh": "寄件人",
+    "difficulty": 2,
+    "examples": []
+  },
+  "served": {
+    "phonetic": "/sɜːrvd/",
+    "zh": "提供",
+    "difficulty": 1,
+    "examples": []
+  },
+  "service": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "session": {
+    "phonetic": "/ˈseʃən/",
+    "zh": "课程",
+    "difficulty": 2,
+    "examples": []
+  },
+  "shirt": {
+    "phonetic": "/ʃɜːrt/",
+    "zh": "衬衫",
+    "difficulty": 1,
+    "examples": []
+  },
+  "should": {
+    "phonetic": "/ʃʊd/",
+    "zh": "应该",
+    "difficulty": 1,
+    "examples": []
+  },
+  "sir": {
+    "phonetic": "/sɜːr/",
+    "zh": "先生",
+    "difficulty": 1,
+    "examples": []
+  },
+  "size": {
+    "phonetic": "/saɪz/",
+    "zh": "尺寸",
+    "difficulty": 1,
+    "examples": []
+  },
+  "sized": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "slow": {
+    "phonetic": "/sloʊ/",
+    "zh": "慢的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "small": {
+    "phonetic": "/smɔːl/",
+    "zh": "小的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "so": {
+    "phonetic": "/soʊ/",
+    "zh": "所以",
+    "difficulty": 1,
+    "examples": []
+  },
+  "some": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "something": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "sometimes": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "sorry": {
+    "phonetic": "/ˈsɒri/",
+    "zh": "对不起",
+    "difficulty": 1,
+    "examples": []
+  },
+  "speed": {
+    "phonetic": "/spiːd/",
+    "zh": "速度",
+    "difficulty": 1,
+    "examples": []
+  },
+  "split": {
+    "phonetic": "/splɪt/",
+    "zh": "分割",
+    "difficulty": 2,
+    "examples": []
+  },
+  "states": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "station": {
+    "phonetic": "/ˈsteɪʃən/",
+    "zh": "站",
+    "difficulty": 1,
+    "examples": []
+  },
+  "stay": {
+    "phonetic": "/steɪ/",
+    "zh": "停留",
+    "difficulty": 1,
+    "examples": []
+  },
+  "still": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "straight": {
+    "phonetic": "/streɪt/",
+    "zh": "笔直的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "studies": {
+    "phonetic": "/ˈstʌdiz/",
+    "zh": "研究",
+    "difficulty": 2,
+    "examples": []
+  },
+  "study": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "subway": {
+    "phonetic": "/ˈsʌbweɪ/",
+    "zh": "地铁",
+    "difficulty": 2,
+    "examples": []
+  },
+  "summarize": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "support": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "sure": {
+    "phonetic": "/ʃʊr/",
+    "zh": "当然",
+    "difficulty": 1,
+    "examples": []
+  },
+  "t": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "table": {
+    "phonetic": "/ˈteɪbl/",
+    "zh": "桌子",
+    "difficulty": 1,
+    "examples": []
+  },
+  "tablet": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "take": {
+    "phonetic": "/teɪk/",
+    "zh": "拿",
+    "difficulty": 1,
+    "examples": []
+  },
+  "team": {
+    "phonetic": "/tiːm/",
+    "zh": "团队",
+    "difficulty": 1,
+    "examples": []
+  },
+  "tech": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "technician": {
+    "phonetic": "/tekˈnɪʃən/",
+    "zh": "技术员",
+    "difficulty": 3,
+    "examples": []
+  },
+  "tell": {
+    "phonetic": "/tel/",
+    "zh": "告诉",
+    "difficulty": 1,
+    "examples": []
+  },
+  "term": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "terms": {
+    "phonetic": "/tɜːrmz/",
+    "zh": "条款",
+    "difficulty": 2,
+    "examples": []
+  },
+  "thank": {
+    "phonetic": "/θæŋk/",
+    "zh": "感谢",
+    "difficulty": 1,
+    "examples": []
+  },
+  "thanks": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "that": {
+    "phonetic": "/ðæt/",
+    "zh": "那",
+    "difficulty": 1,
+    "examples": []
+  },
+  "that's": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "the": {
+    "phonetic": "/ðə/",
+    "zh": "（定冠词）",
+    "difficulty": 1,
+    "examples": []
+  },
+  "then": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "there": {
+    "phonetic": "/ðer/",
+    "zh": "那里",
+    "difficulty": 1,
+    "examples": []
+  },
+  "think": {
+    "phonetic": "/θɪŋk/",
+    "zh": "想",
+    "difficulty": 1,
+    "examples": []
+  },
+  "this": {
+    "phonetic": "/ðɪs/",
+    "zh": "这个",
+    "difficulty": 1,
+    "examples": []
+  },
+  "three": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "through": {
+    "phonetic": "/θruː/",
+    "zh": "穿过",
+    "difficulty": 1,
+    "examples": []
+  },
+  "ticket": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "time": {
+    "phonetic": "/taɪm/",
+    "zh": "时间",
+    "difficulty": 1,
+    "examples": []
+  },
+  "to": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "today": {
+    "phonetic": "/təˈdeɪ/",
+    "zh": "今天",
+    "difficulty": 1,
+    "examples": []
+  },
+  "tomorrow": {
+    "phonetic": "/təˈmɒroʊ/",
+    "zh": "明天",
+    "difficulty": 1,
+    "examples": []
+  },
+  "tracking": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "traffic": {
+    "phonetic": "/ˈtræfɪk/",
+    "zh": "交通",
+    "difficulty": 1,
+    "examples": []
+  },
+  "trainer": {
+    "phonetic": "/ˈtreɪnər/",
+    "zh": "教练",
+    "difficulty": 2,
+    "examples": []
+  },
+  "tried": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "trip": {
+    "phonetic": "/trɪp/",
+    "zh": "旅行",
+    "difficulty": 1,
+    "examples": []
+  },
+  "trouble": {
+    "phonetic": "/ˈtrʌbl/",
+    "zh": "问题",
+    "difficulty": 2,
+    "examples": []
+  },
+  "turn": {
+    "phonetic": "/tɜːrn/",
+    "zh": "转",
+    "difficulty": 1,
+    "examples": []
+  },
+  "two": {
+    "phonetic": "/tuː/",
+    "zh": "二",
+    "difficulty": 1,
+    "examples": []
+  },
+  "under": {
+    "phonetic": "/ˈʌndər/",
+    "zh": "在...之下",
+    "difficulty": 1,
+    "examples": []
+  },
+  "unit": {
+    "phonetic": "/ˈjuːnɪt/",
+    "zh": "单元",
+    "difficulty": 2,
+    "examples": []
+  },
+  "united": {
+    "phonetic": "/juˈnaɪtɪd/",
+    "zh": "联合的",
+    "difficulty": 2,
+    "examples": []
+  },
+  "university": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "up": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "upfront": {
+    "phonetic": "/ˌʌpˈfrʌnt/",
+    "zh": "预付的",
+    "difficulty": 3,
+    "examples": []
+  },
+  "utilities": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "utility": {
+    "phonetic": "/juˈtɪlɪti/",
+    "zh": "公用事业",
+    "difficulty": 2,
+    "examples": []
+  },
+  "very": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "visa": {
+    "phonetic": "/ˈviːzə/",
+    "zh": "签证",
+    "difficulty": 2,
+    "examples": []
+  },
+  "walk": {
+    "phonetic": "/wɔːk/",
+    "zh": "步行",
+    "difficulty": 1,
+    "examples": []
+  },
+  "walking": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "wang": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "want": {
+    "phonetic": "/wɒnt/",
+    "zh": "想要",
+    "difficulty": 1,
+    "examples": []
+  },
+  "was": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "water": {
+    "phonetic": "/ˈwɔːtər/",
+    "zh": "水",
+    "difficulty": 1,
+    "examples": []
+  },
+  "way": {
+    "phonetic": "/weɪ/",
+    "zh": "方式",
+    "difficulty": 1,
+    "examples": []
+  },
+  "we": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "we're": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "website": {
+    "phonetic": "/ˈwebsaɪt/",
+    "zh": "网站",
+    "difficulty": 2,
+    "examples": []
+  },
+  "week": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "weeks": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "wei": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "welcome": {
+    "phonetic": "/ˈwelkəm/",
+    "zh": "欢迎",
+    "difficulty": 1,
+    "examples": []
+  },
+  "what": {
+    "phonetic": "/wɒt/",
+    "zh": "什么",
+    "difficulty": 1,
+    "examples": []
+  },
+  "what's": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "when": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "which": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "wi": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "will": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "wine": {
+    "phonetic": "/waɪn/",
+    "zh": "葡萄酒",
+    "difficulty": 1,
+    "examples": []
+  },
+  "with": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "within": {
+    "phonetic": "/wɪˈðɪn/",
+    "zh": "在...之内",
+    "difficulty": 2,
+    "examples": []
+  },
+  "work": {
+    "phonetic": "/wɜːrk/",
+    "zh": "工作",
+    "difficulty": 1,
+    "examples": []
+  },
+  "working": {
+    "phonetic": "/ˈwɜːrkɪŋ/",
+    "zh": "工作中",
+    "difficulty": 1,
+    "examples": []
+  },
+  "would": {
+    "phonetic": "/wʊd/",
+    "zh": "将会",
+    "difficulty": 1,
+    "examples": []
+  },
+  "xps": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "yes": {
+    "phonetic": "/jes/",
+    "zh": "是的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "you": {
+    "phonetic": "/juː/",
+    "zh": "你",
+    "difficulty": 1,
+    "examples": []
+  },
+  "you're": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "your": {
+    "phonetic": "/jɔːr/",
+    "zh": "你的",
+    "difficulty": 1,
+    "examples": []
+  },
+  "yourself": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "z": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  },
+  "zhang": {
+    "phonetic": "",
+    "zh": "",
+    "difficulty": 1,
+    "examples": []
+  }
+}
