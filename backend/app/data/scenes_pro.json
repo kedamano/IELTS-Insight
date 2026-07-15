@@ -1,0 +1,217 @@
+[
+  {
+    "id": "pro_01",
+    "title": "💼 工作面试",
+    "difficulty": 3,
+    "category": "career",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "面试官", "en": "Good morning, please have a seat. Thank you for coming in today.", "zh": "早上好，请坐。感谢您今天来面试。", "keywords": ["morning", "seat"], "tips": "注意 'Good morning' 的语调自然"},
+      {"seq": 2, "speaker": "B", "role": "候选人", "en": "Good morning. Thank you for giving me this opportunity.", "zh": "早上好。感谢您给我这个机会。", "keywords": ["opportunity"], "tips": "注意 'giving me' 的连读"},
+      {"seq": 3, "speaker": "A", "role": "面试官", "en": "I've reviewed your resume. Could you tell me a bit about yourself?", "zh": "我已经看了你的简历。你能简单介绍一下自己吗？", "keywords": ["resume", "yourself"], "tips": "注意 'tell me' 的连读"},
+      {"seq": 4, "speaker": "B", "role": "候选人", "en": "Sure. I graduated from Peking University with a major in marketing.", "zh": "好的。我毕业于北京大学，主修市场营销。", "keywords": ["graduated", "marketing"], "tips": "注意 'graduated from' 的连读"},
+      {"seq": 5, "speaker": "A", "role": "面试官", "en": "What is one achievement you're most proud of?", "zh": "你最自豪的一个成就是什么？", "keywords": ["achievement", "proud"], "tips": "注意 'most proud of' 的连读"},
+      {"seq": 6, "speaker": "B", "role": "候选人", "en": "In my last internship, I helped increase brand awareness by 30 percent.", "zh": "在我上一次实习中，我帮助品牌知名度提高了 30%。", "keywords": ["awareness", "percent"], "tips": "注意 'brand awareness' 的连读"}
+    ],
+    "cultural_notes": "在英语国家面试中，自我介绍要简洁，重点突出职业成就。注意使用过去时态描述经历。"
+  },
+  {
+    "id": "pro_02",
+    "title": "🤝 商务谈判",
+    "difficulty": 4,
+    "category": "business",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "甲方", "en": "Let's discuss the terms of this partnership.", "zh": "让我们讨论一下这次合作的条款。", "keywords": ["partnership", "terms"], "tips": "注意 'terms of' 的连读"},
+      {"seq": 2, "speaker": "B", "role": "乙方", "en": "We think the profit split should be 60-40 in our favor.", "zh": "我们认为利润分配应该对我们的利益更有利，四六分。", "keywords": ["profit split"], "tips": "注意 'in our favor' 是固定表达"},
+      {"seq": 3, "speaker": "A", "role": "甲方", "en": "That's fair, but can you be more flexible on payment terms?", "zh": "这很公平，但付款条款方面能否更灵活一些？", "keywords": ["flexible"], "tips": "注意 'more flexible' 的 /fl/ 发音"},
+      {"seq": 4, "speaker": "B", "role": "乙方", "en": "What about quarterly payments instead of upfront cash?", "zh": "按季度付款而不是预付现金怎么样？", "keywords": ["upfront"], "tips": "注意 'quarterly payments' 的连读"},
+      {"seq": 5, "speaker": "A", "role": "甲方", "en": "How about 50-50 with milestone-based payments?", "zh": "五五分成，按里程碑付款怎么样？", "keywords": ["milestone"], "tips": "注意 'milestone-based' 的重音在 'mile'"},
+      {"seq": 6, "speaker": "B", "role": "乙方", "en": "I think we can agree to that. Let me propose a draft.", "zh": "我想我们可以同意。让我拟一个草案。", "keywords": ["agree", "draft"], "tips": "注意 'I think we can agree' 是地道的商务表达"}
+    ],
+    "cultural_notes": "英语商务谈判中，'How about...' 是常用提出建议的方式。注意保持语气专业但友好。"
+  },
+  {
+    "id": "pro_03",
+    "title": "🏥 看病就医",
+    "difficulty": 2,
+    "category": "health",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "医生", "en": "Hello, what brings you here today?", "zh": "您好，您今天过来是哪里不舒服？", "keywords": ["brings", "here"], "tips": "注意 'what brings you' 是医生常用开场"},
+      {"seq": 2, "speaker": "B", "role": "病人", "en": "I've had a headache for the last two days.", "zh": "我头疼了两天了。", "keywords": ["headache", "days"], "tips": "注意 'I've had' 是现在完成时"},
+      {"seq": 3, "speaker": "A", "role": "医生", "en": "Does it hurt more when you cough or bend over?", "zh": "咳嗽或弯腰时会更疼吗？", "keywords": ["cough", "bend"], "tips": "注意 'Does it hurt' 的连读"},
+      {"seq": 4, "speaker": "B", "role": "病人", "en": "No, but I feel dizzy sometimes.", "zh": "不会，但有时会觉得头晕。", "keywords": ["dizzy", "sometimes"], "tips": "注意 'feel dizzy' 的 /f/ 发音"}
+    ],
+    "cultural_notes": "在美国看病时，医生通常会先问 'What brings you here today?' 来了解症状。要准确描述疼痛部位和程度。"
+  },
+  {
+    "id": "pro_04",
+    "title": "🏦 银行开户",
+    "difficulty": 3,
+    "category": "finance",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "柜员", "en": "Good morning! Welcome to First National Bank. How can I help you?", "zh": "早上好！欢迎来第一国民银行。我能帮您什么？", "keywords": ["national", "help"], "tips": "注意 'Welcome to' 的连读"},
+      {"seq": 2, "speaker": "B", "role": "客户", "en": "I'd like to open a savings account, please.", "zh": "我想开一个储蓄账户。", "keywords": ["savings", "account"], "tips": "注意 'I'd like to' 的弱读"},
+      {"seq": 3, "speaker": "A", "role": "柜员", "en": "Sure. I'll need a photo ID and proof of address.", "zh": "好的。我需要您的带照片身份证和地址证明。", "keywords": ["proof"], "tips": "注意 'proof of address' 是银行常用语"},
+      {"seq": 4, "speaker": "B", "role": "客户", "en": "Here's my passport and a recent utility bill.", "zh": "这是我的护照和最近的水电账单。", "keywords": ["utility"], "tips": "注意 'passport' 的重音在第一个音节"},
+      {"seq": 5, "speaker": "A", "role": "柜员", "en": "Perfect. This will take about 10 minutes to process.", "zh": "完美。大约需要 10 分钟处理。", "keywords": ["process"], "tips": "注意 'Perfect' 的重音在第一个音节"}
+    ],
+    "cultural_notes": "在英语国家银行存款时，通常需要 Photo ID（护照或驾照）和 Proof of Address（水电账单等）。"
+  },
+  {
+    "id": "pro_05",
+    "title": "🏠 租房看房",
+    "difficulty": 3,
+    "category": "housing",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "房东", "en": "Thanks for coming to see the apartment. It's a two-bedroom unit.", "zh": "感谢您来看房。这是一套两居室。", "keywords": ["apartment", "unit"], "tips": "注意 'bedroom' 的复合词发音"},
+      {"seq": 2, "speaker": "B", "role": "租客", "en": "Nice. How much is the rent and what utilities are included?", "zh": "不错。租金多少？包含哪些 utilities？", "keywords": ["rent", "utilities"], "tips": "注意 'much is' 的连读"},
+      {"seq": 3, "speaker": "A", "role": "房东", "en": "It's $1,500 per month, water and gas are included.", "zh": "每月 1500 美元，包含水费和燃气费。", "keywords": ["included"], "tips": "注意 'It's $1,500' 的发音"},
+      {"seq": 4, "speaker": "B", "role": "租客", "en": "Is there a security deposit? What about the lease term?", "zh": "有押金吗？租约期限是多久？", "keywords": ["security", "deposit"], "tips": "注意 'security deposit' 是押金"}
+    ],
+    "cultural_notes": "在美国租房通常需要支付 Security Deposit（同等一个月租金）和首月租金。租约一般为 12 个月。"
+  },
+  {
+    "id": "pro_06",
+    "title": "✈️ 机场通关",
+    "difficulty": 2,
+    "category": "travel",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "海关", "en": "Good evening, sir. May I see your passport and visa, please?", "zh": "晚上好，先生。我可以看您的护照和签证吗？", "keywords": ["visa"], "tips": "注意 'evening' 的重音"},
+      {"seq": 2, "speaker": "B", "role": "旅客", "en": "Sure, here you go. I'm here for a business trip.", "zh": "当然，给您。我来这里出差。", "keywords": ["business", "trip"], "tips": "注意 'here you go' 的连读"},
+      {"seq": 3, "speaker": "A", "role": "海关", "en": "How long do you plan to stay in the United States this time?", "zh": "这次您打算在美国停留多久？", "keywords": ["plan", "stay"], "tips": "注意 'United States' 的发音"},
+      {"seq": 4, "speaker": "B", "role": "旅客", "en": "Two weeks. I have a hotel reservation and a return ticket.", "zh": "两周。我有机票返程和酒店预订。", "keywords": ["reservation"], "tips": "注意 'Two weeks' 的连读"}
+    ],
+    "cultural_notes": "在美国海关要诚实回答目的和停留时间。回答要简洁清晰，不要紧张。"
+  },
+  {
+    "id": "pro_07",
+    "title": "🚗 租车出行",
+    "difficulty": 2,
+    "category": "travel",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "店员", "en": "Good afternoon. Welcome to Rent-A-Car. What can I do for you today?", "zh": "下午好。欢迎来租车公司。今天能为您做什么？", "keywords": ["rent"], "tips": "注意 'Welcome to' 的连读"},
+      {"seq": 2, "speaker": "B", "role": "客户", "en": "Hi, I reserved a compact car for a week. My name is Wang Wei.", "zh": "您好，我已预订了一周的紧凑型轿车。我叫王伟。", "keywords": ["compact"], "tips": "注意 'compact car' 的连读"},
+      {"seq": 3, "speaker": "A", "role": "店员", "en": "Here's your contract. Insurance is included in the base rate.", "zh": "这是您的合同。保险包含在基础费率中。", "keywords": ["contract", "insurance"], "tips": "注意 'insurance' 的重音在 'sur'"},
+      {"seq": 4, "speaker": "B", "role": "客户", "en": "Is there a mileage limit? Can I pick up the car tomorrow?", "zh": "有里程限制吗？明天可以取车吗？", "keywords": ["mileage"], "tips": "注意 'mileage limit' 的连读"}
+    ],
+    "cultural_notes": "在英语国家租车要注意保险。通常建议买全险，注意问清楚是否有里程限制。"
+  },
+  {
+    "id": "pro_08",
+    "title": "🍺 社交聚会",
+    "difficulty": 2,
+    "category": "social",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "发起人", "en": "Hi, I'm so glad you could make it! Can I get you a drink?", "zh": "您好，您能来真高兴！需要给您拿杯饮料吗？", "keywords": ["make it"], "tips": "注意 'I'm so glad' 的连读"},
+      {"seq": 2, "speaker": "B", "role": "来宾", "en": "Thanks, I'd love a glass of red wine.", "zh": "谢谢，我想要一杯红酒。", "keywords": ["glass", "wine"], "tips": "注意 'I'd love a' 的连读"},
+      {"seq": 3, "speaker": "A", "role": "发起人", "en": "Do you know many people here? I can introduce you around.", "zh": "您认识这里的很多人吗？我可以给您介绍大家认识。", "keywords": ["know", "introduce"], "tips": "注意 'know many' 的连读"},
+      {"seq": 4, "speaker": "B", "role": "来宾", "en": "That's really nice of you. I just moved here last month.", "zh": "您太好了。我上个月才搬到这里。", "keywords": ["moved"], "tips": "注意 'really nice' 的连读"}
+    ],
+    "cultural_notes": "在英语国家的社交聚会中，有时需要自己付钱（Going Dutch）或轮流请客。主动问 'Can I get you a drink?' 是热情的表现。"
+  },
+  {
+    "id": "pro_09",
+    "title": "📞 客服电话",
+    "difficulty": 2,
+    "category": "daily",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "客服", "en": "Good evening, this is T-Mobile customer service. How may I assist you?", "zh": "晚上好，这是 T-Mobile 客服。我能帮助您什么？", "keywords": ["customer", "assist"], "tips": "注意 'How may I' 的连读"},
+      {"seq": 2, "speaker": "B", "role": "客户", "en": "Hi, my internet has been very slow this week and it's quite frustrating.", "zh": "您好，这周我的网特别慢，让人很沮丧。", "keywords": ["slow", "frustrating"], "tips": "注意 'frustrating' 的重音"},
+      {"seq": 3, "speaker": "A", "role": "客服", "en": "I'm sorry to hear that. Let me check your account.", "zh": "很抱歉听到这个。让我查一下您的账户。", "keywords": ["sorry", "account"], "tips": "注意 'Let me check' 是客服常用语"},
+      {"seq": 4, "speaker": "B", "role": "客户", "en": "I want a technician to come check my connection.", "zh": "我想让技术人员来检查一下我的网。", "keywords": ["technician", "connection"], "tips": "注意 'want a technician' 的连读"}
+    ],
+    "cultural_notes": "美国人常说 'I'm sorry to hear that' 表示同情。要求技术支援时可以说 'a technician to come check'。"
+  },
+  {
+    "id": "pro_10",
+    "title": "📦 快递取件",
+    "difficulty": 2,
+    "category": "daily",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "店员", "en": "Hi, picking up a package? Can I see an ID or tracking number?", "zh": "您好，来取包裹吗？可以给我身份证或追踪号码吗？", "keywords": ["picking", "tracking"], "tips": "注意 'tracking number' 是快递追踪号"},
+      {"seq": 2, "speaker": "B", "role": "客户", "en": "Sure, my tracking number is 1Z999AA10123456784.", "zh": "当然，我的追踪号是 1Z999AA10123456784。", "keywords": ["tracking"], "tips": "注意字母数字组合要用自然语调读出"},
+      {"seq": 3, "speaker": "A", "role": "店员", "en": "I'm sorry, this package was returned due to an incomplete address.", "zh": "很抱歉，这个包裹由于地址不完整被退回了。", "keywords": ["returned", "address"], "tips": "注意 'due to' 的连读"},
+      {"seq": 4, "speaker": "B", "role": "客户", "en": "Could you contact the sender for me? I can confirm my address.", "zh": "能帮我联系寄件人吗？我可以确认地址。", "keywords": ["sender"], "tips": "注意 'Could you' 的连读"}
+    ],
+    "cultural_notes": "在美国取快递通常需要 Photo ID（身份证）。追踪号叫 tracking number，小包叫 package，大包叫 parcel。"
+  },
+  {
+    "id": "pro_11",
+    "title": "🏋️ 健身房入会",
+    "difficulty": 2,
+    "category": "health",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "教练", "en": "Welcome to FitLife Gym. Are you interested in a membership?", "zh": "欢迎来 FitLife 健身房。您对会员感兴趣吗？", "keywords": ["membership"], "tips": "注意 'FitLife' 的发音"},
+      {"seq": 2, "speaker": "B", "role": "顾客", "en": "Yes, how much is the monthly fee and what classes are included?", "zh": "是的。月费是多少？包含哪些课程？", "keywords": ["monthly", "classes"], "tips": "注意 'how much is' 的连读"},
+      {"seq": 3, "speaker": "A", "role": "教练", "en": "We have three plans. The basic is forty-nine ninety-nine per month.", "zh": "我们有三套方案。基础的费用是每月 49.99 美元。", "keywords": ["basic", "plan"], "tips": "注意数字读法：49.99 读作 forty-nine ninety-nine"},
+      {"seq": 4, "speaker": "B", "role": "顾客", "en": "Does that include a personal trainer session?", "zh": "这个包含私教课程吗？", "keywords": ["personal", "trainer"], "tips": "注意 'Does that include' 的连读"}
+    ],
+    "cultural_notes": "在美国健身房，Personal Trainer 是私教，通常要额外付费。基础会员费通常在 $30-$80 美元每月。"
+  },
+  {
+    "id": "pro_12",
+    "title": "🏨 酒店入住",
+    "difficulty": 2,
+    "category": "travel",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "前台", "en": "Good afternoon, welcome to the Grand Hotel. Could you please check in?", "zh": "下午好，欢迎来大酒店。可以请您办理入住吗？", "keywords": ["check in"], "tips": "注意 'check in' 是固定短语"},
+      {"seq": 2, "speaker": "B", "role": "顾客", "en": "Hi, I have a reservation under the name Zhang Wei.", "zh": "您好，我在张伟的名下有预订。", "keywords": ["reservation", "under"], "tips": "注意 'under the name' 是常用表达"},
+      {"seq": 3, "speaker": "A", "role": "前台", "en": "Great. Your room is 405 on the fourth floor. Here are your key cards.", "zh": "好的。您的房间是 405，在四楼。这是您的房卡。", "keywords": ["fourth", "floor"], "tips": "注意 'fourth floor' 的连读"},
+      {"seq": 4, "speaker": "B", "role": "顾客", "en": "What time is breakfast served? Is Wi-Fi free?", "zh": "早餐几点供应？Wi-Fi 免费吗？", "keywords": ["served", "free"], "tips": "注意 'What time is' 的连读"}
+    ],
+    "cultural_notes": "在美国酒店入住时需要信用卡作为押金。注意 'check in' 有时也拼作 'check-in'。"
+  },
+  {
+    "id": "pro_13",
+    "title": "📱 数码店",
+    "difficulty": 2,
+    "category": "shopping",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "店员", "en": "Hi there, let me know if you need any help finding something.", "zh": "有需要我帮忙找什么的随时叫我。", "keywords": ["need any help"], "tips": "注意 'need any help' 的连读"},
+      {"seq": 2, "speaker": "B", "role": "顾客", "en": "I'm looking for a laptop for college. What would you recommend?", "zh": "我想找一台适合上学的笔记本。你推荐哪款？", "keywords": ["laptop", "recommend"], "tips": "注意 'looking for a' 的连读"},
+      {"seq": 3, "speaker": "A", "role": "店员", "en": "We have the new MacBook Air or the Dell XPS. Which one do you prefer?", "zh": "我们有新款 MacBook Air 或戴尔 XPS。您偏好哪个？", "keywords": ["prefer"], "tips": "注意 'MacBook Air' 的发音"},
+      {"seq": 4, "speaker": "B", "role": "顾客", "en": "What's the difference in battery life and processing speed?", "zh": "电池续航和处理速度有什么区别？", "keywords": ["battery", "processing"], "tips": "注意 'battery life' 的连读"}
+    ],
+    "cultural_notes": "在美国买苹果产品很多时候可以 24 期免息分期。店员会问是否需要 AppleCare+ 保险。"
+  },
+  {
+    "id": "pro_14",
+    "title": "📝 论文答辩",
+    "difficulty": 4,
+    "category": "academic",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "答辩委员", "en": "Good morning, Dr. Chen. Could you briefly summarize your key findings?", "zh": "早上好，陈博士。您能简要总结一下您的关键发现吗？", "keywords": ["summarize", "findings"], "tips": "注意 'Dr.' 是 Doctor 的缩写"},
+      {"seq": 2, "speaker": "B", "role": "学生", "en": "Thank you. This study examines the impact of AI on job markets.", "zh": "谢谢。这项研究探讨了 AI 对就业市场的影响。", "keywords": ["examines", "impact"], "tips": "注意 'studies examines' 的 /ɪz/ 音节"},
+      {"seq": 3, "speaker": "A", "role": "答辩委员", "en": "What are the limitations of your research methodology?", "zh": "您的研究方法有什么局限？", "keywords": ["limitations", "methodology"], "tips": "注意 'limitations' 的重音在第二个音节"},
+      {"seq": 4, "speaker": "B", "role": "学生", "en": "The sample size is relatively small. Future studies should expand on this.", "zh": "样本量相对较小。未来的研究应该在这个基础上扩展。", "keywords": ["sample", "expand"], "tips": "注意 'relatively' 的 /t/ 闪音"}
+    ],
+    "cultural_notes": "英语论文答辩（Defense）中，回答问题时通常先说 'Thank you' 感谢提问，然后给出结构化的回答。"
+  },
+  {
+    "id": "pro_15",
+    "title": "💬 在线投诉",
+    "difficulty": 3,
+    "category": "daily",
+    "is_free": false,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "客服", "en": "Hello, thank you for calling Amazon support. What's going on today?", "zh": "您好，感谢您致电 Amazon 支持。今天有什么问题？", "keywords": ["support", "today"], "tips": "注意 'going on' 的连读"},
+      {"seq": 2, "speaker": "B", "role": "客户", "en": "Hi, I received a damaged product. The screen on my tablet was cracked.", "zh": "您好，我收到了损坏的商品。我的平板电脑屏幕裂了。", "keywords": ["damaged", "cracked"], "tips": "注意 'product' 的重音在第一个音节"},
+      {"seq": 3, "speaker": "A", "role": "客服", "en": "I'm so sorry about that. Can I have your order number?", "zh": "非常抱歉。您能提供订单号吗？", "keywords": ["order", "number"], "tips": "注意 'Can I have' 的连读"},
+      {"seq": 4, "speaker": "B", "role": "客户", "en": "It's 123-45678901. I'd like a refund or replacement.", "zh": "123-45678901。我想退款或换货。", "keywords": ["refund", "replacement"], "tips": "注意 'refund' 的重音"}
+    ],
+    "cultural_notes": "在美国收到损坏商品时，可以直接要求退款或换货。客服通常会提供免费的退货标签。"
+  }
+]

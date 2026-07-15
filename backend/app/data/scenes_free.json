@@ -1,0 +1,72 @@
+[
+  {
+    "id": "free_01",
+    "title": "🍽️ 餐厅点餐",
+    "difficulty": 1,
+    "category": "daily",
+    "is_free": true,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "服务员", "en": "Welcome to our restaurant. How many people?", "zh": "欢迎光临。请问几位？", "keywords": ["welcome", "restaurant"], "tips": "注意 'How many' 的连读"},
+      {"seq": 2, "speaker": "B", "role": "顾客", "en": "Table for two, please.", "zh": "请给我们两人桌。", "keywords": ["table", "two"], "tips": "'Table for' 注意连读"},
+      {"seq": 3, "speaker": "A", "role": "服务员", "en": "Right this way. Here is the menu.", "zh": "这边请。这是菜单。", "keywords": ["right", "menu"], "tips": "注意 'menu' 的重音在第一个音节"},
+      {"seq": 4, "speaker": "B", "role": "顾客", "en": "Thank you. Can I have some water first?", "zh": "谢谢。能先给我来点水吗？", "keywords": ["thank", "water"], "tips": "注意 'water' 中 /t/ 的闪音发音"}
+    ],
+    "cultural_notes": "在西方国家，服务员通常会先询问是否需要饮品，而不是直接让你看菜单。"
+  },
+  {
+    "id": "free_02",
+    "title": "🗺️ 问路",
+    "difficulty": 1,
+    "category": "daily",
+    "is_free": true,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "游客", "en": "Excuse me, could you tell me how to get to the nearest subway station?", "zh": "打扰一下，请问最近的地铁站怎么走？", "keywords": ["excuse", "subway"], "tips": "注意 'Excuse me' 的语调要礼貌上扬"},
+      {"seq": 2, "speaker": "B", "role": "路人", "en": "Sure. Go straight for two blocks, then turn left at the traffic lights.", "zh": "当然。直走两个街区，然后在红绿灯左转。", "keywords": ["straight", "blocks"], "tips": "注意 'traffic lights' 的连读"},
+      {"seq": 3, "speaker": "A", "role": "游客", "en": "Is it within walking distance?", "zh": "步行能到吗？", "keywords": ["walking", "distance"], "tips": "注意 'within' 的 /ð/ 音"},
+      {"seq": 4, "speaker": "B", "role": "路人", "en": "Yes, it's about a five-minute walk. You can't miss it.", "zh": "能，大约五分钟步行。你不会错过的。", "keywords": ["five-minute", "miss"], "tips": "注意 'can't miss it' 是常用表达"}
+    ],
+    "cultural_notes": "在英语国家问路时，通常先说 'Excuse me' 引起注意，对方回答后记得说 'Thank you' 表示感谢。"
+  },
+  {
+    "id": "free_03",
+    "title": "🏪 购物",
+    "difficulty": 2,
+    "category": "daily",
+    "is_free": true,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "店员", "en": "Hi, can I help you find something?", "zh": "您好，需要我帮您找什么吗？", "keywords": ["help", "find"], "tips": "注意 'Hi' 的语调要热情"},
+      {"seq": 2, "speaker": "B", "role": "顾客", "en": "I'm looking for a medium-sized shirt in blue.", "zh": "我想找一件中号的蓝色衬衫。", "keywords": ["medium", "shirt"], "tips": "注意 'medium-sized' 的连读"},
+      {"seq": 3, "speaker": "A", "role": "店员", "en": "The fitting room is right over there. Let me know if you need a different size.", "zh": "试衣间就在那边。如果您需要其他尺寸请告诉我。", "keywords": ["fitting", "size"], "tips": "注意 'fitting room' 是试衣间"},
+      {"seq": 4, "speaker": "B", "role": "顾客", "en": "This one fits perfectly. I'll take it.", "zh": "这件很合身。我买了。", "keywords": ["fits", "take"], "tips": "注意 'I'll take it' 是购物常用语"}
+    ],
+    "cultural_notes": "在西方国家购物时，店员通常会主动询问是否需要帮助。试衣间叫 'fitting room' 或 'changing room'。"
+  },
+  {
+    "id": "free_04",
+    "title": "👋 自我介绍",
+    "difficulty": 1,
+    "category": "social",
+    "is_free": true,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "新人", "en": "Hi, I'm Alex. I just joined the marketing team.", "zh": "你好，我是 Alex。我刚加入市场部。", "keywords": ["joined", "marketing"], "tips": "注意 'I'm' 的弱读"},
+      {"seq": 2, "speaker": "B", "role": "同事", "en": "Nice to meet you, Alex. I'm Sarah from the design team.", "zh": "很高兴认识你，Alex。我是设计部的 Sarah。", "keywords": ["nice", "design"], "tips": "注意 'Nice to meet you' 是标准问候语"},
+      {"seq": 3, "speaker": "A", "role": "新人", "en": "What projects are you working on right now?", "zh": "你现在在做什么项目？", "keywords": ["projects", "working"], "tips": "注意 'What projects' 的连读"},
+      {"seq": 4, "speaker": "B", "role": "同事", "en": "We're redesigning the company website. It's a big project.", "zh": "我们在重新设计公司网站。是个大项目。", "keywords": ["redesigning", "website"], "tips": "注意 'We're' 的弱读"}
+    ],
+    "cultural_notes": "在英语国家职场，自我介绍时通常先介绍姓名和部门，然后可以询问对方的工作以示友好。"
+  },
+  {
+    "id": "free_05",
+    "title": "📞 打电话",
+    "difficulty": 1,
+    "category": "daily",
+    "is_free": true,
+    "dialogues": [
+      {"seq": 1, "speaker": "A", "role": "接线人", "en": "Hello, this is Tech Support. How can I help you today?", "zh": "您好，这里是技术支持。今天有什么可以帮您？", "keywords": ["support", "help"], "tips": "注意 'How can I help you' 是标准开场白"},
+      {"seq": 2, "speaker": "B", "role": "客户", "en": "Hi, I'm having trouble connecting to the Wi-Fi network.", "zh": "您好，我连接 Wi-Fi 网络时遇到问题。", "keywords": ["trouble", "connecting"], "tips": "注意 'having trouble' 的连读"},
+      {"seq": 3, "speaker": "A", "role": "接线人", "en": "Have you tried restarting your router?", "zh": "您试过重启路由器吗？", "keywords": ["tried", "restarting"], "tips": "注意 'Have you tried' 的连读"},
+      {"seq": 4, "speaker": "B", "role": "客户", "en": "Yes, I did. It still doesn't work. Can you walk me through it?", "zh": "试过了，还是不行。你能指导我一下吗？", "keywords": ["walk", "through"], "tips": "注意 'walk me through' 是常用短语"}
+    ],
+    "cultural_notes": "英语国家打电话时，接线人通常会先自报家门（公司/部门），然后询问对方需要什么帮助。"
+  }
+]

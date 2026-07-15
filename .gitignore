@@ -1,0 +1,62 @@
+# ===== 编译输出 =====
+frontend/dist/
+frontend/src-tauri/target/
+frontend/src-tauri/binaries/
+backend/build/
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/**/__pycache__/
+backend/*.spec
+
+# ===== 依赖目录 =====
+node_modules/
+frontend/node_modules/
+backend/venv/
+
+# ===== 环境 & 密钥 =====
+.env
+.env.local
+*.secret
+
+# ===== 数据库 & 缓存 =====
+*.db
+*.sqlite
+backend/cache/
+backend/db/
+backend/app/data/*.db
+
+# ===== IDE & 工具 =====
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.workbuddy/
+.DS_Store
+Thumbs.db
+
+# ===== Python =====
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+
+# ===== Node.js =====
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== 系统文件 =====
+desktop.ini
+$RECYCLE.BIN/
+nul
+
+# ===== 打包中间产物（pyinstaller_entry.py 需要保留，是打包入口）=====
+
+# ===== 日志文件 =====
+*.log
+tauri-*.log
+
+# ===== TypeScript 编译缓存 =====
+*.tsbuildinfo

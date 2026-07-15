@@ -1,0 +1,22 @@
+# FastAPI
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# TTS
+edge-tts==7.0.0
+
+# STT
+openai-whisper==20240930
+
+# AI Scoring
+openai==1.54.0
+
+# Database (SQLite - no extra needed)
+# sqlite3 is built-in
+
+# Settings
+pydantic==2.9.0
+pydantic-settings==2.6.0
+
+# File upload
+python-multipart==0.0.17
