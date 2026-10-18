@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_sport_07",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 6.5,
+  "title_zh": "运动",
+  "topic": "sport",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "Do you take part in any sport at the moment?"
+    },
+    {
+      "id": "q2",
+      "question": "Did you enjoy sport when you were at school?"
+    },
+    {
+      "id": "q3",
+      "question": "Do you prefer to watch sport or to play it?"
+    }
+  ],
+  "fallback_questions": [
+    "Should companies pay for their staff to do sport?",
+    "Why do some people give up their exercise plan after a few weeks?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

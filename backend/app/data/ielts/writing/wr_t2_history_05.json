@@ -1,0 +1,22 @@
+{
+  "id": "wr_t2_history_05",
+  "module": "writing",
+  "kind": "practice",
+  "task": "task2",
+  "target_band": 7.5,
+  "title_zh": "历史为何重要、是否应必修",
+  "topic": "education",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "time_recommend_sec": 2400,
+  "min_words": 250,
+  "question_type": "two_part_question",
+  "prompt": "Many people believe that studying history is essential, while others think school timetables should concentrate on subjects with clearer job prospects.\n\nWhy do some people consider history important for young people?\nDo you think schools should make history a compulsory subject for all students?",
+  "outline_hint": [
+    "Answer question 1: identity, critical reading of evidence, citizenship.",
+    "Answer question 2: state your position on compulsion.",
+    "Consider an alternative (core period plus options) if you qualify your answer.",
+    "Conclusion that answers both questions explicitly."
+  ],
+  "band_descriptors_ref": "task2"
+}

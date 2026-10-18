@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_art_10",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 7.5,
+  "title_zh": "艺术",
+  "topic": "art",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "Do you like visiting art galleries or museums?"
+    },
+    {
+      "id": "q2",
+      "question": "Did you enjoy drawing or painting when you were a child?"
+    },
+    {
+      "id": "q3",
+      "question": "Do you think every student should study art at school?"
+    }
+  ],
+  "fallback_questions": [
+    "Why do some adults stop making things with their hands?",
+    "Should public money pay for street art in a city?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

@@ -1,0 +1,76 @@
+{
+  "id": "wr_t1_energy_01",
+  "module": "writing",
+  "kind": "practice",
+  "task": "task1",
+  "target_band": 6.5,
+  "title_zh": "四种电源的发电量变化（线图）",
+  "topic": "energy",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "time_recommend_sec": 1200,
+  "min_words": 150,
+  "prompt": "The line chart below shows how much electricity was generated from four different sources in a European country between 2000 and 2020.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "chart": {
+    "type": "line",
+    "unit": "terawatt hours",
+    "labels": [
+      "2000",
+      "2005",
+      "2010",
+      "2015",
+      "2020"
+    ],
+    "years": [
+      2000,
+      2005,
+      2010,
+      2015,
+      2020
+    ],
+    "series": [
+      {
+        "name": "Coal",
+        "values": [
+          120,
+          105,
+          88,
+          62,
+          41
+        ]
+      },
+      {
+        "name": "Gas",
+        "values": [
+          95,
+          110,
+          118,
+          125,
+          131
+        ]
+      },
+      {
+        "name": "Wind and solar",
+        "values": [
+          6,
+          14,
+          32,
+          68,
+          104
+        ]
+      },
+      {
+        "name": "Nuclear",
+        "values": [
+          70,
+          72,
+          68,
+          60,
+          52
+        ]
+      }
+    ],
+    "source_note": "Data invented for practice; not an official statistic."
+  },
+  "band_descriptors_ref": "task1"
+}

@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_work_study_01",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 5.5,
+  "title_zh": "工作与学习",
+  "topic": "work_study",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "Do you work, or are you a student?"
+    },
+    {
+      "id": "q2",
+      "question": "What do you like most about your job or your course?"
+    },
+    {
+      "id": "q3",
+      "question": "Would you like to do a different kind of work in the future?"
+    }
+  ],
+  "fallback_questions": [
+    "Do you prefer to work alone or with other people?",
+    "Is there anything about your daily routine that you would change?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

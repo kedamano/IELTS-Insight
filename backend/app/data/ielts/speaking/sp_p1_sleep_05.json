@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_sleep_05",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 6.5,
+  "title_zh": "睡眠",
+  "topic": "sleep",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "How many hours do you usually sleep at night?"
+    },
+    {
+      "id": "q2",
+      "question": "Do you prefer to go to bed early or to stay up late?"
+    },
+    {
+      "id": "q3",
+      "question": "Have your sleeping habits changed since you were a child?"
+    }
+  ],
+  "fallback_questions": [
+    "Do you think people in your country get enough sleep?",
+    "What helps you to fall asleep when you feel tired but wired?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

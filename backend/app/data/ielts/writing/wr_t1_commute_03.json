@@ -1,0 +1,42 @@
+{
+  "id": "wr_t1_commute_03",
+  "module": "writing",
+  "kind": "practice",
+  "task": "task1",
+  "target_band": 6.5,
+  "title_zh": "通勤方式构成（饼图）",
+  "topic": "transport",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "time_recommend_sec": 1200,
+  "min_words": 150,
+  "prompt": "The pie chart below shows how residents of a city travelled to work in 2025.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "chart": {
+    "type": "pie",
+    "unit": "per cent",
+    "labels": [
+      "Car",
+      "Bus or tram",
+      "Walking",
+      "Bicycle",
+      "Rail"
+    ],
+    "years": [
+      2025
+    ],
+    "series": [
+      {
+        "name": "Share of commuters",
+        "values": [
+          38,
+          22,
+          18,
+          14,
+          8
+        ]
+      }
+    ],
+    "source_note": "Data invented for practice; not an official statistic."
+  },
+  "band_descriptors_ref": "task1"
+}

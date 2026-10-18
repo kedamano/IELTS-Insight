@@ -1,0 +1,23 @@
+{
+  "id": "wr_t2_water_04",
+  "module": "writing",
+  "kind": "practice",
+  "task": "task2",
+  "target_band": 5.5,
+  "title_zh": "城市家庭浪费水的原因与对策",
+  "topic": "environment",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "time_recommend_sec": 2400,
+  "min_words": 250,
+  "question_type": "problem_solution",
+  "prompt": "In many cities household water use keeps rising even though supplies are under pressure.\n\nWhat do you think are the main causes of this, and what measures could be taken to reduce domestic water consumption?",
+  "outline_hint": [
+    "Restate the problem and outline the two causes you will discuss.",
+    "Cause 1: cheap water gives households no reason to save.",
+    "Cause 2: leaks, gardens and appliances waste water.",
+    "Solutions: metered pricing, rebates for efficient fittings, public information.",
+    "Conclusion: which measure would work fastest."
+  ],
+  "band_descriptors_ref": "task2"
+}

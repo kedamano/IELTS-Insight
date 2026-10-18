@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_technology_11",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 7.5,
+  "title_zh": "科技",
+  "topic": "technology",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "What piece of technology do you use most often?"
+    },
+    {
+      "id": "q2",
+      "question": "Do you like learning how new technology works, or do you find it tiring?"
+    },
+    {
+      "id": "q3",
+      "question": "Do you think children today spend too much time on screens?"
+    }
+  ],
+  "fallback_questions": [
+    "Would you use a robot to do your housework?",
+    "Have mobile phones made people better or worse at concentrating?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

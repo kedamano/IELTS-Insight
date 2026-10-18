@@ -1,22 +1,29 @@
-# FastAPI
-fastapi==0.115.0
-uvicorn[standard]==0.32.0
+# IELTS Insight 后端运行时依赖（版本 = backend/venv 中实际验证过的组合）。
+# 测试依赖（pytest / pytest-asyncio / httpx）在 requirements-dev.txt（qa 维护），不要加进来。
+# PyInstaller 由打包脚本 scripts/build.ps1 自行安装（T6 维护），不属于运行时依赖。
 
-# TTS
-edge-tts==7.0.0
+# Web 框架
+fastapi==0.139.0
+uvicorn[standard]==0.51.0
 
-# STT
-openai-whisper==20240930
+# 设置与校验
+pydantic==2.13.4
+pydantic-settings==2.14.2
 
-# AI Scoring
-openai==1.54.0
+# 文件上传（multipart：口语 turn / stt）
+python-multipart==0.0.32
 
-# Database (SQLite - no extra needed)
-# sqlite3 is built-in
+# TTS（edge-tts 按篇章/句子合成，缓存于 TTS_CACHE_DIR）
+# 7.2.8 的固定 Sec-MS-GEC-Version 已被微软端 403 拒绝（实测 wss://speech.platform.bing.com
+# 返回 403 Invalid response status）；7.3.1 换用新 token 版本后同一台机器可正常出音频。
+edge-tts==7.3.1
 
-# Settings
-pydantic==2.9.0
-pydantic-settings==2.6.0
+# STT：Whisper + PyAV（自带 FFmpeg 库，避免依赖系统 ffmpeg 命令行）
+openai-whisper==20250625
+av==18.1.0
+numpy==2.4.6
 
-# File upload
-python-multipart==0.0.17
+# AI 评分（OpenAI 兼容端点；base_url/model/key 来自 .env 或设置页，见 app.config）
+openai==2.45.0
+
+# Database：sqlite3 为标准库内置，无需额外依赖

@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_keepsake_05",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 7.5,
+  "title_zh": "有纪念意义的物品",
+  "topic": "keepsake",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe an object that you keep because it reminds you of something.",
+      "bullets": [
+        "what the object is",
+        "what or who it reminds you of",
+        "how long you have kept it"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "Why do people attach emotions to ordinary objects?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "Do you think museums should collect everyday items rather than only valuable art?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "Would you travel to another country for an old object that you had lost?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "Do people keep too many things that they never use?",
+    "How does the value of a possession change over time?",
+    "Should children learn to sort and donate clothes they no longer wear?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

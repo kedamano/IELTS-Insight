@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_shopping_09",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 7.5,
+  "title_zh": "购物",
+  "topic": "shopping",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "Do you enjoy shopping for clothes?"
+    },
+    {
+      "id": "q2",
+      "question": "Do you compare prices before you buy something expensive?"
+    },
+    {
+      "id": "q3",
+      "question": "Some people say that shopping online has changed the look of town centres. What do you think?"
+    }
+  ],
+  "fallback_questions": [
+    "Do you think advertising makes people buy things they do not need?",
+    "Would you pay more for a product that was made locally?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

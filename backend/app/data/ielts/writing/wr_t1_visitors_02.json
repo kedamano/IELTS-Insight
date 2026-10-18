@@ -1,0 +1,50 @@
+{
+  "id": "wr_t1_visitors_02",
+  "module": "writing",
+  "kind": "practice",
+  "task": "task1",
+  "target_band": 5.5,
+  "title_zh": "四类场所的入场人次（柱状图）",
+  "topic": "culture",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "time_recommend_sec": 1200,
+  "min_words": 150,
+  "prompt": "The bar chart below shows the number of visits to four kinds of venue in a city in 2005 and in 2023.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "chart": {
+    "type": "bar",
+    "unit": "thousand visits",
+    "labels": [
+      "Museums",
+      "Cinemas",
+      "Sports stadiums",
+      "Public libraries"
+    ],
+    "years": [
+      2005,
+      2023
+    ],
+    "series": [
+      {
+        "name": "2005",
+        "values": [
+          420,
+          610,
+          380,
+          260
+        ]
+      },
+      {
+        "name": "2023",
+        "values": [
+          505,
+          470,
+          540,
+          190
+        ]
+      }
+    ],
+    "source_note": "Data invented for practice; not an official statistic."
+  },
+  "band_descriptors_ref": "task1"
+}

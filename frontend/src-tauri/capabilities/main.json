@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main-capability",
-  "description": "Main application capabilities",
+  "description": "Main window capabilities. NOTE: Tauri has no microphone/media capability — getUserMedia() is governed by WebView2 (see docs/specs/ielts/mic-on-windows.md). `opener`/`fs` permissions are intentionally omitted because those plugins are not dependencies of this app; adding them here without the Rust plugin would fail ACL validation.",
   "windows": ["main"],
   "permissions": [
     "core:default",

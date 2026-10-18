@@ -1,0 +1,486 @@
+{
+  "id": "li_s1_leisure_01",
+  "module": "listening",
+  "kind": "practice",
+  "section": 1,
+  "target_band": 6.5,
+  "title_zh": "休闲中心报名与河畔公园改造",
+  "topic": "leisure",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "instruction_zh": "听录音，完成第 1–20 题。第 1–5、15–18 题为填空题，每空不超过 TWO WORDS AND/OR A NUMBER（第 17 题可写 THREE WORDS AND/OR A NUMBER）；第 6–8、19–20 题为选择题；第 9–11 题为配对题，选项可重复使用；第 12–14 题按公园平面图字母作答。",
+  "audio_text": "Good morning, Riverside Leisure Centre, Dan speaking. Hello, my name is Emma Whitfield, and I saw a poster in the city library about adult swimming lessons. You have reached us at a good moment, because the Thursday group still has places. I have not been in a pool since school, so I think I need the beginners class rather than squad training. That is the right choice, the beginners class is held on Thursday evenings in the small teaching pool. Thursday suits me, and what time does the lesson start? The coach opens up at half past six, but the class begins at a quarter past seven and ends at eight thirty. How much is the whole course? It is eight sessions, and the fee is 65 pounds, which you may pay in two instalments. Do I need any special equipment? Only a towel, and please bring your own goggles because we no longer keep spare pairs here. Is there a test at the end? No formal exam, but the coach writes a short report and everyone swims one length alone to prove the basics. A little frightening, but I will try. I also saw a water safety course on your website. That runs in the autumn, and you must swim two hundred metres before you enrol. My brother wants to come too, can he join the same class? We have eleven people already, so I will put him on the waiting list for October. Please do, and I will pay by card today. Could I switch to Sunday mornings if I work late? No weekend lessons in winter, but summer has Sunday mornings. I will send a confirmation message before Friday. Good evening, I am Rita Shah from the city parks team, and tonight I will describe the changes at Riverside Park. On the plan, area A is the old boathouse, B is the north lawn, C is the playground, D is the river path beside the bridge, and E is the car park. The boathouse has stood empty since the flood, and we are converting it into a cafe run by a social enterprise. The Saturday market is squeezed beside the main entrance, where stalls block the pavement, and it will now move onto the open grass to the north. There the traders can spread out, and the ground has been drained so that vans can enter after heavy rain. The playground stays where it is, though the wooden fence will be replaced by a low hedge. The car park will not change, except that six spaces near the gate are kept for staff. The old wooden bridge was taken away last winter, and a viewing jetty will be built where the path beside the bridge reaches the river. That position gives a clear view of the marsh, and the ramp is gentle enough for a wheelchair. Three facilities are aimed at particular groups, so think about who each one is for. The exercise frame with low bars and a balance board has been chosen with older visitors in mind. The concrete bowl and ramp at the far corner have drawn complaints about noise, but they were designed for teenagers. The sand pit and shallow water channel are intended for families with small children, beside the playground benches. Work on the jetty begins in March, and the contractor arrives on the second Monday of that month. The jetty will be 45 metres long, shorter than the bridge it replaces but much wider. The park closes to traffic during the works, and the only vehicle through the gate will be the delivery van on Friday afternoons. From June to September the gates stay open until 9 in the evening, after which a night guard walks the path. We still need volunteers for the opening weekend, mainly to sow meadow seeds on Saturday and to lead guided walks on Sunday. The whole project is paid for by a government grant, which is why the works are free to visitors. To comment on the designs, please come to the meeting on the ninth of May, before the drawings go out to tender.",
+  "audio_voice": "en-GB-SoniaNeural",
+  "sentences": [
+    {
+      "idx": 0,
+      "text": "Good morning, Riverside Leisure Centre, Dan speaking.",
+      "anchor_sec": 0.0
+    },
+    {
+      "idx": 1,
+      "text": "Hello, my name is Emma Whitfield, and I saw a poster in the city library about adult swimming lessons.",
+      "anchor_sec": 2.8
+    },
+    {
+      "idx": 2,
+      "text": "You have reached us at a good moment, because the Thursday group still has places.",
+      "anchor_sec": 10.4
+    },
+    {
+      "idx": 3,
+      "text": "I have not been in a pool since school, so I think I need the beginners class rather than squad training.",
+      "anchor_sec": 16.4
+    },
+    {
+      "idx": 4,
+      "text": "That is the right choice, the beginners class is held on Thursday evenings in the small teaching pool.",
+      "anchor_sec": 24.8
+    },
+    {
+      "idx": 5,
+      "text": "Thursday suits me, and what time does the lesson start?",
+      "anchor_sec": 32.0
+    },
+    {
+      "idx": 6,
+      "text": "The coach opens up at half past six, but the class begins at a quarter past seven and ends at eight thirty.",
+      "anchor_sec": 36.0
+    },
+    {
+      "idx": 7,
+      "text": "How much is the whole course?",
+      "anchor_sec": 44.8
+    },
+    {
+      "idx": 8,
+      "text": "It is eight sessions, and the fee is 65 pounds, which you may pay in two instalments.",
+      "anchor_sec": 47.2
+    },
+    {
+      "idx": 9,
+      "text": "Do I need any special equipment?",
+      "anchor_sec": 54.0
+    },
+    {
+      "idx": 10,
+      "text": "Only a towel, and please bring your own goggles because we no longer keep spare pairs here.",
+      "anchor_sec": 56.4
+    },
+    {
+      "idx": 11,
+      "text": "Is there a test at the end?",
+      "anchor_sec": 63.2
+    },
+    {
+      "idx": 12,
+      "text": "No formal exam, but the coach writes a short report and everyone swims one length alone to prove the basics.",
+      "anchor_sec": 66.0
+    },
+    {
+      "idx": 13,
+      "text": "A little frightening, but I will try. I also saw a water safety course on your website.",
+      "anchor_sec": 74.0
+    },
+    {
+      "idx": 14,
+      "text": "That runs in the autumn, and you must swim two hundred metres before you enrol.",
+      "anchor_sec": 80.8
+    },
+    {
+      "idx": 15,
+      "text": "My brother wants to come too, can he join the same class?",
+      "anchor_sec": 86.8
+    },
+    {
+      "idx": 16,
+      "text": "We have eleven people already, so I will put him on the waiting list for October.",
+      "anchor_sec": 91.6
+    },
+    {
+      "idx": 17,
+      "text": "Please do, and I will pay by card today. Could I switch to Sunday mornings if I work late?",
+      "anchor_sec": 98.0
+    },
+    {
+      "idx": 18,
+      "text": "No weekend lessons in winter, but summer has Sunday mornings. I will send a confirmation message before Friday.",
+      "anchor_sec": 105.6
+    },
+    {
+      "idx": 19,
+      "text": "Good evening, I am Rita Shah from the city parks team, and tonight I will describe the changes at Riverside Park.",
+      "anchor_sec": 112.8
+    },
+    {
+      "idx": 20,
+      "text": "On the plan, area A is the old boathouse, B is the north lawn, C is the playground, D is the river path beside the bridge, and E is the car park.",
+      "anchor_sec": 121.2
+    },
+    {
+      "idx": 21,
+      "text": "The boathouse has stood empty since the flood, and we are converting it into a cafe run by a social enterprise.",
+      "anchor_sec": 134.0
+    },
+    {
+      "idx": 22,
+      "text": "The Saturday market is squeezed beside the main entrance, where stalls block the pavement, and it will now move onto the open grass to the north.",
+      "anchor_sec": 142.4
+    },
+    {
+      "idx": 23,
+      "text": "There the traders can spread out, and the ground has been drained so that vans can enter after heavy rain.",
+      "anchor_sec": 152.8
+    },
+    {
+      "idx": 24,
+      "text": "The playground stays where it is, though the wooden fence will be replaced by a low hedge.",
+      "anchor_sec": 160.8
+    },
+    {
+      "idx": 25,
+      "text": "The car park will not change, except that six spaces near the gate are kept for staff.",
+      "anchor_sec": 167.6
+    },
+    {
+      "idx": 26,
+      "text": "The old wooden bridge was taken away last winter, and a viewing jetty will be built where the path beside the bridge reaches the river.",
+      "anchor_sec": 174.4
+    },
+    {
+      "idx": 27,
+      "text": "That position gives a clear view of the marsh, and the ramp is gentle enough for a wheelchair.",
+      "anchor_sec": 184.4
+    },
+    {
+      "idx": 28,
+      "text": "Three facilities are aimed at particular groups, so think about who each one is for.",
+      "anchor_sec": 191.6
+    },
+    {
+      "idx": 29,
+      "text": "The exercise frame with low bars and a balance board has been chosen with older visitors in mind.",
+      "anchor_sec": 197.6
+    },
+    {
+      "idx": 30,
+      "text": "The concrete bowl and ramp at the far corner have drawn complaints about noise, but they were designed for teenagers.",
+      "anchor_sec": 204.8
+    },
+    {
+      "idx": 31,
+      "text": "The sand pit and shallow water channel are intended for families with small children, beside the playground benches.",
+      "anchor_sec": 212.8
+    },
+    {
+      "idx": 32,
+      "text": "Work on the jetty begins in March, and the contractor arrives on the second Monday of that month.",
+      "anchor_sec": 220.0
+    },
+    {
+      "idx": 33,
+      "text": "The jetty will be 45 metres long, shorter than the bridge it replaces but much wider.",
+      "anchor_sec": 227.2
+    },
+    {
+      "idx": 34,
+      "text": "The park closes to traffic during the works, and the only vehicle through the gate will be the delivery van on Friday afternoons.",
+      "anchor_sec": 233.6
+    },
+    {
+      "idx": 35,
+      "text": "From June to September the gates stay open until 9 in the evening, after which a night guard walks the path.",
+      "anchor_sec": 242.8
+    },
+    {
+      "idx": 36,
+      "text": "We still need volunteers for the opening weekend, mainly to sow meadow seeds on Saturday and to lead guided walks on Sunday.",
+      "anchor_sec": 251.2
+    },
+    {
+      "idx": 37,
+      "text": "The whole project is paid for by a government grant, which is why the works are free to visitors.",
+      "anchor_sec": 260.0
+    },
+    {
+      "idx": 38,
+      "text": "To comment on the designs, please come to the meeting on the ninth of May, before the drawings go out to tender.",
+      "anchor_sec": 267.6
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "gap_fill",
+      "number": 1,
+      "prompt": "Emma first saw the poster about swimming lessons in the city ______.",
+      "word_limit": 2,
+      "answer": "library",
+      "accepted_alternatives": [
+        "city library",
+        "libraries"
+      ],
+      "explanation_zh": "原文 'I saw a poster in the city library'，地点为 library（图书馆），注意不是 leisure centre。"
+    },
+    {
+      "id": "q2",
+      "type": "gap_fill",
+      "number": 2,
+      "prompt": "Emma decides that she should join the ______ class.",
+      "word_limit": 2,
+      "answer": "beginners",
+      "accepted_alternatives": [
+        "beginner",
+        "the beginners"
+      ],
+      "explanation_zh": "原文 'I think I need the beginners class rather than squad training'，她多年没游泳，故选择初学者班。"
+    },
+    {
+      "id": "q3",
+      "type": "gap_fill",
+      "number": 3,
+      "prompt": "The lessons are held on ______ evenings.",
+      "word_limit": 2,
+      "answer": "Thursday",
+      "accepted_alternatives": [
+        "Thursdays",
+        "thursday"
+      ],
+      "explanation_zh": "原文 'the beginners class is held on Thursday evenings'，星期词直接作定语，首字母大写。"
+    },
+    {
+      "id": "q4",
+      "type": "gap_fill",
+      "number": 4,
+      "prompt": "The fee for the course is ______ pounds.",
+      "word_limit": 2,
+      "answer": "65",
+      "accepted_alternatives": [
+        "sixty-five",
+        "65 pounds"
+      ],
+      "explanation_zh": "原文 'the fee is 65 pounds'，题目已给出 pounds，因此只填数字 65。"
+    },
+    {
+      "id": "q5",
+      "type": "gap_fill",
+      "number": 5,
+      "prompt": "Emma has to bring a towel and her own ______.",
+      "word_limit": 2,
+      "answer": "goggles",
+      "accepted_alternatives": [
+        "swimming goggles",
+        "a pair of goggles"
+      ],
+      "explanation_zh": "原文 'please bring your own goggles because we no longer keep spare pairs here'，泳镜用复数 goggles。"
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "number": 6,
+      "prompt": "At what time does the swimming class begin?",
+      "options": [
+        "A. Half past six.",
+        "B. A quarter past seven.",
+        "C. Eight thirty."
+      ],
+      "answer": "B",
+      "explanation_zh": "教练 'The coach opens up at half past six'，但正式上课是 'the class begins at a quarter past seven'，eight thirty 为下课时间。"
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "number": 7,
+      "prompt": "What condition does Dan mention about the water safety course?",
+      "options": [
+        "A. It costs the same 65 pounds.",
+        "B. It is open only to staff members.",
+        "C. You must first swim 200 metres."
+      ],
+      "answer": "C",
+      "explanation_zh": "原文 'you must swim two hundred metres before you enrol'，先能游 200 米才可报名秋季水上安全课。"
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "number": 8,
+      "prompt": "Why is Emma's brother put on a waiting list?",
+      "options": [
+        "A. The Thursday group is already full.",
+        "B. He cannot swim at all.",
+        "C. He has not paid by card."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'We have eleven people already, so I will put him on the waiting list'，人数已满是被列入等候名单的原因。"
+    },
+    {
+      "id": "q9",
+      "type": "matching",
+      "number": 9,
+      "prompt": "Which group is the exercise frame with a balance board intended for?",
+      "options_list": [
+        "A. families with small children",
+        "B. teenagers",
+        "C. older visitors",
+        "D. people who work in the cafe",
+        "E. volunteers on guided walks"
+      ],
+      "answer": "C",
+      "explanation_zh": "原文 'has been chosen with older visitors in mind'，对应 C（年长访客）。"
+    },
+    {
+      "id": "q10",
+      "type": "matching",
+      "number": 10,
+      "prompt": "Which group are the concrete bowl and ramp intended for?",
+      "options_list": [
+        "A. families with small children",
+        "B. teenagers",
+        "C. older visitors",
+        "D. people who work in the cafe",
+        "E. volunteers on guided walks"
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'they were designed for teenagers'，尽管有噪音投诉，仍对应 B（青少年）。"
+    },
+    {
+      "id": "q11",
+      "type": "matching",
+      "number": 11,
+      "prompt": "Which group are the sand pit and the shallow water channel intended for?",
+      "options_list": [
+        "A. families with small children",
+        "B. teenagers",
+        "C. older visitors",
+        "D. people who work in the cafe",
+        "E. volunteers on guided walks"
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'are intended for families with small children'，对应 A。D、E 为干扰项。"
+    },
+    {
+      "id": "q12",
+      "type": "map_diagram_label",
+      "number": 12,
+      "prompt": "On the park plan, A is the old boathouse, B is the north lawn, C is the playground, D is the river path beside the bridge, E is the car park. Which area will hold the new cafe?",
+      "labels": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'we are converting it into a cafe run by a social enterprise'，it 指 boathouse，即图中 A。"
+    },
+    {
+      "id": "q13",
+      "type": "map_diagram_label",
+      "number": 13,
+      "prompt": "On the park plan, A is the old boathouse, B is the north lawn, C is the playground, D is the river path beside the bridge, E is the car park. Which area will the Saturday market move to?",
+      "labels": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'it will now move onto the open grass to the north'，北部草坪为 B。"
+    },
+    {
+      "id": "q14",
+      "type": "map_diagram_label",
+      "number": 14,
+      "prompt": "On the park plan, A is the old boathouse, B is the north lawn, C is the playground, D is the river path beside the bridge, E is the car park. Which area will the viewing jetty be built in?",
+      "labels": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "answer": "D",
+      "explanation_zh": "原文 'a viewing jetty will be built where the path beside the bridge reaches the river'，与 D（桥边河道）一致。C 游乐场、E 停车场保持不变，为干扰项。"
+    },
+    {
+      "id": "q15",
+      "type": "gap_fill",
+      "number": 15,
+      "prompt": "Building work on the jetty starts in ______.",
+      "word_limit": 2,
+      "answer": "March",
+      "accepted_alternatives": [
+        "march",
+        "the second Monday in March"
+      ],
+      "explanation_zh": "原文 'Work on the jetty begins in March'，月份前不加冠词。"
+    },
+    {
+      "id": "q16",
+      "type": "gap_fill",
+      "number": 16,
+      "prompt": "The new jetty will be ______ metres long.",
+      "word_limit": 2,
+      "answer": "45",
+      "accepted_alternatives": [
+        "forty-five",
+        "45 metres"
+      ],
+      "explanation_zh": "原文 'The jetty will be 45 metres long'，题目已有 metres，只填 45。"
+    },
+    {
+      "id": "q17",
+      "type": "gap_fill",
+      "number": 17,
+      "prompt": "During the works, the only vehicle allowed through the gate is the ______ on Friday afternoons.",
+      "word_limit": 3,
+      "answer": "delivery van",
+      "accepted_alternatives": [
+        "a delivery van",
+        "delivery vans"
+      ],
+      "explanation_zh": "原文 'the only vehicle through the gate will be the delivery van on Friday afternoons'，不超过 THREE WORDS。"
+    },
+    {
+      "id": "q18",
+      "type": "gap_fill",
+      "number": 18,
+      "prompt": "In summer the gates remain open until ______ in the evening.",
+      "word_limit": 2,
+      "answer": "9",
+      "accepted_alternatives": [
+        "nine",
+        "9 pm",
+        "9 o'clock"
+      ],
+      "explanation_zh": "原文 'the gates stay open until 9 in the evening'，题目已有 in the evening，故填数字 9。"
+    },
+    {
+      "id": "q19",
+      "type": "multiple_choice",
+      "number": 19,
+      "prompt": "What are volunteers asked to do on the opening weekend?",
+      "options": [
+        "A. Sow seeds and lead guided walks.",
+        "B. Paint the new jetty.",
+        "C. Serve customers in the cafe."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'mainly to sow meadow seeds on Saturday and to lead guided walks on Sunday'，两件事分别对应周六与周日。"
+    },
+    {
+      "id": "q20",
+      "type": "multiple_choice",
+      "number": 20,
+      "prompt": "How can residents comment on the park designs?",
+      "options": [
+        "A. By writing to the council.",
+        "B. At a meeting on 9 May.",
+        "C. After the work is finished."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'please come to the meeting on the ninth of May, before the drawings go out to tender'，招标开始之后不再征集意见。"
+    }
+  ]
+}

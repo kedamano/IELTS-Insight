@@ -1,0 +1,340 @@
+{
+  "id": "re_p_iceharvest_03",
+  "module": "reading",
+  "kind": "practice",
+  "level": "upper-intermediate",
+  "target_band": 6.5,
+  "title": "Cut from the Pond: The Rise and Collapse of the Natural Ice Trade",
+  "title_zh": "取自池塘的冬天：天然冰贸易的兴起与崩塌",
+  "topic": "iceharvest",
+  "source": "hand",
+  "generated_at": "2026-10-18T12:00:00Z",
+  "time_limit_sec": 1200,
+  "instruction_zh": "阅读短文，完成第 1–13 题。第 1–5 题判断句子信息：TRUE 表示与原文相符，FALSE 表示原文反驳，NOT GIVEN 表示原文既未肯定也未否定；第 6–9 题为段落标题配对，标题列表中有四个多余项；第 10–12 题从原文取词完成句子，每空不超过 TWO WORDS AND/OR A NUMBER；第 13 题为选择题。",
+  "word_count": 868,
+  "passage": {
+    "paragraphs": [
+      {
+        "label": "A",
+        "text": "For most of recorded history, keeping a drink cold was a matter of luck and geography: a deep cellar, a north wall, a cold stream, or a hill where snow lingered into June. What changed in the middle of the nineteenth century was the discovery that ice could be handled like a crop. A frozen pond could be cut in February, buried under litter, and sold in July at a price that paid for the labour and something besides. Within forty years an ordinary substance had become one of the most carried goods on the Atlantic routes, and the men who ran it grew convinced that the supply could not fail."
+      },
+      {
+        "label": "B",
+        "text": "A harvest depended on weather nobody could order. Cutters waited for a run of nights cold enough to freeze a pond or a slow river to a depth of thirty centimetres, and then worked fast, because ice that softens in a mild week must be left where it lies. Ploughs with long blades scored the surface in a grid so that the cakes could be separated, saws cut along the lines, and men with iron tongs slid the squares onto a conveyor that lifted them to the bank. The blocks were irregular, often cracked, and full of weed from the water below. Nothing was cleaned and nothing was tested. The trade's first rule was speed, since a crew that lost three days to a thaw lost the season's income. Records from one county show that between 1855 and 1894 four winters yielded almost nothing, while the best winter gave nine times the average."
+      },
+      {
+        "label": "C",
+        "text": "Ice had to be buried before it could be sold. A storage house was usually cut into the side of a hill, so that earth carried the weight of three of its walls, and its floor was a lattice of drains to carry away the water that always appeared. Layers of blocks were separated by sawdust, shaved bark, or straw: materials that cost almost nothing and slowed the heat pressing in from the roof. Builders measured their work in losses. A well-made house was expected to give up a tenth of its contents by the following June, and a careless one twice that much, so managers kept ledgers of drainages with the anxiety of farmers counting dead lambs. Because heat travels slowly, a house could not be emptied and refilled within one season: two summers of trade had to fit inside a single winter's cutting, and any ice left standing in August was a loss already booked."
+      },
+      {
+        "label": "D",
+        "text": "The product then had to move, and the cost of moving it decided who would buy. Blocks packed in sawdust travelled by barge and rail two hundred kilometres to towns whose own ponds froze for only three weeks a year, and they still arrived cheaper than a local cut could be gathered. The first customers were not households but trades: fish sellers, brewers, butchers, and above all the dairies that churned butter in warm months and needed cream cooled before it turned. Hotels and hospitals followed, then grocers, who sold a single cake wrapped in sacking for a day's use. The trade learned to price by the hundredweight and to sell in winter for delivery in July, which is when a hot summer became a fortune for whoever held the ice and a ruin for everyone who had promised to deliver it."
+      },
+      {
+        "label": "E",
+        "text": "The rival arrived as a compressor driven by a steam engine, forcing a volatile liquid to evaporate and then to give up its heat somewhere else. Engineers had described the principle a century earlier, but the first plants that made ice for sale were built in the 1860s in tropical ports, where no pond could freeze and where imported ice cost three times its weight in silver. Their advantage was not cheapness. Early factory ice cost more per block than harvested ice in most seasons. Its advantage was certainty: a plant turned out the same tonnage each week, in the town that wanted it, and could filter the water before freezing, which began to matter after illnesses were traced to ponds that also served as open sewers. When machinery became cheaper and fuel dependable, the argument shifted from preference to arithmetic."
+      },
+      {
+        "label": "F",
+        "text": "The collapse took twenty years, and it came through the trade's weakest point, the summer price. In the short summers of the 1890s imported natural ice doubled and then tripled in cost, while factory ice stayed at its printed rate all year, and buyers who had to budget could not go backwards. By 1900 most cutting crews had moved to the mills, and the storage houses stood empty with their drains choked by a decade of sawdust. Two things survived the harvest. The first was a habit: a population that had learned to expect cold milk, cold butter and a cold drink in July could not be argued out of it. The second was engineering. The insulation, the drained floors and the packed railway vans of the ice trade passed intact to the meat and fruit shippers who came after. Nothing in the story is more instructive than the ending. The trade was not beaten by a cheaper product but by a dependable one."
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "type": "true_false_notgiven",
+      "number": 1,
+      "statement": "Nineteenth-century traders came to treat ice as a crop that could be stored and sold for profit.",
+      "answer": "TRUE",
+      "answer_label": "A",
+      "answer_paragraph": "A",
+      "answer_quote": "ice could be handled like a crop",
+      "explanation_zh": "A 段指出十九世纪中叶的变化在于把冰当作作物处理：冬天切割、埋藏、夏天卖出获利，故 TRUE。"
+    },
+    {
+      "id": "q2",
+      "type": "true_false_notgiven",
+      "number": 2,
+      "statement": "The cut blocks were washed and examined before being taken into store.",
+      "answer": "FALSE",
+      "answer_label": "B",
+      "answer_paragraph": "B",
+      "answer_quote": "Nothing was cleaned and nothing was tested",
+      "explanation_zh": "B 段明确说冰块的清洗与检测都没有做过，题面与原文相反，属 FALSE。"
+    },
+    {
+      "id": "q3",
+      "type": "true_false_notgiven",
+      "number": 3,
+      "statement": "The engineers who designed the storage houses were paid by the railway companies.",
+      "answer": "NOTGIVEN",
+      "answer_label": "C",
+      "answer_paragraph": "C",
+      "answer_quote": "A storage house was usually cut into the side of a hill",
+      "explanation_zh": "C 段只描写冰库如何依山坡建造、如何计算损耗，全文未提设计者由谁雇用，因此是 NOT GIVEN，而非反驳。"
+    },
+    {
+      "id": "q4",
+      "type": "true_false_notgiven",
+      "number": 4,
+      "statement": "In one county, four winters between 1855 and 1894 produced almost no ice at all.",
+      "answer": "TRUE",
+      "answer_label": "A",
+      "answer_paragraph": "B",
+      "answer_quote": "between 1855 and 1894 four winters yielded almost nothing",
+      "explanation_zh": "B 段末句给出该郡记录：四个冬天近乎无收成，而最好的冬天是均值的九倍，故 TRUE。"
+    },
+    {
+      "id": "q5",
+      "type": "true_false_notgiven",
+      "number": 5,
+      "statement": "Machine-made ice undercut harvested ice on price from the very first years.",
+      "answer": "FALSE",
+      "answer_label": "B",
+      "answer_paragraph": "E",
+      "answer_quote": "Early factory ice cost more per block than harvested ice in most seasons",
+      "explanation_zh": "E 段指出早期工厂冰每块成本更高，其优势在于稳定而非便宜，题面与原文相反。"
+    },
+    {
+      "id": "q6",
+      "type": "heading_match",
+      "number": 6,
+      "paragraph_label": "B",
+      "prompt": "Choose the correct heading for paragraph B from the list of headings below.",
+      "answer": "i",
+      "answer_paragraph": "B",
+      "answer_quote": "Cutters waited for a run of nights cold enough to freeze a pond",
+      "explanation_zh": "B 段讲收割完全依赖无法预定的严寒天气与作业速度，对应 i「无人能订的天气」。v（切割队的工资与工时）只出现一句间接信息，为干扰项。",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "Weather that no one could order"
+        },
+        {
+          "i": "ii",
+          "text": "Counting the ice that melts away"
+        },
+        {
+          "i": "iii",
+          "text": "Buyers who needed cold more than comfort"
+        },
+        {
+          "i": "iv",
+          "text": "Why the first machines were never cheap"
+        },
+        {
+          "i": "v",
+          "text": "The wages and hours of the cutting crews"
+        },
+        {
+          "i": "vi",
+          "text": "Ice in the ancient world"
+        },
+        {
+          "i": "vii",
+          "text": "How the price of sawdust was fixed"
+        },
+        {
+          "i": "viii",
+          "text": "An ending, and two things left behind"
+        }
+      ]
+    },
+    {
+      "id": "q7",
+      "type": "heading_match",
+      "number": 7,
+      "paragraph_label": "C",
+      "prompt": "Choose the correct heading for paragraph C from the list of headings below.",
+      "answer": "ii",
+      "answer_paragraph": "C",
+      "answer_quote": "Builders measured their work in losses",
+      "explanation_zh": "C 段以融化损失为衡量单位（良好冰库到次年六月失去十分之一），即「计算化掉的冰」，对应 ii。",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "Weather that no one could order"
+        },
+        {
+          "i": "ii",
+          "text": "Counting the ice that melts away"
+        },
+        {
+          "i": "iii",
+          "text": "Buyers who needed cold more than comfort"
+        },
+        {
+          "i": "iv",
+          "text": "Why the first machines were never cheap"
+        },
+        {
+          "i": "v",
+          "text": "The wages and hours of the cutting crews"
+        },
+        {
+          "i": "vi",
+          "text": "Ice in the ancient world"
+        },
+        {
+          "i": "vii",
+          "text": "How the price of sawdust was fixed"
+        },
+        {
+          "i": "viii",
+          "text": "An ending, and two things left behind"
+        }
+      ]
+    },
+    {
+      "id": "q8",
+      "type": "heading_match",
+      "number": 8,
+      "paragraph_label": "D",
+      "prompt": "Choose the correct heading for paragraph D from the list of headings below.",
+      "answer": "iii",
+      "answer_paragraph": "D",
+      "answer_quote": "The first customers were not households but trades",
+      "explanation_zh": "D 段说明最早买家是鱼铺、酿酒坊、肉铺与奶厂等需要低温的行业，对应 iii「更需要冷而不是舒适的买家」。",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "Weather that no one could order"
+        },
+        {
+          "i": "ii",
+          "text": "Counting the ice that melts away"
+        },
+        {
+          "i": "iii",
+          "text": "Buyers who needed cold more than comfort"
+        },
+        {
+          "i": "iv",
+          "text": "Why the first machines were never cheap"
+        },
+        {
+          "i": "v",
+          "text": "The wages and hours of the cutting crews"
+        },
+        {
+          "i": "vi",
+          "text": "Ice in the ancient world"
+        },
+        {
+          "i": "vii",
+          "text": "How the price of sawdust was fixed"
+        },
+        {
+          "i": "viii",
+          "text": "An ending, and two things left behind"
+        }
+      ]
+    },
+    {
+      "id": "q9",
+      "type": "heading_match",
+      "number": 9,
+      "paragraph_label": "F",
+      "prompt": "Choose the correct heading for paragraph F from the list of headings below.",
+      "answer": "viii",
+      "answer_paragraph": "F",
+      "answer_quote": "Two things survived the harvest",
+      "explanation_zh": "F 段写贸易崩解后留下两件东西：用冷的习惯与保温、冷藏运输工程，对应 viii「一个结局与两样遗产」。",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "Weather that no one could order"
+        },
+        {
+          "i": "ii",
+          "text": "Counting the ice that melts away"
+        },
+        {
+          "i": "iii",
+          "text": "Buyers who needed cold more than comfort"
+        },
+        {
+          "i": "iv",
+          "text": "Why the first machines were never cheap"
+        },
+        {
+          "i": "v",
+          "text": "The wages and hours of the cutting crews"
+        },
+        {
+          "i": "vi",
+          "text": "Ice in the ancient world"
+        },
+        {
+          "i": "vii",
+          "text": "How the price of sawdust was fixed"
+        },
+        {
+          "i": "viii",
+          "text": "An ending, and two things left behind"
+        }
+      ]
+    },
+    {
+      "id": "q10",
+      "type": "sentence_completion",
+      "number": 10,
+      "prompt": "From the water the men slid the squares of ice onto a ______ that raised them to the bank.",
+      "word_limit": 2,
+      "answer": "conveyor",
+      "accepted_alternatives": [
+        "a conveyor"
+      ],
+      "answer_paragraph": "B",
+      "answer_quote": "slid the squares onto a conveyor that lifted them to the bank",
+      "explanation_zh": "定位 B 段：铁钳把冰块送上把冰提升到岸边的传送装置，答案为 conveyor， ONE WORD。"
+    },
+    {
+      "id": "q11",
+      "type": "sentence_completion",
+      "number": 11,
+      "prompt": "The floor of a storage house was built as a lattice of ______ to remove the water that appeared.",
+      "word_limit": 2,
+      "answer": "drains",
+      "accepted_alternatives": [
+        "a lattice of drains",
+        "the drains"
+      ],
+      "answer_paragraph": "C",
+      "answer_quote": "its floor was a lattice of drains to carry away the water that always appeared",
+      "explanation_zh": "C 段：冰库地板是排水道的格架，用来排走不断渗出的水，填 drains。"
+    },
+    {
+      "id": "q12",
+      "type": "sentence_completion",
+      "number": 12,
+      "prompt": "Ice merchants learned to sell futures in winter against delivery in ______.",
+      "word_limit": 2,
+      "answer": "July",
+      "accepted_alternatives": [
+        "in July",
+        "the month of July"
+      ],
+      "answer_paragraph": "D",
+      "answer_quote": "to sell in winter for delivery in July",
+      "explanation_zh": "D 段末：按百weight 计价并在冬天卖出夏天交货的期货，热夏让持有冰的人暴富，答案为 July。"
+    },
+    {
+      "id": "q13",
+      "type": "multiple_choice",
+      "number": 13,
+      "prompt": "Why, according to the writer, did the natural ice trade collapse so quickly?",
+      "options": [
+        "A. Factory ice held its price while harvested ice rose sharply in short summers.",
+        "B. Households lost their taste for chilled food after 1890.",
+        "C. Railway companies refused to carry blocks packed in sawdust.",
+        "D. The price of sawdust and bark rose faster than the price of ice."
+      ],
+      "answer": "A",
+      "answer_paragraph": "F",
+      "answer_quote": "imported natural ice doubled and then tripled in cost",
+      "explanation_zh": "F 段：进口天然冰在短夏涨价两到三倍，工厂冰全年按牌价，需做预算的买家无法回头，故选 A。B、C、D 均无原文依据。"
+    }
+  ]
+}

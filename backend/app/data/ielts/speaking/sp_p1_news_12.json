@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_news_12",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 7.5,
+  "title_zh": "新闻",
+  "topic": "news",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "How do you usually find out what is happening in the world?"
+    },
+    {
+      "id": "q2",
+      "question": "Do you prefer to read the news in the morning or in the evening?"
+    },
+    {
+      "id": "q3",
+      "question": "Do people in your country trust the news they see online?"
+    }
+  ],
+  "fallback_questions": [
+    "Should newspapers report on the private lives of famous people?",
+    "Would you pay for news that has no advertising?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

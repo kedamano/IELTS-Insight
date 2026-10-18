@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_hometown_02",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 5.5,
+  "title_zh": "家乡",
+  "topic": "hometown",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "Where is your hometown?"
+    },
+    {
+      "id": "q2",
+      "question": "What is the most interesting part of your hometown?"
+    },
+    {
+      "id": "q3",
+      "question": "Has your hometown changed much in the last few years?"
+    }
+  ],
+  "fallback_questions": [
+    "Would you like to live in your hometown again in the future?",
+    "Is it easy for visitors to find their way around your hometown?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

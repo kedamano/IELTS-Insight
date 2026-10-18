@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_friends_08",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 6.5,
+  "title_zh": "朋友",
+  "topic": "friends",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "Do you prefer to spend time with a few close friends or with a large group?"
+    },
+    {
+      "id": "q2",
+      "question": "How did you meet your closest friend?"
+    },
+    {
+      "id": "q3",
+      "question": "Has the way you keep in touch with friends changed in recent years?"
+    }
+  ],
+  "fallback_questions": [
+    "Is it possible to stay good friends with someone you disagree with?",
+    "Do people in your country still visit a good friend?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

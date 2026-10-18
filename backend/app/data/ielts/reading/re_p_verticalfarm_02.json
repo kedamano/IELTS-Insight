@@ -1,0 +1,329 @@
+{
+  "id": "re_p_verticalfarm_02",
+  "module": "reading",
+  "kind": "practice",
+  "level": "advanced",
+  "target_band": 7.5,
+  "title": "Food from Skyscrapers: The Uncertain Promise of Vertical Farming",
+  "title_zh": "来自摩天楼的食物：垂直农业的不确定前景",
+  "topic": "technology_farming",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "time_limit_sec": 1200,
+  "word_count": 896,
+  "instruction_zh": "阅读短文第 1–13 题。第 1–5 题判断句子信息（TRUE / FALSE / NOT GIVEN）；第 6–9 题为段落标题配对，有两个标题为多余项；第 10–12 题从原文取词完成句子，每空不超过 TWO WORDS AND/OR A NUMBER；第 13 题为选择题。",
+  "passage": {
+    "paragraphs": [
+      {
+        "label": "A",
+        "text": "The pitch is disarmingly simple. Stack trays of lettuce on shelves inside a warehouse, light them with lamps, mist their roots with a nutrient solution instead of soil, and you have a farm that runs in any weather, needs no pesticide spray and can stand in the middle of the city that eats its produce. Enthusiasts add a bigger claim: because a tower of shelves multiplies the growing area above the ground it occupies, one building could in principle feed the district around it. Advocates say that this would spare the countryside from further clearing and save the water that field agriculture uses. The industry is now large enough to be measured, and the measurements are less tidy than the pitch."
+      },
+      {
+        "label": "B",
+        "text": "The idea did not begin with skyscrapers. Controlled-environment growing has existed for a century in glasshouses, and space agencies spent decades learning how to rear plants in chambers with no windows at all, because a spacecraft cannot carry a field. The modern proposal dates from the 1990s, when an agricultural scientist at a university in the United States asked students to calculate how many thirty-storey glass towers would be needed to feed New York. The arithmetic became a book, and the book became a fashion. Yet almost every farm that now trades on that promise occupies a low building: a former bakery, an old cold store, the shell of a distribution centre. What has spread indoors is not the tower but the warehouse."
+      },
+      {
+        "label": "C",
+        "text": "Inside, the decisive cost is light. Plants use only a narrow band of the spectrum, mostly red and blue, and for years growers paid for it twice over, once in the electricity and again in the waste heat given off by old sodium lamps that cooked the leaves beneath them. Light-emitting diodes changed that arithmetic, because they send their energy into the two colours the crop wants and can be set within centimetres of a shelf. A well-run unit needs roughly ten to twelve kilowatt hours of electricity for each kilogram of leafy greens it harvests, and its lamps burn for sixteen hours a day. Field lettuce consumes almost no light energy, since the sun is not billed. In the language of the industry, a vertical farm converts a power bill into a harvest, and its profit depends on how much a buyer will pay for the difference."
+      },
+      {
+        "label": "D",
+        "text": "That explains the menu. Nobody grows wheat or rice indoors, because a calorie of grain costs far more electricity to lift than any shopper will accept; the same is true of potatoes and onions. What sells is a green that grows fast, weighs little, spoils quickly and carries a high price: pea shoots, basil, mint, ready-washed salad leaves and, in the most ambitious units, strawberries. Basil harvested in a warehouse two miles from a supermarket reaches the shelf the same day, whereas imported basil loses a third of its value in transit, which is why the price gap can still be survived. The economics are fragile: when wholesale electricity doubled in one European market, three indoor farms closed within a year, and their shelves were sold for scrap."
+      },
+      {
+        "label": "E",
+        "text": "The environmental ledger is genuinely better in two columns and worse in a third. Because the solution that feeds the roots is captured and sprayed again, an indoor unit can claim to reuse up to ninety-five per cent of its water, and nothing leaves the building as fertiliser running into a ditch. With no aphids to fear, no insecticide is applied, and the leaves need no washing before sale. The weakness is uniformity. On a field, a patch of bad lettuce is one patch; in a sealed room where every tray shares the same water, a contamination of the recirculating system can reach the whole building in a few days. One grower admitted that his most feared moment is the tank inspection, because nothing in the design stops a single fault becoming a total one."
+      },
+      {
+        "label": "F",
+        "text": "A working example makes the scale plain. A farm on the eastern side of a dense Asian city fills a building of eight floors with twelve-tier racks, and its managers calculate that the output matches what forty hectares of good field land would provide, delivered to customers within thirty kilometres. Staff do not spend their days harvesting; most of them clean trays, calibrate sensors and move racks that have grown too close to a lamp. The firm publishes its energy use openly, and its agronomists argue that honest numbers matter more than promises, since the sector has already survived one round of exaggerated claims and bankruptcies."
+      },
+      {
+        "label": "G",
+        "text": "So what is a vertical farm for? The sober answer of most researchers is that it is a supplement, not a substitute. It can put salad leaves into a city that imports them from another climate, and it can shorten a supply chain that is badly exposed to drought and fuel prices. It cannot return large tracts of farmland to nature, because the calories that a population lives on are cheap to grow outdoors and expensive to grow anywhere else. Two changes could widen the role: breeders are already selecting shorter varieties of grain that would fit between shelves, and a unit running on wind or sunlight bought at midnight can cut its bill. Until then, an indoor farm powered by coal has moved its footprint from the soil to the sky, and changed little."
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "type": "true_false_notgiven",
+      "number": 1,
+      "statement": "Vertical farms do not need to spray chemicals to control insects.",
+      "answer": "TRUE",
+      "answer_label": "A",
+      "answer_paragraph": "A",
+      "answer_quote": "needs no pesticide spray and can stand in the middle of the city that eats its produce",
+      "explanation_zh": "A 段介绍室内农场卖点时写明 needs no pesticide spray，E 段亦说无蚜虫便不施杀虫剂，故 TRUE。"
+    },
+    {
+      "id": "q2",
+      "type": "true_false_notgiven",
+      "number": 2,
+      "statement": "Most vertical farms currently operating are built in tall towers.",
+      "answer": "FALSE",
+      "answer_label": "B",
+      "answer_paragraph": "B",
+      "answer_quote": "almost every farm that now trades on that promise occupies a low building",
+      "explanation_zh": "B 段末句指出如今营业的农场几乎都占用低矮建筑，推广的是仓库而非塔楼，题目与原文相反，为 FALSE。"
+    },
+    {
+      "id": "q3",
+      "type": "true_false_notgiven",
+      "number": 3,
+      "statement": "Space agencies developed windowless chambers for growing plants.",
+      "answer": "TRUE",
+      "answer_label": "A",
+      "answer_paragraph": "B",
+      "answer_quote": "space agencies spent decades learning how to rear plants in chambers with no windows at all",
+      "explanation_zh": "B 段说明航天机构花了几十年研究无窗舱室内栽培，故 TRUE。"
+    },
+    {
+      "id": "q4",
+      "type": "true_false_notgiven",
+      "number": 4,
+      "statement": "The book based on the New York calculation sold more than a hundred thousand copies.",
+      "answer": "NOTGIVEN",
+      "answer_label": "C",
+      "answer_paragraph": "B",
+      "answer_quote": "The arithmetic became a book, and the book became a fashion",
+      "explanation_zh": "B 段只说这套算术变成一本书、并成了一种风尚，并未提及销量数字，属于 NOTGIVEN（未提及），不可当作 FALSE。"
+    },
+    {
+      "id": "q5",
+      "type": "true_false_notgiven",
+      "number": 5,
+      "statement": "Old sodium lamps wasted energy as heat.",
+      "answer": "TRUE",
+      "answer_label": "A",
+      "answer_paragraph": "C",
+      "answer_quote": "waste heat given off by old sodium lamps that cooked the leaves beneath them",
+      "explanation_zh": "C 段指出旧钠灯把能量变成废热，甚至烤焦下方叶片，故 TRUE。"
+    },
+    {
+      "id": "q6",
+      "type": "heading_match",
+      "number": 6,
+      "paragraph_label": "C",
+      "prompt": "Choose the correct heading for paragraph C from the list of headings below.",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "Why the most profitable crops are not the ones we eat most"
+        },
+        {
+          "i": "ii",
+          "text": "An idea that arrived long before the buildings"
+        },
+        {
+          "i": "iii",
+          "text": "What a tower cannot replace"
+        },
+        {
+          "i": "iv",
+          "text": "Turning electricity into leaves"
+        },
+        {
+          "i": "v",
+          "text": "A cleaner harvest with new kinds of risk"
+        },
+        {
+          "i": "vi",
+          "text": "The training of vertical farm technicians"
+        },
+        {
+          "i": "vii",
+          "text": "How governments have taxed indoor farms"
+        }
+      ],
+      "answer": "iv",
+      "answer_paragraph": "C",
+      "answer_quote": "A well-run unit needs roughly ten to twelve kilowatt hours of electricity for each kilogram of leafy greens",
+      "explanation_zh": "C 段围绕灯光与电耗，说明如何把电力变成菜叶，对应 iv「把电力变成叶子」。"
+    },
+    {
+      "id": "q7",
+      "type": "heading_match",
+      "number": 7,
+      "paragraph_label": "D",
+      "prompt": "Choose the correct heading for paragraph D from the list of headings below.",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "Why the most profitable crops are not the ones we eat most"
+        },
+        {
+          "i": "ii",
+          "text": "An idea that arrived long before the buildings"
+        },
+        {
+          "i": "iii",
+          "text": "What a tower cannot replace"
+        },
+        {
+          "i": "iv",
+          "text": "Turning electricity into leaves"
+        },
+        {
+          "i": "v",
+          "text": "A cleaner harvest with new kinds of risk"
+        },
+        {
+          "i": "vi",
+          "text": "The training of vertical farm technicians"
+        },
+        {
+          "i": "vii",
+          "text": "How governments have taxed indoor farms"
+        }
+      ],
+      "answer": "i",
+      "answer_paragraph": "D",
+      "answer_quote": "Nobody grows wheat or rice indoors, because a calorie of grain costs far more electricity to lift",
+      "explanation_zh": "D 段讲为何只种罗勒、豌豆苗等高价速生叶菜而不种谷物，即「最赚钱的作物并不是我们吃得最多的」，对应 i。"
+    },
+    {
+      "id": "q8",
+      "type": "heading_match",
+      "number": 8,
+      "paragraph_label": "E",
+      "prompt": "Choose the correct heading for paragraph E from the list of headings below.",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "Why the most profitable crops are not the ones we eat most"
+        },
+        {
+          "i": "ii",
+          "text": "An idea that arrived long before the buildings"
+        },
+        {
+          "i": "iii",
+          "text": "What a tower cannot replace"
+        },
+        {
+          "i": "iv",
+          "text": "Turning electricity into leaves"
+        },
+        {
+          "i": "v",
+          "text": "A cleaner harvest with new kinds of risk"
+        },
+        {
+          "i": "vi",
+          "text": "The training of vertical farm technicians"
+        },
+        {
+          "i": "vii",
+          "text": "How governments have taxed indoor farms"
+        }
+      ],
+      "answer": "v",
+      "answer_paragraph": "E",
+      "answer_quote": "a contamination of the recirculating system can reach the whole building in a few days",
+      "explanation_zh": "E 段先讲节水与无杀虫剂的好处，再谈封闭循环带来的系统性污染风险，对应 v「更干净的收成与新型风险」。"
+    },
+    {
+      "id": "q9",
+      "type": "heading_match",
+      "number": 9,
+      "paragraph_label": "G",
+      "prompt": "Choose the correct heading for paragraph G from the list of headings below.",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "Why the most profitable crops are not the ones we eat most"
+        },
+        {
+          "i": "ii",
+          "text": "An idea that arrived long before the buildings"
+        },
+        {
+          "i": "iii",
+          "text": "What a tower cannot replace"
+        },
+        {
+          "i": "iv",
+          "text": "Turning electricity into leaves"
+        },
+        {
+          "i": "v",
+          "text": "A cleaner harvest with new kinds of risk"
+        },
+        {
+          "i": "vi",
+          "text": "The training of vertical farm technicians"
+        },
+        {
+          "i": "vii",
+          "text": "How governments have taxed indoor farms"
+        }
+      ],
+      "answer": "iii",
+      "answer_paragraph": "G",
+      "answer_quote": "It cannot return large tracts of farmland to nature, because the calories that a population lives on are cheap to grow outdoors",
+      "explanation_zh": "G 段结论是室内农场只能补充、不能替代大田农业，即「一座塔楼无法取代的东西」，对应 iii。iii 亦可误认为 D 段，但 D 段主旨是作物选择。"
+    },
+    {
+      "id": "q10",
+      "type": "sentence_completion",
+      "number": 10,
+      "prompt": "Indoor farms are usually sited close to the ______ that will buy their produce.",
+      "word_limit": 2,
+      "answer": "city",
+      "accepted_alternatives": [
+        "the city",
+        "cities"
+      ],
+      "answer_paragraph": "A",
+      "answer_quote": "can stand in the middle of the city that eats its produce",
+      "explanation_zh": "A 段：农场可以设在「吃它产品的城市」中央，即贴近消费市场，答案 ONE WORD city。"
+    },
+    {
+      "id": "q11",
+      "type": "sentence_completion",
+      "number": 11,
+      "prompt": "Light-emitting diodes are efficient because they direct energy into the two ______ needed by the crop.",
+      "word_limit": 2,
+      "answer": "colours",
+      "accepted_alternatives": [
+        "two colours",
+        "colors"
+      ],
+      "answer_paragraph": "C",
+      "answer_quote": "they send their energy into the two colours the crop wants",
+      "explanation_zh": "C 段：LED 把能量投向作物所需的两种颜色（红光与蓝光），故填 colours，英式拼写为准。"
+    },
+    {
+      "id": "q12",
+      "type": "sentence_completion",
+      "number": 12,
+      "prompt": "On a vertical farm, the workers spend most of their time cleaning trays and calibrating the ______.",
+      "word_limit": 2,
+      "answer": "sensors",
+      "accepted_alternatives": [
+        "the sensors",
+        "calibrate sensors"
+      ],
+      "answer_paragraph": "F",
+      "answer_quote": "most of them clean trays, calibrate sensors and move racks that have grown too close to a lamp",
+      "explanation_zh": "F 段举例说明员工日常并非采收，而是清洁托盘、校准传感器并搬移过近的架子，答案为 sensors。"
+    },
+    {
+      "id": "q13",
+      "type": "multiple_choice",
+      "number": 13,
+      "prompt": "In paragraph E, the grower's fear of the tank inspection is given as an example of",
+      "options": [
+        "A. how much water an indoor farm can save.",
+        "B. the way a single fault can affect every tray at once.",
+        "C. the cost of nutrient solutions for growers.",
+        "D. why leafy greens need washing before sale."
+      ],
+      "answer": "B",
+      "answer_paragraph": "E",
+      "answer_quote": "nothing in the design stops a single fault becoming a total one",
+      "explanation_zh": "E 段：所有托盘共用同一循环水，一处故障可波及全楼，「最害怕水箱检查」正是这种系统性风险的例子，故选 B。"
+    }
+  ]
+}

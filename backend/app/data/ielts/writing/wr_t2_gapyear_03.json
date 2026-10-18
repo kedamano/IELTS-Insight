@@ -1,0 +1,23 @@
+{
+  "id": "wr_t2_gapyear_03",
+  "module": "writing",
+  "kind": "practice",
+  "task": "task2",
+  "target_band": 6.5,
+  "title_zh": "大学前间隔一年的利弊",
+  "topic": "education",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "time_recommend_sec": 2400,
+  "min_words": 250,
+  "question_type": "advantages_disadvantages",
+  "prompt": "In some countries an increasing number of school leavers spend a year working or travelling before they start university.\n\nWhat are the advantages and the disadvantages of this trend for young people?",
+  "outline_hint": [
+    "Describe the trend and say which side you weigh more heavily.",
+    "Advantages: maturity, income, skills that classrooms cannot teach.",
+    "Disadvantages: loss of study habits, cost, delay for poorer families.",
+    "Optional: who is most likely to benefit.",
+    "Conclusion balancing both."
+  ],
+  "band_descriptors_ref": "task2"
+}

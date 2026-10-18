@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_useful_app_06",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 7.5,
+  "title_zh": "帮助计划的网站或应用",
+  "topic": "useful_app",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe a website or app that helps you organise your life.",
+      "bullets": [
+        "what the website or app does",
+        "how often you use it",
+        "explain how it has changed your habits"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "Are people becoming too dependent on devices to remember things?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "Do you think employers should monitor how long staff spend on productivity apps?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "Why do some people still prefer paper diaries to digital calendars?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "Would you trust an app to make important decisions for you?",
+    "How can design stop people from spending too much time on a single app?",
+    "Should there be limits on how much personal data an app can collect?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

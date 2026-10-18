@@ -1,0 +1,23 @@
+{
+  "id": "wr_t2_carcity_02",
+  "module": "writing",
+  "kind": "practice",
+  "task": "task2",
+  "target_band": 7.5,
+  "title_zh": "城市是否应限制私家车",
+  "topic": "cities",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "time_recommend_sec": 2400,
+  "min_words": 250,
+  "question_type": "discuss_both_views",
+  "prompt": "Some people think that private car ownership in city centres should be discouraged, while others believe that how people travel is a personal choice.\n\nDiscuss both these views and give your own opinion.",
+  "outline_hint": [
+    "Paraphrase the debate and preview your view.",
+    "View A: reasons to discourage cars (air, space, safety, noise).",
+    "View B: reasons to leave the choice to individuals (rural links, mobility, cost of transit).",
+    "Your position: which measures you would prioritise and why.",
+    "Conclusion summarising both sides."
+  ],
+  "band_descriptors_ref": "task2"
+}

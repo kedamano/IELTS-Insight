@@ -1,0 +1,23 @@
+{
+  "id": "wr_t2_remotework_01",
+  "module": "writing",
+  "kind": "practice",
+  "task": "task2",
+  "target_band": 6.5,
+  "title_zh": "居家办公对员工更有利吗",
+  "topic": "work",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "time_recommend_sec": 2400,
+  "min_words": 250,
+  "question_type": "agree_disagree",
+  "prompt": "In many countries workers can now do the same job from home that they used to do in an office. Some people believe that this change is better for employees than it is for employers.\n\nTo what extent do you agree or disagree?",
+  "outline_hint": [
+    "Introduce the change and state your position clearly.",
+    "Body 1: benefits for employees (commute, hours, care duties).",
+    "Body 2: benefits for employers (rent, retention, wider talent pool).",
+    "Body 3: why the balance may tip one way, with one concession.",
+    "Conclusion: restate the position and add one condition."
+  ],
+  "band_descriptors_ref": "task2"
+}

@@ -1,0 +1,65 @@
+{
+  "id": "wr_t1_enrolment_04",
+  "module": "writing",
+  "kind": "practice",
+  "task": "task1",
+  "target_band": 7.5,
+  "title_zh": "各学部全日制学生占比（表格）",
+  "topic": "education",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "time_recommend_sec": 1200,
+  "min_words": 150,
+  "prompt": "The table below shows what proportion of full-time students at one university were enrolled in each faculty in 2010 and in 2020.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "chart": {
+    "type": "table",
+    "unit": "per cent of all students",
+    "labels": [
+      "2010",
+      "2020"
+    ],
+    "years": [
+      2010,
+      2020
+    ],
+    "series": [
+      {
+        "name": "Engineering and technology",
+        "values": [
+          31,
+          38
+        ]
+      },
+      {
+        "name": "Business and management",
+        "values": [
+          27,
+          29
+        ]
+      },
+      {
+        "name": "Humanities",
+        "values": [
+          18,
+          12
+        ]
+      },
+      {
+        "name": "Medicine and health",
+        "values": [
+          14,
+          15
+        ]
+      },
+      {
+        "name": "Arts and design",
+        "values": [
+          10,
+          6
+        ]
+      }
+    ],
+    "source_note": "Data invented for practice; not an official statistic."
+  },
+  "band_descriptors_ref": "task1"
+}

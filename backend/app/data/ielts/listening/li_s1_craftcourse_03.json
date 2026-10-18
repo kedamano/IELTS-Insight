@@ -1,0 +1,513 @@
+{
+  "id": "li_s1_craftcourse_03",
+  "module": "listening",
+  "kind": "practice",
+  "section": 1,
+  "sections_covered": [
+    1,
+    2
+  ],
+  "target_band": 6.5,
+  "title_zh": "夜校陶艺报名与新工艺楼参观",
+  "topic": "craftcourse",
+  "source": "hand",
+  "generated_at": "2026-10-18T12:00:00Z",
+  "instruction_zh": "听录音，完成第 1–20 题。第 1–5、15–18 题为填空题，每空不超过 TWO WORDS AND/OR A NUMBER；第 6–8、19–20 题为选择题；第 9–11 题为配对题，选项可以重复使用（其中两题答案相同）；第 12–14 题按工艺楼平面图字母作答。",
+  "audio_voice": "en-GB-SoniaNeural",
+  "audio_text": "Good afternoon, Bridgeford Institute of Adult Classes, Owen speaking. Hello, this is Sarah Cooper from the district hospital, and I would like a place on your evening pottery course for myself and three places for colleagues. You are in time, because the Thursday group has four places free. Is this your first pottery class? I made a bowl by hand two winters ago, but I never learned to use the wheel, so I want plenty of time on the wheel. Then the Thursday intermediate group suits you, because the beginners class spends its whole first term on hand building. And when does it meet? The class runs on Thursday evenings from twenty past six until eight thirty. Thursday suits me. Now the form. Can I take your address? Number fourteen Ashcombe Close, and the postcode is BF7 4LT. Is a mobile number enough in case we cancel a session? My mobile stays in my locker at work, so please write the landline, which is nearer me in the evening. When does the course begin? The first class falls in the week beginning 12 January, and the twelve weeks finish at Easter. And the fee? It is 95 pounds for the whole course, with a deposit of 30 pounds now and the rest at the second class. Must we buy clay or glaze? Both are included, so bring an old tea towel and a bag for your work, since our shelves are never empty. I also dread a final test. There is no written test, but on the last evening each student chooses one piece to show the group. Now for my colleagues. Martin is a night nurse in the accident and emergency unit, so he sleeps every morning and cannot face a class that starts before nine. Dana drives straight from the hospital and never leaves work before eight on weekdays. Tom is retired, has finished the twelve-week course twice already, and only wants to fire pots he makes at home. We have three other groups. The Saturday morning session is for parents with children under five. The late Tuesday class begins at nine, because it was created for hospital staff who work shifts. The open studio on the first Sunday of each month is for students who have finished the course and want to use the kiln. Then Tom takes the Sunday, and Martin and Dana both fit the Tuesday. That is what I thought. Pay 30 pounds today, and the office will confirm by Friday.\nWelcome to the new craft building; tonight I will show you where everything is. Here is the plan of the ground floor: letter A is the entrance hall with the noticeboard, B is the wheel room, C is the hand-building room, D is the glaze store, and E is the yard behind the side door. The eight kick-wheels now stand in B, because that floor had to be strengthened for their weight, and its windows face east, so there is daylight until four. Hand building takes place in C, where every table is covered with leather and the boards can be swept free of dried clay. The kiln has left the building altogether and sits in the yard at E, two metres from the wall, after the fire officer insisted on that gap. The glaze store at D stays locked, because two students were ill last spring after mixing powder without a mask, and now only the technician opens it for anyone who needs a jar. Three rules apply in every room. Studio boots must be worn in the yard, aprons hang on the hooks by the hall, and nobody may throw on a wheel until an instructor has watched them prepare a lump. We are short of two things at the moment: a second banding wheel and a set of cutting wires, so tell me what you can lend. The building fund supper is on the fourteenth of March, and the exhibition of the students' work opens to the public on the second of June. Any question about the rooms can wait until the interval.",
+  "sentences": [
+    {
+      "idx": 0,
+      "text": "Good afternoon, Bridgeford Institute of Adult Classes, Owen speaking.",
+      "anchor_sec": 0.0
+    },
+    {
+      "idx": 1,
+      "text": "Hello, this is Sarah Cooper from the district hospital, and I would like a place on your evening pottery course for myself and three places for colleagues.",
+      "anchor_sec": 3.2
+    },
+    {
+      "idx": 2,
+      "text": "You are in time, because the Thursday group has four places free.",
+      "anchor_sec": 13.0
+    },
+    {
+      "idx": 3,
+      "text": "Is this your first pottery class?",
+      "anchor_sec": 17.3
+    },
+    {
+      "idx": 4,
+      "text": "I made a bowl by hand two winters ago, but I never learned to use the wheel, so I want plenty of time on the wheel.",
+      "anchor_sec": 19.4
+    },
+    {
+      "idx": 5,
+      "text": "Then the Thursday intermediate group suits you, because the beginners class spends its whole first term on hand building.",
+      "anchor_sec": 28.8
+    },
+    {
+      "idx": 6,
+      "text": "And when does it meet?",
+      "anchor_sec": 35.6
+    },
+    {
+      "idx": 7,
+      "text": "The class runs on Thursday evenings from twenty past six until eight thirty.",
+      "anchor_sec": 37.7
+    },
+    {
+      "idx": 8,
+      "text": "Thursday suits me.",
+      "anchor_sec": 42.4
+    },
+    {
+      "idx": 9,
+      "text": "Now the form.",
+      "anchor_sec": 43.7
+    },
+    {
+      "idx": 10,
+      "text": "Can I take your address?",
+      "anchor_sec": 45.0
+    },
+    {
+      "idx": 11,
+      "text": "Number fourteen Ashcombe Close, and the postcode is BF7 4LT.",
+      "anchor_sec": 47.1
+    },
+    {
+      "idx": 12,
+      "text": "Is a mobile number enough in case we cancel a session?",
+      "anchor_sec": 50.7
+    },
+    {
+      "idx": 13,
+      "text": "My mobile stays in my locker at work, so please write the landline, which is nearer me in the evening.",
+      "anchor_sec": 54.6
+    },
+    {
+      "idx": 14,
+      "text": "When does the course begin?",
+      "anchor_sec": 61.8
+    },
+    {
+      "idx": 15,
+      "text": "The first class falls in the week beginning 12 January, and the twelve weeks finish at Easter.",
+      "anchor_sec": 63.9
+    },
+    {
+      "idx": 16,
+      "text": "And the fee?",
+      "anchor_sec": 70.0
+    },
+    {
+      "idx": 17,
+      "text": "It is 95 pounds for the whole course, with a deposit of 30 pounds now and the rest at the second class.",
+      "anchor_sec": 71.3
+    },
+    {
+      "idx": 18,
+      "text": "Must we buy clay or glaze?",
+      "anchor_sec": 79.3
+    },
+    {
+      "idx": 19,
+      "text": "Both are included, so bring an old tea towel and a bag for your work, since our shelves are never empty.",
+      "anchor_sec": 81.4
+    },
+    {
+      "idx": 20,
+      "text": "I also dread a final test.",
+      "anchor_sec": 89.0
+    },
+    {
+      "idx": 21,
+      "text": "There is no written test, but on the last evening each student chooses one piece to show the group.",
+      "anchor_sec": 91.1
+    },
+    {
+      "idx": 22,
+      "text": "Now for my colleagues.",
+      "anchor_sec": 98.0
+    },
+    {
+      "idx": 23,
+      "text": "Martin is a night nurse in the accident and emergency unit, so he sleeps every morning and cannot face a class that starts before nine.",
+      "anchor_sec": 99.7
+    },
+    {
+      "idx": 24,
+      "text": "Dana drives straight from the hospital and never leaves work before eight on weekdays.",
+      "anchor_sec": 108.7
+    },
+    {
+      "idx": 25,
+      "text": "Tom is retired, has finished the twelve-week course twice already, and only wants to fire pots he makes at home.",
+      "anchor_sec": 113.7
+    },
+    {
+      "idx": 26,
+      "text": "We have three other groups.",
+      "anchor_sec": 120.9
+    },
+    {
+      "idx": 27,
+      "text": "The Saturday morning session is for parents with children under five.",
+      "anchor_sec": 123.0
+    },
+    {
+      "idx": 28,
+      "text": "The late Tuesday class begins at nine, because it was created for hospital staff who work shifts.",
+      "anchor_sec": 126.9
+    },
+    {
+      "idx": 29,
+      "text": "The open studio on the first Sunday of each month is for students who have finished the course and want to use the kiln.",
+      "anchor_sec": 133.0
+    },
+    {
+      "idx": 30,
+      "text": "Then Tom takes the Sunday, and Martin and Dana both fit the Tuesday.",
+      "anchor_sec": 141.7
+    },
+    {
+      "idx": 31,
+      "text": "That is what I thought.",
+      "anchor_sec": 146.4
+    },
+    {
+      "idx": 32,
+      "text": "Pay 30 pounds today, and the office will confirm by Friday.",
+      "anchor_sec": 148.4
+    },
+    {
+      "idx": 33,
+      "text": "Welcome to the new craft building; tonight I will show you where everything is.",
+      "anchor_sec": 152.4
+    },
+    {
+      "idx": 34,
+      "text": "Here is the plan of the ground floor: letter A is the entrance hall with the noticeboard, B is the wheel room, C is the hand-building room, D is the glaze store, and E is the yard behind the side door.",
+      "anchor_sec": 157.4
+    },
+    {
+      "idx": 35,
+      "text": "The eight kick-wheels now stand in B, because that floor had to be strengthened for their weight, and its windows face east, so there is daylight until four.",
+      "anchor_sec": 172.2
+    },
+    {
+      "idx": 36,
+      "text": "Hand building takes place in C, where every table is covered with leather and the boards can be swept free of dried clay.",
+      "anchor_sec": 182.3
+    },
+    {
+      "idx": 37,
+      "text": "The kiln has left the building altogether and sits in the yard at E, two metres from the wall, after the fire officer insisted on that gap.",
+      "anchor_sec": 190.5
+    },
+    {
+      "idx": 38,
+      "text": "The glaze store at D stays locked, because two students were ill last spring after mixing powder without a mask, and now only the technician opens it for anyone who needs a jar.",
+      "anchor_sec": 200.3
+    },
+    {
+      "idx": 39,
+      "text": "Three rules apply in every room.",
+      "anchor_sec": 212.1
+    },
+    {
+      "idx": 40,
+      "text": "Studio boots must be worn in the yard, aprons hang on the hooks by the hall, and nobody may throw on a wheel until an instructor has watched them prepare a lump.",
+      "anchor_sec": 214.3
+    },
+    {
+      "idx": 41,
+      "text": "We are short of two things at the moment: a second banding wheel and a set of cutting wires, so tell me what you can lend.",
+      "anchor_sec": 225.8
+    },
+    {
+      "idx": 42,
+      "text": "The building fund supper is on the fourteenth of March, and the exhibition of the students' work opens to the public on the second of June.",
+      "anchor_sec": 235.2
+    },
+    {
+      "idx": 43,
+      "text": "Any question about the rooms can wait until the interval.",
+      "anchor_sec": 244.5
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "gap_fill",
+      "number": 1,
+      "prompt": "Sarah is put down for the ______ group at the Bridgeford Institute.",
+      "word_limit": 2,
+      "answer": "intermediate",
+      "accepted_alternatives": [
+        "the intermediate",
+        "intermediate group"
+      ],
+      "explanation_zh": "原文 'the Thursday intermediate group suits you'，因为她想多练拉坯（wheel），初学者班整学期只学手塑（hand building），故答案不是 beginners。"
+    },
+    {
+      "id": "q2",
+      "type": "gap_fill",
+      "number": 2,
+      "prompt": "The pottery course runs for ______ weeks and ends at Easter.",
+      "word_limit": 2,
+      "answer": "twelve",
+      "accepted_alternatives": [
+        "12",
+        "12 weeks"
+      ],
+      "explanation_zh": "原文 'the twelve weeks finish at Easter'，注意与开课日期 12 January 区分，数字写法同样给分。"
+    },
+    {
+      "id": "q3",
+      "type": "gap_fill",
+      "number": 3,
+      "prompt": "Sarah's address on the form is number ______ Ashcombe Close.",
+      "word_limit": 1,
+      "answer": "14",
+      "accepted_alternatives": [
+        "fourteen"
+      ],
+      "explanation_zh": "原文 'Number fourteen Ashcombe Close'，本题仅限 ONE WORD，门牌号写数字或英文均可。"
+    },
+    {
+      "id": "q4",
+      "type": "gap_fill",
+      "number": 4,
+      "prompt": "The postcode Owen writes down is ______.",
+      "word_limit": 2,
+      "answer": "BF7 4LT",
+      "accepted_alternatives": [
+        "BF74LT",
+        "bf7 4lt"
+      ],
+      "explanation_zh": "原文 'the postcode is BF7 4LT'，邮编按原文顺序书写，中间空格可有可无。"
+    },
+    {
+      "id": "q5",
+      "type": "gap_fill",
+      "number": 5,
+      "prompt": "Sarah has to bring an old ______ and a bag for her work.",
+      "word_limit": 2,
+      "answer": "tea towel",
+      "accepted_alternatives": [
+        "a tea towel",
+        "tea towels"
+      ],
+      "explanation_zh": "原文 'bring an old tea towel and a bag for your work'；陶土与釉料已含在费用里，因此不填 clay 或 glaze。"
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "number": 6,
+      "prompt": "What does Owen say about the Thursday class?",
+      "options": [
+        "A. It begins at half past six.",
+        "B. It begins at twenty past six.",
+        "C. It ends at eight o'clock."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'from twenty past six until eight thirty'，六点半是下课与上课都易听错的干扰点，eight o'clock 与原文 eight thirty 不符。"
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "number": 7,
+      "prompt": "What happens at the end of the twelve weeks?",
+      "options": [
+        "A. Each student shows the group one piece of their own choosing.",
+        "B. There is a written test about the kiln.",
+        "C. The tutor picks a piece for the June exhibition."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'There is no written test, but on the last evening each student chooses one piece to show the group'，由学生自己选，不是老师代选。"
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "number": 8,
+      "prompt": "Why does Sarah ask Owen to write the landline instead of her mobile?",
+      "options": [
+        "A. The mobile stays in her locker while she is at work.",
+        "B. The landline is nearer to the Institute.",
+        "C. She cannot hear messages on a mobile."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'My mobile stays in my locker at work, so please write the landline'，理由是上班时拿不到手机，而非距离问题。"
+    },
+    {
+      "id": "q9",
+      "type": "matching",
+      "number": 9,
+      "prompt": "Which session does Martin need?",
+      "options_list": [
+        "A. the Thursday intermediate class",
+        "B. the Saturday morning session",
+        "C. the late Tuesday class",
+        "D. the open studio on the first Sunday",
+        "E. the beginners class"
+      ],
+      "answer": "C",
+      "explanation_zh": "Martin 上夜班，'cannot face a class that starts before nine'，只有九点开始的 Tuesday 班合适，对应 C。"
+    },
+    {
+      "id": "q10",
+      "type": "matching",
+      "number": 10,
+      "prompt": "Which session does Dana need?",
+      "options_list": [
+        "A. the Thursday intermediate class",
+        "B. the Saturday morning session",
+        "C. the late Tuesday class",
+        "D. the open studio on the first Sunday",
+        "E. the beginners class"
+      ],
+      "answer": "C",
+      "explanation_zh": "Dana 工作日八点才离开医院，原文 'Martin and Dana both fit the Tuesday'，选项可重复使用，故仍为 C。"
+    },
+    {
+      "id": "q11",
+      "type": "matching",
+      "number": 11,
+      "prompt": "Which session does Tom need?",
+      "options_list": [
+        "A. the Thursday intermediate class",
+        "B. the Saturday morning session",
+        "C. the late Tuesday class",
+        "D. the open studio on the first Sunday",
+        "E. the beginners class"
+      ],
+      "answer": "D",
+      "explanation_zh": "Tom 已两次修完十二周课程，只想烧自己在家做的坯，对应 'open studio on the first Sunday ... want to use the kiln'，即 D。"
+    },
+    {
+      "id": "q12",
+      "type": "map_diagram_label",
+      "number": 12,
+      "prompt": "On the plan of the ground floor, A is the entrance hall with the noticeboard, B is the wheel room, C is the hand-building room, D is the glaze store, and E is the yard behind the side door. Which letter marks the room where the eight kick-wheels now stand?",
+      "labels": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'The eight kick-wheels now stand in B, because that floor had to be strengthened for their weight'。"
+    },
+    {
+      "id": "q13",
+      "type": "map_diagram_label",
+      "number": 13,
+      "prompt": "On the plan of the ground floor, A is the entrance hall with the noticeboard, B is the wheel room, C is the hand-building room, D is the glaze store, and E is the yard behind the side door. Which letter marks the room with leather-covered tables that can be swept free of dried clay?",
+      "labels": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "answer": "C",
+      "explanation_zh": "原文 'Hand building takes place in C, where every table is covered with leather'，C 为手塑教室。"
+    },
+    {
+      "id": "q14",
+      "type": "map_diagram_label",
+      "number": 14,
+      "prompt": "On the plan of the ground floor, A is the entrance hall with the noticeboard, B is the wheel room, C is the hand-building room, D is the glaze store, and E is the yard behind the side door. Which letter marks the place where the kiln stands now?",
+      "labels": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "answer": "E",
+      "explanation_zh": "原文 'The kiln has left the building altogether and sits in the yard at E'，D（釉料间）上锁，A 门厅仅为干扰项。"
+    },
+    {
+      "id": "q15",
+      "type": "gap_fill",
+      "number": 15,
+      "prompt": "The windows of the wheel room face ______, so there is daylight until four.",
+      "word_limit": 2,
+      "answer": "east",
+      "accepted_alternatives": [
+        "Eastern",
+        "east-facing"
+      ],
+      "explanation_zh": "原文 'its windows face east, so there is daylight until four'，方位词直接作答。"
+    },
+    {
+      "id": "q16",
+      "type": "gap_fill",
+      "number": 16,
+      "prompt": "The kiln now stands ______ metres from the wall of the building.",
+      "word_limit": 2,
+      "answer": "two",
+      "accepted_alternatives": [
+        "2",
+        "two metres"
+      ],
+      "explanation_zh": "原文 'two metres from the wall, after the fire officer insisted on that gap'，题目已有 metres，只填数量。"
+    },
+    {
+      "id": "q17",
+      "type": "gap_fill",
+      "number": 17,
+      "prompt": "Only the ______ is allowed to open the glaze store.",
+      "word_limit": 2,
+      "answer": "technician",
+      "accepted_alternatives": [
+        "the technician",
+        "technicians"
+      ],
+      "explanation_zh": "原文 'now only the technician opens it for anyone who needs a jar'，不要填 instructor。"
+    },
+    {
+      "id": "q18",
+      "type": "gap_fill",
+      "number": 18,
+      "prompt": "The building fund supper will be held on the ______ of March.",
+      "word_limit": 2,
+      "answer": "fourteenth",
+      "accepted_alternatives": [
+        "14th",
+        "14"
+      ],
+      "explanation_zh": "原文 'The building fund supper is on the fourteenth of March'，June 的展览是另一件事。"
+    },
+    {
+      "id": "q19",
+      "type": "multiple_choice",
+      "number": 19,
+      "prompt": "Why is the glaze store kept locked?",
+      "options": [
+        "A. Two students were ill after mixing powder without a mask.",
+        "B. The glaze powder has to be weighed by the treasurer.",
+        "C. The room is being repainted before the exhibition."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'because two students were ill last spring after mixing powder without a mask'，安全原因导致上锁。"
+    },
+    {
+      "id": "q20",
+      "type": "multiple_choice",
+      "number": 20,
+      "prompt": "What two things does the speaker still need?",
+      "options": [
+        "A. Aprons and hooks for the hall.",
+        "B. A banding wheel and a set of cutting wires.",
+        "C. Leather for two of the tables."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'We are short of two things at the moment: a second banding wheel and a set of cutting wires'。"
+    }
+  ]
+}

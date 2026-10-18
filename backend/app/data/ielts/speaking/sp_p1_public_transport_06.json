@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_public_transport_06",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 6.5,
+  "title_zh": "公共交通",
+  "topic": "public_transport",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "How do you usually travel to work or to university?"
+    },
+    {
+      "id": "q2",
+      "question": "What are the advantages of public transport in your city?"
+    },
+    {
+      "id": "q3",
+      "question": "Do you think public transport will be more popular in the future?"
+    }
+  ],
+  "fallback_questions": [
+    "Would you use a self-service bicycle scheme if your city had one?",
+    "Is a car seat belt as important as the seat belt on a bus?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

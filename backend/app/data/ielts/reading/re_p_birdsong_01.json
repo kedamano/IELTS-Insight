@@ -1,0 +1,324 @@
+{
+  "id": "re_p_birdsong_01",
+  "module": "reading",
+  "kind": "practice",
+  "level": "upper-intermediate",
+  "target_band": 6.5,
+  "title": "Singing Louder: How City Noise Is Reshaping Birdsong",
+  "title_zh": "更响的鸣唱：城市噪音如何改变鸟的歌声",
+  "topic": "urban_wildlife",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "time_limit_sec": 1200,
+  "word_count": 877,
+  "instruction_zh": "阅读短文第 1–13 题。第 1–5 题判断句子信息：TRUE 表示与原文相符，FALSE 表示原文反驳，NOT GIVEN 表示原文既未肯定也未否定；第 6–9 题为段落标题配对，标题选项可重复使用；第 10–12 题为完成句子，每空不超过 TWO WORDS AND/OR A NUMBER；第 13 题为选择题。",
+  "passage": {
+    "paragraphs": [
+      {
+        "label": "A",
+        "text": "Anyone who stands in a city park at dawn in May will hear far more birds than she can see. For most of history the dawn chorus was the loudest event in an urban morning, and it arrived free of charge. That is no longer true. Over the past seventy years the noise of traffic, ventilation fans, air conditioners and night deliveries has laid a continuous grey blanket over towns, and this blanket is thickest at the low frequencies where many birds sing. The question facing urban ecologists is no longer whether noise annoys birds. It is what birds have had to change about themselves to keep being heard at all, and whether those changes carry a cost."
+      },
+      {
+        "label": "B",
+        "text": "To date the problem, researchers needed quiet comparisons. A team led by Hana Novak of the Baltic Field Laboratory spent three breeding seasons recording great tits in twelve town parks and in six woodland sites far from any road. Each singing male was filmed from a fixed hide and his song stored as a spectrogram, a picture of sound in which pitch rises up the page and time runs across it. The urban tapes proved unmistakable. Males singing in parks delivered their phrases at a minimum frequency roughly two kilohertz above their woodland relatives, and they repeated each phrase several more times before moving on. Novak noted a second difference as well: the park birds began singing earlier in the morning, a few minutes before the first buses appeared on the road beside the fence."
+      },
+      {
+        "label": "C",
+        "text": "The simplest explanation is that birds are doing what people do in a noisy room. Linguists call this the Lombard effect, after an early study of conversation in a telephone booth, in which speakers raise and sharpen their voices when the background roars. Traffic is dominated by the deep rumble of engines and tyres, so a note that sits below about two kilohertz is buried, while a thinner, higher note squeezes through. But physics is rarely generous twice. High notes lose energy quickly and travel a shorter distance, which means that a male who lifts his song may be heard clearly by a mate ten metres away and ignored by a rival fifty metres away. There is a second trade-off. In many species the deepest elements of a song advertise body size and dominance, and the males that win fights are those whose low notes carry. A bird that abandons its bass in order to outshout a delivery lorry gives up part of the very message it is trying to send."
+      },
+      {
+        "label": "D",
+        "text": "Faced with that trade-off, some species have changed the clock instead of the tune. Blackbirds in one northern European capital now sing after midnight, when traffic falls to a quarter of its daytime level. To test whether this is a bargain, an ecologist compared nests in territories where males sang at night with nests in territories where they did not. Night singers were visited by females more slowly, and pairs on the noisiest streets raised one fewer chick on average. The most plausible cost is tiredness, since a bird that spends the dark hours advertising has fewer hours left to feed, and its feathers repair less well while it is busy. Timing, in other words, can buy clarity but not for nothing, and the species that profit are those whose songs were already thin and whistling rather than rich and deep."
+      },
+      {
+        "label": "E",
+        "text": "Songs are not entirely in the genes. A young male learns the details of his repertoire during a short sensitive period, copying whichever neighbours he hears most often, and he continues to adjust them for the rest of his life. This makes birdsong a culture, and cultures can change quickly. Recordings made in the same streets forty years apart show that urban song has become shorter and less varied, with fewer unusual syllables, while country song has grown longer. That is the opposite of what people usually assume about cities, which are thought to attract novelty. Novak's group tested whether the difference matters by playing recordings of country birds and town birds to males holding territories in the parks. The residents reacted strongly to the town songs and barely turned their heads toward the country ones, which suggests they could already hear the difference between them."
+      },
+      {
+        "label": "F",
+        "text": "If noise is the cause, then planning is the treatment, and a few authorities have begun to map their cities as soundscapes rather than as collections of buildings. The results are practical. Old tarmac can be replaced with a rubberised surface that lowers tyre roar by half. Leaf blowers, among the loudest machines on a summer street, have been banned in several towns, and night deliveries have been pushed into the early afternoon. Green corridors linking one park to another matter for a second reason, because they allow young birds to move between neighbourhoods and pick up new songs, so that a quiet garden is not stranded like an island. Even so, no species has been driven out of the city by noise alone, and several, including the peregrine and the starling, have multiplied on our buildings. The urban soundscape is a vast experiment in animal communication, running without anyone deciding to run it, and it can be reversed if the blanket of noise is lifted."
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "type": "true_false_notgiven",
+      "number": 1,
+      "statement": "Urban noise levels are highest in the lower part of the sound spectrum.",
+      "answer": "TRUE",
+      "answer_label": "A",
+      "answer_paragraph": "A",
+      "answer_quote": "this blanket is thickest at the low frequencies where many birds sing",
+      "explanation_zh": "A 段末句明确指出城市噪音这层「灰毯」在低频处最厚，而低频正是许多鸟鸣所在，故为 TRUE。"
+    },
+    {
+      "id": "q2",
+      "type": "true_false_notgiven",
+      "number": 2,
+      "statement": "Novak's team recorded equal numbers of town and woodland sites.",
+      "answer": "FALSE",
+      "answer_label": "B",
+      "answer_paragraph": "B",
+      "answer_quote": "recording great tits in twelve town parks and in six woodland sites far from any road",
+      "explanation_zh": "B 段给出 12 个城镇公园与 6 个林地样点，数量并不相等，属于与原文相反的 FALSE。"
+    },
+    {
+      "id": "q3",
+      "type": "true_false_notgiven",
+      "number": 3,
+      "statement": "Male birds living in parks sang at a lower pitch than those in woodland.",
+      "answer": "FALSE",
+      "answer_label": "B",
+      "answer_paragraph": "B",
+      "answer_quote": "at a minimum frequency roughly two kilohertz above their woodland relatives",
+      "explanation_zh": "原文说城镇雄鸟的最低频率比林地同类高出约 2 千赫，即音高更高，题目所说 lower pitch 与文相反。"
+    },
+    {
+      "id": "q4",
+      "type": "true_false_notgiven",
+      "number": 4,
+      "statement": "The recording equipment used by Novak's team was paid for by a national research council.",
+      "answer": "NOTGIVEN",
+      "answer_label": "C",
+      "answer_paragraph": "B",
+      "answer_quote": "A team led by Hana Novak of the Baltic Field Laboratory spent three breeding seasons",
+      "explanation_zh": "B 段只说明团队来自 Baltic Field Laboratory 并花了三个繁殖季，全篇未提经费来源，因此是 NOTGIVEN（文中未提及），而非 FALSE。"
+    },
+    {
+      "id": "q5",
+      "type": "true_false_notgiven",
+      "number": 5,
+      "statement": "Notes that are high in pitch do not travel as far as low notes.",
+      "answer": "TRUE",
+      "answer_label": "A",
+      "answer_paragraph": "C",
+      "answer_quote": "High notes lose energy quickly and travel a shorter distance",
+      "explanation_zh": "C 段说明高音衰减快、传播距离短，题目为其同义改写，故 TRUE。"
+    },
+    {
+      "id": "q6",
+      "type": "heading_match",
+      "number": 6,
+      "paragraph_label": "B",
+      "prompt": "Choose the correct heading for paragraph B from the list of headings below.",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "The benefits of birdsong for human health"
+        },
+        {
+          "i": "ii",
+          "text": "Choosing when to sing rather than how"
+        },
+        {
+          "i": "iii",
+          "text": "A city-wide response to the problem"
+        },
+        {
+          "i": "iv",
+          "text": "Learning from the neighbours"
+        },
+        {
+          "i": "v",
+          "text": "Measuring the difference"
+        },
+        {
+          "i": "vi",
+          "text": "What constant noise does to the human ear"
+        },
+        {
+          "i": "vii",
+          "text": "A price paid for being heard"
+        }
+      ],
+      "answer": "v",
+      "answer_paragraph": "B",
+      "answer_quote": "spent three breeding seasons recording great tits in twelve town parks",
+      "explanation_zh": "B 段讲研究者如何取样、录音并用频谱图量化差异，即「测量这种差异」，对应标题 v。"
+    },
+    {
+      "id": "q7",
+      "type": "heading_match",
+      "number": 7,
+      "paragraph_label": "C",
+      "prompt": "Choose the correct heading for paragraph C from the list of headings below.",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "The benefits of birdsong for human health"
+        },
+        {
+          "i": "ii",
+          "text": "Choosing when to sing rather than how"
+        },
+        {
+          "i": "iii",
+          "text": "A city-wide response to the problem"
+        },
+        {
+          "i": "iv",
+          "text": "Learning from the neighbours"
+        },
+        {
+          "i": "v",
+          "text": "Measuring the difference"
+        },
+        {
+          "i": "vi",
+          "text": "What constant noise does to the human ear"
+        },
+        {
+          "i": "vii",
+          "text": "A price paid for being heard"
+        }
+      ],
+      "answer": "vii",
+      "answer_paragraph": "C",
+      "answer_quote": "a male who lifts his song may be heard clearly by a mate ten metres away and ignored by a rival",
+      "explanation_zh": "C 段核心是提高音高虽能盖过车流，却损失传播距离与宣示体型的低音，即「被听见是有代价的」，对应 vii。"
+    },
+    {
+      "id": "q8",
+      "type": "heading_match",
+      "number": 8,
+      "paragraph_label": "D",
+      "prompt": "Choose the correct heading for paragraph D from the list of headings below.",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "The benefits of birdsong for human health"
+        },
+        {
+          "i": "ii",
+          "text": "Choosing when to sing rather than how"
+        },
+        {
+          "i": "iii",
+          "text": "A city-wide response to the problem"
+        },
+        {
+          "i": "iv",
+          "text": "Learning from the neighbours"
+        },
+        {
+          "i": "v",
+          "text": "Measuring the difference"
+        },
+        {
+          "i": "vi",
+          "text": "What constant noise does to the human ear"
+        },
+        {
+          "i": "vii",
+          "text": "A price paid for being heard"
+        }
+      ],
+      "answer": "ii",
+      "answer_paragraph": "D",
+      "answer_quote": "some species have changed the clock instead of the tune",
+      "explanation_zh": "D 段讲乌鸫改在午夜鸣唱，即改变「何时唱」而不是「怎么唱」，对应 ii。"
+    },
+    {
+      "id": "q9",
+      "type": "heading_match",
+      "number": 9,
+      "paragraph_label": "E",
+      "prompt": "Choose the correct heading for paragraph E from the list of headings below.",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "The benefits of birdsong for human health"
+        },
+        {
+          "i": "ii",
+          "text": "Choosing when to sing rather than how"
+        },
+        {
+          "i": "iii",
+          "text": "A city-wide response to the problem"
+        },
+        {
+          "i": "iv",
+          "text": "Learning from the neighbours"
+        },
+        {
+          "i": "v",
+          "text": "Measuring the difference"
+        },
+        {
+          "i": "vi",
+          "text": "What constant noise does to the human ear"
+        },
+        {
+          "i": "vii",
+          "text": "A price paid for being heard"
+        }
+      ],
+      "answer": "iv",
+      "answer_paragraph": "E",
+      "answer_quote": "copying whichever neighbours he hears most often",
+      "explanation_zh": "E 段说明鸣唱是幼鸟向邻居学习得来的文化，并比较城乡曲目差异，对应 iv「向邻居学习」。标题 iii 是 F 段内容，此处为干扰项。"
+    },
+    {
+      "id": "q10",
+      "type": "sentence_completion",
+      "number": 10,
+      "prompt": "On the spectrograms used in the study, pitch rises up the page while ______ runs across it.",
+      "word_limit": 2,
+      "answer": "time",
+      "accepted_alternatives": [
+        "the time"
+      ],
+      "answer_paragraph": "B",
+      "answer_quote": "pitch rises up the page and time runs across it",
+      "explanation_zh": "定位 B 段频谱图一句：pitch rises up the page and time runs across it。题面已有 while，答案取 ONE WORD：time。"
+    },
+    {
+      "id": "q11",
+      "type": "sentence_completion",
+      "number": 11,
+      "prompt": "According to the passage, the males that win contests are those whose ______ carry.",
+      "word_limit": 2,
+      "answer": "low notes",
+      "accepted_alternatives": [
+        "deepest elements",
+        "low notes carry"
+      ],
+      "answer_paragraph": "C",
+      "answer_quote": "the males that win fights are those whose low notes carry",
+      "explanation_zh": "C 段末段指出宣示体型的是低音，赢得争斗的是 low notes 传得远的雄鸟，答案 TWO WORDS。"
+    },
+    {
+      "id": "q12",
+      "type": "sentence_completion",
+      "number": 12,
+      "prompt": "One practical measure is to cover old road tarmac with a ______ surface to reduce tyre noise.",
+      "word_limit": 2,
+      "answer": "rubberised",
+      "accepted_alternatives": [
+        "a rubberised",
+        "rubber"
+      ],
+      "answer_paragraph": "F",
+      "answer_quote": "Old tarmac can be replaced with a rubberised surface that lowers tyre roar by half",
+      "explanation_zh": "F 段列举措施：把旧柏油换成橡胶化路面可使胎噪减半。空格需要一个形容词，填 rubberised。"
+    },
+    {
+      "id": "q13",
+      "type": "multiple_choice",
+      "number": 13,
+      "prompt": "What did Novak's group conclude from the playback experiment described in paragraph E?",
+      "options": [
+        "A. Town males recognised songs from their own kind of environment.",
+        "B. Country birds sing more loudly than town birds.",
+        "C. Young birds stop learning songs after the sensitive period.",
+        "D. Park territories are defended better than garden territories."
+      ],
+      "answer": "A",
+      "answer_paragraph": "E",
+      "answer_quote": "The residents reacted strongly to the town songs and barely turned their heads toward the country ones",
+      "explanation_zh": "E 段末句：城市雄鸟对城镇录音反应强烈、对乡村录音几乎无反应，说明它们能分辨「本地」歌声，对应 A。B、C、D 均无依据。"
+    }
+  ]
+}

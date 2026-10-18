@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_help_stranger_04",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 6.5,
+  "title_zh": "帮助陌生人的经历",
+  "topic": "help_stranger",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe a time when you helped someone you did not know.",
+      "bullets": [
+        "what the situation was",
+        "how you helped the person",
+        "explain how you felt afterwards"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "Why are some people willing to help strangers and others not?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "Do you think people in small towns help each other more than people in cities?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "How can communities encourage more everyday kindness?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "Should schools make community service part of the timetable?",
+    "Is it safer to help a stranger now than it was in the past?",
+    "What kinds of help do visitors to a city usually need?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

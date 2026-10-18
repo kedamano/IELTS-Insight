@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_family_skill_02",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 5.5,
+  "title_zh": "从长辈处学到的本领",
+  "topic": "family_skill",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe something useful that you learned from an older member of your family.",
+      "bullets": [
+        "what the skill is",
+        "who taught you and how",
+        "explain how you use it today"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "What can children learn from grandparents that schools cannot teach?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "Why are some traditional skills disappearing in modern cities?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "Should governments pay people to teach old crafts to young people?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "Do you think families today spend enough time teaching each other things?",
+    "Is it easier to learn a practical skill from a person or from a video?",
+    "Which household skills would be useful for everyone to learn?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

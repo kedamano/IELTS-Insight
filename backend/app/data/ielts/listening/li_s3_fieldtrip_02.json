@@ -1,0 +1,453 @@
+{
+  "id": "li_s3_fieldtrip_02",
+  "module": "listening",
+  "kind": "practice",
+  "section": 3,
+  "target_band": 7.5,
+  "title_zh": "海岸考察计划与城市蜜蜂讲座",
+  "topic": "fieldtrip",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "instruction_zh": "听录音，完成第 1–20 题。填空题每空不超过 TWO WORDS AND/OR A NUMBER，但第 1、2 题可写 THREE WORDS AND/OR A NUMBER、第 4 题仅限 ONE WORD、第 17 题可写 THREE WORDS；第 5–7、18–20 题为选择题；第 8–10 题为配对题，选项可重复使用；第 11–13 题按考察地点平面图字母作答。",
+  "audio_text": "Before we finish today, let us check the plan for the field course at Port Kestrel on Friday. Should we meet at the harbour master's office, as we did last term? That office is locked on a Friday, so we will meet at the lifeboat station, the building with the orange roof beside the fuel jetty. That is easy to find, and what time do we start? We begin at a quarter past eight, because the low tide in the morning gives us the longest window on the rocks. You each need a pair of old trainers, since the rocks are covered with weed and every path is slippery. Do we still take the water samples? Yes, and remember that a cheap thermometer only gives the temperature, what you must measure is the salinity, in other words the salt content. Put every sample in a labelled jar, not in the plastic bag, because the bags leak and the labels come off. Anika, you are not coming into the water this time? No, I am taking the photographs of the cliff face for the habitat map, so I will stay on the path above the beach. Then wear the hard hat, because stones fall from that face after rain. My data sheet has the sites printed in the wrong order, so I have to write the numbers out again by hand. Do that tonight, Josh, and bring three copies, one for each pair. Now for responsibilities: Josh will keep the tide table and call the hour when we leave the rocks. Anika hands out the sorting trays in the laboratory, and I will carry the first aid kit and the radio. Your first stop is the flat rock platform that runs south from the lighthouse, where the barnacles are thickest. From there we wade across to the salt marsh, and we will work where the grass meets the sand. Finally we look under the stones at the old slipway, where boats are winched out of the water. Nobody enters the breakwater, and the beach cafe car park is only for lunch. Tonight my talk is about bees in cities, and whether the hives on our roofs are really helping. For years we treated wild bees as a farming problem, since hedges had vanished from the countryside. The first serious study covered twelve gardens in a single city, and lasted only one summer. The same team has repeated the work in thirty cities across three countries, and the results are surprising. In the warm months a city garden keeps flowering for a much longer season than a farm field, because people water their plants. Watered plants keep making nectar into September, when the countryside has already turned brown. Hives on city allotments produced almost twice as much honey as those on the surrounding farmland. The range of plants seems to matter more than their number, since one balcony with ten pots can beat a park of a single species. There is a limit, though, and if too many hives go into one district the colonies have to fly further to find food, and their success falls. So the biggest problem for wild bees in a city is not pesticide, it is the loss of bare ground, because every patch of soil is paved or turned into turf. Leaf cutter bees nest in hollow stems, and mining bees need undisturbed earth, and neither can live on a neat lawn. If you want to help, choose plants that flower for months rather than weeks, leave one corner uncut, and think before adding a hive to a street that already has five.",
+  "audio_voice": "en-US-GuyNeural",
+  "sentences": [
+    {
+      "idx": 0,
+      "text": "Before we finish today, let us check the plan for the field course at Port Kestrel on Friday.",
+      "anchor_sec": 0.0
+    },
+    {
+      "idx": 1,
+      "text": "Should we meet at the harbour master's office, as we did last term?",
+      "anchor_sec": 7.2
+    },
+    {
+      "idx": 2,
+      "text": "That office is locked on a Friday, so we will meet at the lifeboat station, the building with the orange roof beside the fuel jetty.",
+      "anchor_sec": 12.4
+    },
+    {
+      "idx": 3,
+      "text": "That is easy to find, and what time do we start?",
+      "anchor_sec": 22.4
+    },
+    {
+      "idx": 4,
+      "text": "We begin at a quarter past eight, because the low tide in the morning gives us the longest window on the rocks.",
+      "anchor_sec": 26.8
+    },
+    {
+      "idx": 5,
+      "text": "You each need a pair of old trainers, since the rocks are covered with weed and every path is slippery.",
+      "anchor_sec": 35.6
+    },
+    {
+      "idx": 6,
+      "text": "Do we still take the water samples?",
+      "anchor_sec": 43.6
+    },
+    {
+      "idx": 7,
+      "text": "Yes, and remember that a cheap thermometer only gives the temperature, what you must measure is the salinity, in other words the salt content.",
+      "anchor_sec": 46.4
+    },
+    {
+      "idx": 8,
+      "text": "Put every sample in a labelled jar, not in the plastic bag, because the bags leak and the labels come off.",
+      "anchor_sec": 56.0
+    },
+    {
+      "idx": 9,
+      "text": "Anika, you are not coming into the water this time?",
+      "anchor_sec": 64.4
+    },
+    {
+      "idx": 10,
+      "text": "No, I am taking the photographs of the cliff face for the habitat map, so I will stay on the path above the beach.",
+      "anchor_sec": 68.4
+    },
+    {
+      "idx": 11,
+      "text": "Then wear the hard hat, because stones fall from that face after rain.",
+      "anchor_sec": 78.0
+    },
+    {
+      "idx": 12,
+      "text": "My data sheet has the sites printed in the wrong order, so I have to write the numbers out again by hand.",
+      "anchor_sec": 83.2
+    },
+    {
+      "idx": 13,
+      "text": "Do that tonight, Josh, and bring three copies, one for each pair.",
+      "anchor_sec": 92.0
+    },
+    {
+      "idx": 14,
+      "text": "Now for responsibilities: Josh will keep the tide table and call the hour when we leave the rocks.",
+      "anchor_sec": 96.8
+    },
+    {
+      "idx": 15,
+      "text": "Anika hands out the sorting trays in the laboratory, and I will carry the first aid kit and the radio.",
+      "anchor_sec": 104.0
+    },
+    {
+      "idx": 16,
+      "text": "Your first stop is the flat rock platform that runs south from the lighthouse, where the barnacles are thickest.",
+      "anchor_sec": 112.0
+    },
+    {
+      "idx": 17,
+      "text": "From there we wade across to the salt marsh, and we will work where the grass meets the sand.",
+      "anchor_sec": 119.6
+    },
+    {
+      "idx": 18,
+      "text": "Finally we look under the stones at the old slipway, where boats are winched out of the water.",
+      "anchor_sec": 127.2
+    },
+    {
+      "idx": 19,
+      "text": "Nobody enters the breakwater, and the beach cafe car park is only for lunch.",
+      "anchor_sec": 134.4
+    },
+    {
+      "idx": 20,
+      "text": "Tonight my talk is about bees in cities, and whether the hives on our roofs are really helping.",
+      "anchor_sec": 140.0
+    },
+    {
+      "idx": 21,
+      "text": "For years we treated wild bees as a farming problem, since hedges had vanished from the countryside.",
+      "anchor_sec": 147.2
+    },
+    {
+      "idx": 22,
+      "text": "The first serious study covered twelve gardens in a single city, and lasted only one summer.",
+      "anchor_sec": 154.0
+    },
+    {
+      "idx": 23,
+      "text": "The same team has repeated the work in thirty cities across three countries, and the results are surprising.",
+      "anchor_sec": 160.4
+    },
+    {
+      "idx": 24,
+      "text": "In the warm months a city garden keeps flowering for a much longer season than a farm field, because people water their plants.",
+      "anchor_sec": 167.6
+    },
+    {
+      "idx": 25,
+      "text": "Watered plants keep making nectar into September, when the countryside has already turned brown.",
+      "anchor_sec": 176.8
+    },
+    {
+      "idx": 26,
+      "text": "Hives on city allotments produced almost twice as much honey as those on the surrounding farmland.",
+      "anchor_sec": 182.4
+    },
+    {
+      "idx": 27,
+      "text": "The range of plants seems to matter more than their number, since one balcony with ten pots can beat a park of a single species.",
+      "anchor_sec": 188.8
+    },
+    {
+      "idx": 28,
+      "text": "There is a limit, though, and if too many hives go into one district the colonies have to fly further to find food, and their success falls.",
+      "anchor_sec": 198.8
+    },
+    {
+      "idx": 29,
+      "text": "So the biggest problem for wild bees in a city is not pesticide, it is the loss of bare ground, because every patch of soil is paved or turned into turf.",
+      "anchor_sec": 209.6
+    },
+    {
+      "idx": 30,
+      "text": "Leaf cutter bees nest in hollow stems, and mining bees need undisturbed earth, and neither can live on a neat lawn.",
+      "anchor_sec": 222.0
+    },
+    {
+      "idx": 31,
+      "text": "If you want to help, choose plants that flower for months rather than weeks, leave one corner uncut, and think before adding a hive to a street that already has five.",
+      "anchor_sec": 230.4
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "gap_fill",
+      "number": 1,
+      "prompt": "On Friday morning the students will meet at the ______.",
+      "word_limit": 3,
+      "answer": "lifeboat station",
+      "accepted_alternatives": [
+        "the lifeboat station",
+        "lifeboat"
+      ],
+      "explanation_zh": "原文 'we will meet at the lifeboat station, the building with the orange roof'，海港办公室周五上锁只是改地点的原因。"
+    },
+    {
+      "id": "q2",
+      "type": "gap_fill",
+      "number": 2,
+      "prompt": "The field course begins at ______.",
+      "word_limit": 3,
+      "answer": "8.15",
+      "accepted_alternatives": [
+        "a quarter past eight",
+        "8:15",
+        "eight fifteen"
+      ],
+      "explanation_zh": "原文 'We begin at a quarter past eight'，数字写法与原文写法都给分。"
+    },
+    {
+      "id": "q3",
+      "type": "gap_fill",
+      "number": 3,
+      "prompt": "Each student has to measure the ______ of the sea water.",
+      "word_limit": 2,
+      "answer": "salinity",
+      "accepted_alternatives": [
+        "salt content",
+        "the salinity"
+      ],
+      "explanation_zh": "原文 'what you must measure is the salinity, in other words the salt content'，温度计测的是 temperature，不是本题答案。"
+    },
+    {
+      "id": "q4",
+      "type": "gap_fill",
+      "number": 4,
+      "prompt": "Samples must be placed in a labelled ______.",
+      "word_limit": 1,
+      "answer": "jar",
+      "accepted_alternatives": [
+        "jars",
+        "a jar"
+      ],
+      "explanation_zh": "原文 'Put every sample in a labelled jar, not in the plastic bag'，本题仅限 ONE WORD。"
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "number": 5,
+      "prompt": "Why does the tutor tell the students to wear old trainers?",
+      "options": [
+        "A. The rocks are covered with slippery weed.",
+        "B. They will have to run for the bus.",
+        "C. The laboratory floor is always wet."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'the rocks are covered with weed and every path is slippery'，因此要求穿旧的运动鞋。"
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "number": 6,
+      "prompt": "What will Anika do during Friday's session?",
+      "options": [
+        "A. She will count the seals on the rocks.",
+        "B. She will photograph the cliff face.",
+        "C. She will sort the trays in the laboratory."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'I am taking the photographs of the cliff face for the habitat map'，她不进水；分发托盘的是同一个 Anika 之后的安排。"
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "number": 7,
+      "prompt": "What problem does Josh have with his data sheet?",
+      "options": [
+        "A. Too few copies have been printed.",
+        "B. The sites are printed in the wrong order.",
+        "C. The tide times are missing."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'My data sheet has the sites printed in the wrong order'，三份复印件是老师随后提出的要求，不是现有问题。"
+    },
+    {
+      "id": "q8",
+      "type": "matching",
+      "number": 8,
+      "prompt": "Who will hand out the sorting trays in the laboratory?",
+      "options_list": [
+        "A. Anika",
+        "B. Josh",
+        "C. the tutor",
+        "D. the ranger",
+        "E. the harbour master"
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'Anika hands out the sorting trays in the laboratory'，对应 A。"
+    },
+    {
+      "id": "q9",
+      "type": "matching",
+      "number": 9,
+      "prompt": "Who will keep the tide table on the day?",
+      "options_list": [
+        "A. Anika",
+        "B. Josh",
+        "C. the tutor",
+        "D. the ranger",
+        "E. the harbour master"
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'Josh will keep the tide table and call the hour when we leave the rocks'，对应 B。"
+    },
+    {
+      "id": "q10",
+      "type": "matching",
+      "number": 10,
+      "prompt": "Who will carry the first aid kit?",
+      "options_list": [
+        "A. Anika",
+        "B. Josh",
+        "C. the tutor",
+        "D. the ranger",
+        "E. the harbour master"
+      ],
+      "answer": "C",
+      "explanation_zh": "原文 'I will carry the first aid kit and the radio'，说话人是带队导师，对应 C（the tutor）。"
+    },
+    {
+      "id": "q11",
+      "type": "map_diagram_label",
+      "number": 11,
+      "prompt": "On the field-trip plan, A is the old slipway, B is the salt marsh, C is the flat rock platform south of the lighthouse, D is the beach cafe car park, E is the breakwater. Which area will the group visit first to look at barnacles?",
+      "labels": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "answer": "C",
+      "explanation_zh": "原文 'the flat rock platform that runs south from the lighthouse, where the barnacles are thickest'，与图例 C 相同。"
+    },
+    {
+      "id": "q12",
+      "type": "map_diagram_label",
+      "number": 12,
+      "prompt": "On the field-trip plan, A is the old slipway, B is the salt marsh, C is the flat rock platform south of the lighthouse, D is the beach cafe car park, E is the breakwater. Which area will the group work in where grass meets sand?",
+      "labels": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'we will work where the grass meets the sand'，说的是 salt marsh，即 B。"
+    },
+    {
+      "id": "q13",
+      "type": "map_diagram_label",
+      "number": 13,
+      "prompt": "On the field-trip plan, A is the old slipway, B is the salt marsh, C is the flat rock platform south of the lighthouse, D is the beach cafe car park, E is the breakwater. Which area will the group look under stones?",
+      "labels": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'we look under the stones at the old slipway, where boats are winched out of the water'，船台滑道为 A；防波堤 E 禁止进入，为干扰项。"
+    },
+    {
+      "id": "q14",
+      "type": "gap_fill",
+      "number": 14,
+      "prompt": "Compared with a farm field, a city garden keeps flowering for a longer ______.",
+      "word_limit": 2,
+      "answer": "season",
+      "accepted_alternatives": [
+        "flowering season",
+        "much longer season"
+      ],
+      "explanation_zh": "原文 'a city garden keeps flowering for a much longer season than a farm field'，填 season。"
+    },
+    {
+      "id": "q15",
+      "type": "gap_fill",
+      "number": 15,
+      "prompt": "Hives on city allotments produced about ______ as much honey as those on farmland.",
+      "word_limit": 2,
+      "answer": "twice",
+      "accepted_alternatives": [
+        "double",
+        "two times",
+        "almost twice"
+      ],
+      "explanation_zh": "原文 'Hives on city allotments produced almost twice as much honey'，倍数词 twice 是关键，注意 almost 可不写。"
+    },
+    {
+      "id": "q16",
+      "type": "gap_fill",
+      "number": 16,
+      "prompt": "City plants continue to provide nectar late in the year because they are ______.",
+      "word_limit": 2,
+      "answer": "watered",
+      "accepted_alternatives": [
+        "often watered",
+        "watered by people"
+      ],
+      "explanation_zh": "原文 'Watered plants keep making nectar into September'，原因在城市居民给植物浇水。"
+    },
+    {
+      "id": "q17",
+      "type": "gap_fill",
+      "number": 17,
+      "prompt": "For wild bees in a city, the most serious problem is the loss of ______.",
+      "word_limit": 3,
+      "answer": "bare ground",
+      "accepted_alternatives": [
+        "bare soil",
+        "open soil",
+        "undisturbed earth"
+      ],
+      "explanation_zh": "原文 'the biggest problem for wild bees in a city is not pesticide, it is the loss of bare ground'，答案不是农药。"
+    },
+    {
+      "id": "q18",
+      "type": "multiple_choice",
+      "number": 18,
+      "prompt": "What does the lecturer say about the first study of city bees?",
+      "options": [
+        "A. It was carried out in one city only.",
+        "B. It covered thirty cities.",
+        "C. It went on for three years."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'The first serious study covered twelve gardens in a single city, and lasted only one summer'，三十座城市是后来重复的实验。"
+    },
+    {
+      "id": "q19",
+      "type": "multiple_choice",
+      "number": 19,
+      "prompt": "What happens when one district has too many hives?",
+      "options": [
+        "A. The colonies must fly further for food.",
+        "B. Nearby crops fail completely.",
+        "C. The bees stop making honey altogether."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'if too many hives go into one district the colonies have to fly further to find food'，说的是觅食距离增加。"
+    },
+    {
+      "id": "q20",
+      "type": "multiple_choice",
+      "number": 20,
+      "prompt": "What does the lecturer advise people to do?",
+      "options": [
+        "A. Remove hives from city rooftops.",
+        "B. Plant species that flower for months.",
+        "C. Cut every corner of their lawn."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'choose plants that flower for months rather than weeks, leave one corner uncut'，是留出一角不剪，而非全部修剪。"
+    }
+  ]
+}

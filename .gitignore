@@ -3,10 +3,13 @@ frontend/dist/
 frontend/src-tauri/target/
 frontend/src-tauri/binaries/
 backend/build/
+backend/dist/
 backend/__pycache__/
 backend/app/__pycache__/
 backend/app/**/__pycache__/
+# PyInstaller 生成的 spec 忽略；但 backend.spec 是手写的打包入口配置，必须入库
 backend/*.spec
+!backend/backend.spec
 
 # ===== 依赖目录 =====
 node_modules/
@@ -21,6 +24,7 @@ backend/venv/
 # ===== 数据库 & 缓存 =====
 *.db
 *.sqlite
+*.pre-ielts.bak
 backend/cache/
 backend/db/
 backend/app/data/*.db

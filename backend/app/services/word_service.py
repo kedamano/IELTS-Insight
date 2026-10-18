@@ -8,10 +8,15 @@
 
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Optional
 
-DICT_PATH = Path(__file__).parent.parent / "data" / "dictionary.json"
+# PyInstaller 打包后使用 sys._MEIPASS 作为数据根目录
+if getattr(sys, "frozen", False):
+    DICT_PATH = Path(sys._MEIPASS) / "app" / "data" / "dictionary.json"
+else:
+    DICT_PATH = Path(__file__).parent.parent / "data" / "dictionary.json"
 
 
 def _load_dict() -> dict:

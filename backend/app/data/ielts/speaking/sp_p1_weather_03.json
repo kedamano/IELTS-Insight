@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_weather_03",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 5.5,
+  "title_zh": "天气",
+  "topic": "weather",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "What kind of weather do you like best?"
+    },
+    {
+      "id": "q2",
+      "question": "Does the weather affect the way you feel?"
+    },
+    {
+      "id": "q3",
+      "question": "Do you check the weather forecast before you leave home?"
+    }
+  ],
+  "fallback_questions": [
+    "What do you usually do on a rainy day?",
+    "Is the weather in your country different now from fifty years ago?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

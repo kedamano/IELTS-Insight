@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_cooking_04",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 5.5,
+  "title_zh": "烹饪",
+  "topic": "cooking",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "Do you enjoy cooking at home?"
+    },
+    {
+      "id": "q2",
+      "question": "What was the first dish you learned to cook?"
+    },
+    {
+      "id": "q3",
+      "question": "Do people in your country prefer to eat at home or eat out?"
+    }
+  ],
+  "fallback_questions": [
+    "Should children learn to cook at school?",
+    "Do you follow recipes exactly or change them a little?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

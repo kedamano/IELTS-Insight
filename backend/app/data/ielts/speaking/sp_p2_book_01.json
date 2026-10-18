@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_book_01",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 5.5,
+  "title_zh": "反复阅读的一本书",
+  "topic": "book",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe a book that you have read more than once.",
+      "bullets": [
+        "what the book is about",
+        "when you first read it",
+        "explain why you decided to read it again"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "Why do some people prefer to re-read a familiar book rather than start a new one?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "Do you think e-books will replace printed books in the coming decades?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "How could schools encourage students to read for pleasure rather than for exams?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "Is it better to know a few books very well or to read many books quickly?",
+    "What kinds of books do people in your country buy most often?",
+    "Should libraries keep old books even when nobody borrows them?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

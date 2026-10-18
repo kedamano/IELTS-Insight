@@ -102,6 +102,9 @@ def generate_offline_review(
         "overall_tip": overall_tip,
         "encouragement": encouragement,
         "source": "offline",
+        # CONSTITUTION §3：降级必须可见，不能伪装成 AI 结果
+        "ai_used": False,
+        "degraded_reason": "offline_template",
     }
 
 
@@ -113,17 +116,28 @@ def generate_ai_review(
 ) -> dict:
     """AI 深度点评（联网）
 
-    使用 OpenAI 兼容 API 生成详细的发音分析
+    使用 OpenAI 兼容 API 生成详细的发音分析。
+
+    凭据解析顺序（CONSTITUTION §3）：设置页写入 > `.env`。
+    之前本文件读 `settings.OPENAI_BASE_URL/OPENAI_MODEL` 而 `config.py` 从未定义它们，
+    AttributeError 被下面的 `except` 静默吞掉 → 永远走离线模板；现在 config 定义了这些字段，
+    并且失败原因会写进结果的 `degraded_reason`，不再伪装成功。
     """
-    if not settings.OPENAI_API_KEY:
-        return generate_offline_review(original_text, user_text, word_scores, overall_score)
+    from app.db import store
+
+    api_key, _source = store.effective_ai_key()
+    if not api_key:
+        result = generate_offline_review(original_text, user_text, word_scores, overall_score)
+        result["degraded_reason"] = "no_api_key"
+        return result
 
     try:
         import openai
 
         client = openai.OpenAI(
-            api_key=settings.OPENAI_API_KEY,
-            base_url=settings.OPENAI_BASE_URL if settings.OPENAI_BASE_URL else None,
+            api_key=api_key,
+            base_url=store.ai_base_url() or None,
+            timeout=settings.AI_TIMEOUT_SEC,
         )
 
         word_scores_str = json.dumps(word_scores, ensure_ascii=False, indent=2)
@@ -152,7 +166,7 @@ def generate_ai_review(
 }}"""
 
         response = client.chat.completions.create(
-            model=settings.OPENAI_MODEL or "gpt-4o-mini",
+            model=store.ai_model(),
             messages=[
                 {"role": "system", "content": "你是英语口语教练。只输出JSON，不输出其他内容。"},
                 {"role": "user", "content": prompt},
@@ -171,11 +185,24 @@ def generate_ai_review(
 
         result = json.loads(content)
         result["source"] = "ai"
+        result["ai_used"] = True
+        result["degraded_reason"] = None
+        result["model"] = store.ai_model()
         return result
 
-    except Exception:
-        # AI 不可用时降级
-        return generate_offline_review(original_text, user_text, word_scores, overall_score)
+    except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
+        print(f"[AI Review] 模型输出不可解析，降级为离线模板：{type(exc).__name__}", flush=True)
+        result = generate_offline_review(original_text, user_text, word_scores, overall_score)
+        result["degraded_reason"] = "invalid_model_output"
+        return result
+
+    except Exception as exc:
+        # 降级可以，但必须可见（CONSTITUTION §3）。异常文本里绝不包含 key。
+        reason = "network_error" if "timeout" not in type(exc).__name__.lower() else "timeout"
+        print(f"[AI Review] 降级为离线模板：{type(exc).__name__}: {exc}", flush=True)
+        result = generate_offline_review(original_text, user_text, word_scores, overall_score)
+        result["degraded_reason"] = reason
+        return result
 
 
 def _generate_word_tip(word: str, error_type: str) -> str:

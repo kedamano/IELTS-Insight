@@ -1,0 +1,79 @@
+{
+  "id": "wr_t1_migration_05",
+  "module": "writing",
+  "kind": "practice",
+  "task": "task1",
+  "target_band": 6.5,
+  "title_zh": "五个地区的人口增长（动态图）",
+  "topic": "population",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "time_recommend_sec": 1200,
+  "min_words": 150,
+  "prompt": "The chart below shows changes in the population living in five regions of the world between 1990 and 2020.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "chart": {
+    "type": "dynamic_chart",
+    "unit": "million people",
+    "labels": [
+      "1990",
+      "2000",
+      "2010",
+      "2020"
+    ],
+    "years": [
+      1990,
+      2000,
+      2010,
+      2020
+    ],
+    "series": [
+      {
+        "name": "Region A",
+        "values": [
+          610,
+          680,
+          740,
+          790
+        ]
+      },
+      {
+        "name": "Region B",
+        "values": [
+          420,
+          490,
+          560,
+          610
+        ]
+      },
+      {
+        "name": "Region C",
+        "values": [
+          280,
+          340,
+          405,
+          470
+        ]
+      },
+      {
+        "name": "Region D",
+        "values": [
+          165,
+          210,
+          260,
+          315
+        ]
+      },
+      {
+        "name": "Region E",
+        "values": [
+          95,
+          110,
+          128,
+          141
+        ]
+      }
+    ],
+    "source_note": "Data invented for practice; not an official statistic."
+  },
+  "band_descriptors_ref": "task1"
+}

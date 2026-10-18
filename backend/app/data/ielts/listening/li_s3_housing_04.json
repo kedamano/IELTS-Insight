@@ -1,0 +1,481 @@
+{
+  "id": "li_s3_housing_04",
+  "module": "listening",
+  "kind": "practice",
+  "section": 3,
+  "sections_covered": [
+    3,
+    4
+  ],
+  "target_band": 7.5,
+  "title_zh": "住宿调研分工与企业模型村讲座",
+  "topic": "housing",
+  "source": "hand",
+  "generated_at": "2026-10-18T12:00:00Z",
+  "instruction_zh": "听录音，完成第 1–20 题。第 1–6、13–16 题为填空题，每空不超过 TWO WORDS AND/OR A NUMBER；第 7–9、17–20 题为选择题；第 10–12 题为配对题，选项可以重复使用（其中两题答案为同一人）。",
+  "audio_voice": "en-US-GuyNeural",
+  "audio_text": "Dr Lund, before we go, can we fix who does what for the housing project? Yes, but first the date, because the written plan is due on Friday the tenth and I have not seen a draft. It is half written. Amara, how long is the questionnaire now? Forty questions, and I typed them all last night. Cut it to twenty. A long form loses people, and the first five must be easy enough that nobody gives up. We cannot leave the rent out, though. Keep the rent, but ask people to tick a range instead of writing a number. Then nobody has to admit what they pay. Ben, your interviews? I have six people, all from two halls of residence, and five of them play football with me. That is your problem, not theirs. Your sample is a club, and a club pays similar rents. I will find six more, in private houses and in the commuter hostel. When? The week after Easter, before the teaching rooms are taken by examinations. Good. Now the tasks, and remember that one person may take two. Amara will retype the shortened form and upload it to the module page, and since she knows the spreadsheet better than anyone, she will enter the rent ranges too. Ben brings the recorder and two spare batteries, because we lost a whole interview to a flat microphone in March. I will write to both housing offices for permission before anyone uses their tenancy records. Who asks the landlord association about the meeting room? I can do it, said Amara, because I already email their officer about the bus survey. Thank you. One risk: the library database closes for maintenance on the fourteenth, so download every article tonight.\nTonight we look at the model villages, and at what later planners took from them. The word suggests charity, and charity had very little to do with it. The first large village went up on waste ground beside a soap works, when the company bought the land and put up 310 houses for its own workers. The aim was not kindness but reliability. The firm wanted staff who came to work every day and who did not spend their wages in a public house, so the plan built that argument into the layout. The school, the chapel, the washhouse and the reading room stood within five minutes of every front door, while the two pubs were placed outside the village boundary, not inside it. Rent was low, but it was never free, and the accounts show that the estate paid for itself in about nineteen years, which is why the firm kept building. Every house had running water from the start, and each family was given a strip of ground for vegetables. Two details were copied by the council estates that followed after the First World War: the road that bends to slow the traffic, and the garden behind the house rather than in front of it. Two were not. The school, the washhouse and the library belonged to the company, and the villagers had no vote in any of them. When one firm closed in the 1960s, its maintenance fund closed with it, and the houses passed to private landlords who had never swept a chimney. The lesson the twentieth century drew is not that employers build bad housing, but that a village can be planned beautifully and still be governed badly.",
+  "sentences": [
+    {
+      "idx": 0,
+      "text": "Dr Lund, before we go, can we fix who does what for the housing project?",
+      "anchor_sec": 0.0
+    },
+    {
+      "idx": 1,
+      "text": "Yes, but first the date, because the written plan is due on Friday the tenth and I have not seen a draft.",
+      "anchor_sec": 5.4
+    },
+    {
+      "idx": 2,
+      "text": "It is half written.",
+      "anchor_sec": 13.3
+    },
+    {
+      "idx": 3,
+      "text": "Amara, how long is the questionnaire now?",
+      "anchor_sec": 15.0
+    },
+    {
+      "idx": 4,
+      "text": "Forty questions, and I typed them all last night.",
+      "anchor_sec": 17.5
+    },
+    {
+      "idx": 5,
+      "text": "Cut it to twenty.",
+      "anchor_sec": 20.8
+    },
+    {
+      "idx": 6,
+      "text": "A long form loses people, and the first five must be easy enough that nobody gives up.",
+      "anchor_sec": 22.5
+    },
+    {
+      "idx": 7,
+      "text": "We cannot leave the rent out, though.",
+      "anchor_sec": 28.6
+    },
+    {
+      "idx": 8,
+      "text": "Keep the rent, but ask people to tick a range instead of writing a number.",
+      "anchor_sec": 31.1
+    },
+    {
+      "idx": 9,
+      "text": "Then nobody has to admit what they pay.",
+      "anchor_sec": 36.5
+    },
+    {
+      "idx": 10,
+      "text": "Ben, your interviews?",
+      "anchor_sec": 39.4
+    },
+    {
+      "idx": 11,
+      "text": "I have six people, all from two halls of residence, and five of them play football with me.",
+      "anchor_sec": 40.7
+    },
+    {
+      "idx": 12,
+      "text": "That is your problem, not theirs.",
+      "anchor_sec": 47.2
+    },
+    {
+      "idx": 13,
+      "text": "Your sample is a club, and a club pays similar rents.",
+      "anchor_sec": 49.3
+    },
+    {
+      "idx": 14,
+      "text": "I will find six more, in private houses and in the commuter hostel.",
+      "anchor_sec": 53.3
+    },
+    {
+      "idx": 15,
+      "text": "When?",
+      "anchor_sec": 58.0
+    },
+    {
+      "idx": 16,
+      "text": "The week after Easter, before the teaching rooms are taken by examinations.",
+      "anchor_sec": 58.7
+    },
+    {
+      "idx": 17,
+      "text": "Good.",
+      "anchor_sec": 63.1
+    },
+    {
+      "idx": 18,
+      "text": "Now the tasks, and remember that one person may take two.",
+      "anchor_sec": 63.8
+    },
+    {
+      "idx": 19,
+      "text": "Amara will retype the shortened form and upload it to the module page, and since she knows the spreadsheet better than anyone, she will enter the rent ranges too.",
+      "anchor_sec": 67.8
+    },
+    {
+      "idx": 20,
+      "text": "Ben brings the recorder and two spare batteries, because we lost a whole interview to a flat microphone in March.",
+      "anchor_sec": 78.2
+    },
+    {
+      "idx": 21,
+      "text": "I will write to both housing offices for permission before anyone uses their tenancy records.",
+      "anchor_sec": 85.4
+    },
+    {
+      "idx": 22,
+      "text": "Who asks the landlord association about the meeting room?",
+      "anchor_sec": 90.8
+    },
+    {
+      "idx": 23,
+      "text": "I can do it, said Amara, because I already email their officer about the bus survey.",
+      "anchor_sec": 94.1
+    },
+    {
+      "idx": 24,
+      "text": "Thank you.",
+      "anchor_sec": 99.8
+    },
+    {
+      "idx": 25,
+      "text": "One risk: the library database closes for maintenance on the fourteenth, so download every article tonight.",
+      "anchor_sec": 101.0
+    },
+    {
+      "idx": 26,
+      "text": "Tonight we look at the model villages, and at what later planners took from them.",
+      "anchor_sec": 106.7
+    },
+    {
+      "idx": 27,
+      "text": "The word suggests charity, and charity had very little to do with it.",
+      "anchor_sec": 112.1
+    },
+    {
+      "idx": 28,
+      "text": "The first large village went up on waste ground beside a soap works, when the company bought the land and put up 310 houses for its own workers.",
+      "anchor_sec": 116.8
+    },
+    {
+      "idx": 29,
+      "text": "The aim was not kindness but reliability.",
+      "anchor_sec": 126.9
+    },
+    {
+      "idx": 30,
+      "text": "The firm wanted staff who came to work every day and who did not spend their wages in a public house, so the plan built that argument into the layout.",
+      "anchor_sec": 129.4
+    },
+    {
+      "idx": 31,
+      "text": "The school, the chapel, the washhouse and the reading room stood within five minutes of every front door, while the two pubs were placed outside the village boundary, not inside it.",
+      "anchor_sec": 140.2
+    },
+    {
+      "idx": 32,
+      "text": "Rent was low, but it was never free, and the accounts show that the estate paid for itself in about nineteen years, which is why the firm kept building.",
+      "anchor_sec": 151.4
+    },
+    {
+      "idx": 33,
+      "text": "Every house had running water from the start, and each family was given a strip of ground for vegetables.",
+      "anchor_sec": 161.8
+    },
+    {
+      "idx": 34,
+      "text": "Two details were copied by the council estates that followed after the First World War: the road that bends to slow the traffic, and the garden behind the house rather than in front of it.",
+      "anchor_sec": 168.6
+    },
+    {
+      "idx": 35,
+      "text": "Two were not.",
+      "anchor_sec": 181.2
+    },
+    {
+      "idx": 36,
+      "text": "The school, the washhouse and the library belonged to the company, and the villagers had no vote in any of them.",
+      "anchor_sec": 182.6
+    },
+    {
+      "idx": 37,
+      "text": "When one firm closed in the 1960s, its maintenance fund closed with it, and the houses passed to private landlords who had never swept a chimney.",
+      "anchor_sec": 190.1
+    },
+    {
+      "idx": 38,
+      "text": "The lesson the twentieth century drew is not that employers build bad housing, but that a village can be planned beautifully and still be governed badly.",
+      "anchor_sec": 199.5
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "gap_fill",
+      "number": 1,
+      "prompt": "The written plan for the housing project is due on ______.",
+      "word_limit": 3,
+      "answer": "Friday the tenth",
+      "accepted_alternatives": [
+        "Friday 10th",
+        "the tenth of Friday"
+      ],
+      "explanation_zh": "原文 'the written plan is due on Friday the tenth'；四点中的 forty questions 与十四号的数据库维护都是干扰信息。"
+    },
+    {
+      "id": "q2",
+      "type": "gap_fill",
+      "number": 2,
+      "prompt": "The questionnaire they finally use will have ______ questions.",
+      "word_limit": 2,
+      "answer": "twenty",
+      "accepted_alternatives": [
+        "20",
+        "20 questions"
+      ],
+      "explanation_zh": "原文 'Cut it to twenty'，四十题是 Amara 的初稿数量，不能填 forty。"
+    },
+    {
+      "id": "q3",
+      "type": "gap_fill",
+      "number": 3,
+      "prompt": "Students will be asked to tick a rent ______ rather than write a number.",
+      "word_limit": 2,
+      "answer": "range",
+      "accepted_alternatives": [
+        "ranges",
+        "a range"
+      ],
+      "explanation_zh": "原文 'ask people to tick a range instead of writing a number'，故答案也可写复数。"
+    },
+    {
+      "id": "q4",
+      "type": "gap_fill",
+      "number": 4,
+      "prompt": "The interviews will take place in the week after ______.",
+      "word_limit": 2,
+      "answer": "Easter",
+      "accepted_alternatives": [
+        "the week after Easter"
+      ],
+      "explanation_zh": "原文 'The week after Easter, before the teaching rooms are taken by examinations'。"
+    },
+    {
+      "id": "q5",
+      "type": "gap_fill",
+      "number": 5,
+      "prompt": "Ben will bring the recorder and two spare ______.",
+      "word_limit": 2,
+      "answer": "batteries",
+      "accepted_alternatives": [
+        "battery"
+      ],
+      "explanation_zh": "原文 'Ben brings the recorder and two spare batteries'，因三月曾因没电丢过一次访谈。"
+    },
+    {
+      "id": "q6",
+      "type": "gap_fill",
+      "number": 6,
+      "prompt": "Amara will upload the shortened form to the ______ page.",
+      "word_limit": 2,
+      "answer": "module",
+      "accepted_alternatives": [
+        "the module",
+        "module's"
+      ],
+      "explanation_zh": "原文 'upload it to the module page'，spreadsheet 是她另一项任务的载体，不是本题答案。"
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "number": 7,
+      "prompt": "Why does Dr Lund want the questionnaire shortened?",
+      "options": [
+        "A. Long forms make people stop answering.",
+        "B. Most of the questions are too difficult.",
+        "C. The module page cannot hold forty questions."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'A long form loses people'，说的是问卷过长导致弃答，与难度或上传限制无关。"
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "number": 8,
+      "prompt": "What is Dr Lund's criticism of Ben's first interview list?",
+      "options": [
+        "A. It is too small to be useful.",
+        "B. The people in it are too similar to one another.",
+        "C. It leaves out the commuter hostel."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'Your sample is a club, and a club pays similar rents'，问题在样本同质，而非人数太少。"
+    },
+    {
+      "id": "q9",
+      "type": "multiple_choice",
+      "number": 9,
+      "prompt": "Why must the students download their articles that same night?",
+      "options": [
+        "A. The library database closes for maintenance on the fourteenth.",
+        "B. The wifi in the common room is too slow for videos.",
+        "C. Dr Lund needs the reading list before Friday."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'the library database closes for maintenance on the fourteenth, so download every article tonight'。"
+    },
+    {
+      "id": "q10",
+      "type": "matching",
+      "number": 10,
+      "prompt": "Who will enter the rent ranges into the spreadsheet?",
+      "options_list": [
+        "A. Amara",
+        "B. Ben",
+        "C. Dr Lund",
+        "D. the housing office",
+        "E. the landlord association"
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'since she knows the spreadsheet better than anyone, she will enter the rent ranges too'，即 Amara。"
+    },
+    {
+      "id": "q11",
+      "type": "matching",
+      "number": 11,
+      "prompt": "Who will write to ask permission to use the tenancy records?",
+      "options_list": [
+        "A. Amara",
+        "B. Ben",
+        "C. Dr Lund",
+        "D. the housing office",
+        "E. the landlord association"
+      ],
+      "answer": "C",
+      "explanation_zh": "原文 'I will write to both housing offices for permission'，说话人是导师 Dr Lund，对应 C；housing office 是被联系的对象而非执行者。"
+    },
+    {
+      "id": "q12",
+      "type": "matching",
+      "number": 12,
+      "prompt": "Who will contact the landlord association about the meeting room?",
+      "options_list": [
+        "A. Amara",
+        "B. Ben",
+        "C. Dr Lund",
+        "D. the housing office",
+        "E. the landlord association"
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'I can do it, said Amara'，本题与第 10 题同为 A，说明选项可重复使用。"
+    },
+    {
+      "id": "q13",
+      "type": "gap_fill",
+      "number": 13,
+      "prompt": "The first large model village was built beside a ______ works.",
+      "word_limit": 2,
+      "answer": "soap",
+      "accepted_alternatives": [
+        "a soap",
+        "soap works"
+      ],
+      "explanation_zh": "原文 'The first large village went up on waste ground beside a soap works'。"
+    },
+    {
+      "id": "q14",
+      "type": "gap_fill",
+      "number": 14,
+      "prompt": "The company built ______ houses for its own workers.",
+      "word_limit": 2,
+      "answer": "310",
+      "accepted_alternatives": [
+        "three hundred and ten",
+        "310 houses"
+      ],
+      "explanation_zh": "原文 'put up 310 houses for its own workers'，数字按原文写法填写。"
+    },
+    {
+      "id": "q15",
+      "type": "gap_fill",
+      "number": 15,
+      "prompt": "The two pubs were deliberately placed ______ the village boundary.",
+      "word_limit": 2,
+      "answer": "outside",
+      "accepted_alternatives": [
+        "not inside",
+        "beyond"
+      ],
+      "explanation_zh": "原文 'the two pubs were placed outside the village boundary, not inside it'，注意不要填 inside。"
+    },
+    {
+      "id": "q16",
+      "type": "gap_fill",
+      "number": 16,
+      "prompt": "The accounts show that the estate paid for itself in about ______ years.",
+      "word_limit": 2,
+      "answer": "nineteen",
+      "accepted_alternatives": [
+        "19",
+        "nineteen years"
+      ],
+      "explanation_zh": "原文 'the estate paid for itself in about nineteen years'，about 表示约数，可保留亦可省略。"
+    },
+    {
+      "id": "q17",
+      "type": "multiple_choice",
+      "number": 17,
+      "prompt": "According to the speaker, why did the company build the village?",
+      "options": [
+        "A. It wanted workers who came to work every day.",
+        "B. It had been ordered to do so by law.",
+        "C. It hoped to sell the houses for a profit."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'The aim was not kindness but reliability'，并提到房租从未免费，故不是慈善也不是卖房获利。"
+    },
+    {
+      "id": "q18",
+      "type": "multiple_choice",
+      "number": 18,
+      "prompt": "Which pair of features did council estates after the First World War copy?",
+      "options": [
+        "A. The school and the washhouse.",
+        "B. The road that bends and the garden behind the house.",
+        "C. The low rent and the running water."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'Two details were copied ... the road that bends to slow the traffic, and the garden behind the house'；学校与公司拥有的设施属于没有被 copied 的两项。"
+    },
+    {
+      "id": "q19",
+      "type": "multiple_choice",
+      "number": 19,
+      "prompt": "What happened when one of the companies closed in the 1960s?",
+      "options": [
+        "A. Its money for upkeep disappeared at the same time.",
+        "B. The villagers were given the houses for nothing.",
+        "C. The council pulled the school down."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'its maintenance fund closed with it, and the houses passed to private landlords'，房子是被转给私人房东而非免费分给村民。"
+    },
+    {
+      "id": "q20",
+      "type": "multiple_choice",
+      "number": 20,
+      "prompt": "What lesson does the speaker draw about model villages?",
+      "options": [
+        "A. Employers always build poor housing.",
+        "B. A well-planned place can still be badly governed.",
+        "C. Rents should never be charged by a company."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'a village can be planned beautifully and still be governed badly'，讲者并未一概否定雇主建房。"
+    }
+  ]
+}

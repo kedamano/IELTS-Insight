@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_quiet_place_03",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 6.5,
+  "title_zh": "安静的地方",
+  "topic": "quiet_place",
+  "source": "hand",
+  "generated_at": "2026-10-17T12:00:00Z",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe a quiet place where you like to spend time alone.",
+      "bullets": [
+        "where the place is",
+        "what you usually do there",
+        "explain why it feels quiet to you"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "Why is it becoming harder to find quiet places in big cities?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "Do you think noise should be treated as a public health problem?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "Should cafés and libraries provide more spaces for people who are alone?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "Is silence a luxury that only rich people can afford?",
+    "How does sound affect the way people behave in public spaces?",
+    "Would you like to work in an office without private rooms?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

@@ -1,12 +1,14 @@
 [package]
-name = "ai-language-dialogue"
-version = "0.1.0"
-description = "AI 英语学习桌面应用"
+name = "ielts-insight"
+version = "2.0.0"
+description = "IELTS Insight — 个人雅思备考桌面应用（听说读写四科 + AI 评分）"
 authors = ["you"]
 license = ""
 repository = ""
 edition = "2021"
 
+# The `_up_` in the produced exe name comes from `productName`; Tauri lowercases/
+# slugifies it to `ielts-insight`. Keep the binary name aligned with the package.
 [build-dependencies]
 tauri-build = { version = "2", features = ["config-json5"] }
 

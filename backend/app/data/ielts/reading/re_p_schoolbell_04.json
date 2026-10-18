@@ -1,0 +1,398 @@
+{
+  "id": "re_p_schoolbell_04",
+  "module": "reading",
+  "kind": "practice",
+  "level": "advanced",
+  "target_band": 7.5,
+  "title": "The Clock in the Classroom: What Sleep Does to the School Day",
+  "title_zh": "课堂里的生物钟：睡眠如何改写上学的一天",
+  "topic": "schoolbell",
+  "source": "hand",
+  "generated_at": "2026-10-18T12:00:00Z",
+  "time_limit_sec": 1200,
+  "instruction_zh": "阅读短文，完成第 1–13 题。第 1–4 题判断句子信息（TRUE / FALSE / NOT GIVEN）；第 5–9 题为段落标题配对，标题列表共九项、有四个多余项；第 10–12 题从原文取词完成句子，每空不超过 TWO WORDS AND/OR A NUMBER；第 13 题为选择题。",
+  "word_count": 931,
+  "passage": {
+    "paragraphs": [
+      {
+        "label": "A",
+        "text": "Every teacher has noticed it, and every parent pays for it. A room of adolescents can sit through a morning of algebra and still fail the same questions in the afternoon, while the same room will remember the plot of a film it saw once, weeks earlier. The explanation now looks less moral than mechanical, and it has made an old question urgent again: what happens to the school day when we learn that some of it is decided by a clock that most timetables ignore?"
+      },
+      {
+        "label": "B",
+        "text": "Learning does not end when a student puts the book down. During the night the brain replays the day in miniature, and the replay is not a copy but an edit. In a study led by Marta Reiss at the Greifwald Sleep Centre, fifty-six students memorised pairs of words at eight in the evening and were then assigned by lot either to a full night of sleep or to a night on duty in the campus common room. Those who slept recalled a fifth more of the list, and the size of the advantage did not depend on how deeply they had slept, only on how long. Nobody was surprised by the direction of the result; what surprised the group was that the gain did not grow again on the second night, since whatever was to be saved had been saved while the student was unconscious."
+      },
+      {
+        "label": "C",
+        "text": "The edit is where the interest lies, and where the caution begins. Sleep does not preserve everything equally, and it appears to favour material that carries an emotional charge or that connects to something already stored. Reiss's group showed volunteers a series of pictures, some ordinary and some unsettling, and tested them a week later. The unsettling images were remembered better after a night of sleep, but so were the ordinary ones that happened to be shown beside them. Whatever the brain decides is worth keeping, it keeps in company, and the company is chosen by the viewer's interest rather than by the syllabus. Teachers have long exploited this without naming it, by putting the difficult case next to the story nobody forgets. Whether the effect survives a whole term is not known, since few groups have been followed that long."
+      },
+      {
+        "label": "D",
+        "text": "A second finding has made more trouble for schools than for science. The replay is not complete when a student wakes. Interference runs during the following hours, and fresh learning seems to crowd out what was filed only that morning. In one design, three groups of students learned a map of a fictional island at nine in the morning and were tested a week later. One group went straight into a full day of lessons, one was allowed a ninety-minute nap, and one sat quietly in an empty room with nothing to read. The nap group placed twenty per cent more towns correctly, the quiet room came second, and the day of lessons came last. The quiet room is the telling condition, because it shows that rest alone is not enough; what damaged the map was the traffic that followed it."
+      },
+      {
+        "label": "E",
+        "text": "Timing has followed from this, though the evidence is thinner than the confidence behind it. A district in the north moved its middle schools to twenty past eight and its high schools to ten, then recorded attendance, the load on each bus, and two years of test scores. Attendance rose, the early buses ran empty, and the scores did not move at all. Few districts can afford such a trial, and no head teacher wants to move first on a weak result, because a timetable is a contract with bus companies, sports fixtures, evening work and the childcare of two thousand families, and each of them is renegotiated when the bell changes."
+      },
+      {
+        "label": "F",
+        "text": "Then a difficulty appears that no clock can solve, and it is the one every adolescent knows. A student who stays awake until two in the morning is usually not choosing between sleep and a lesson. The same light that carries the lesson carries the phone, and light itself delays the onset of sleep, which laboratory work has shown in rooms where nothing else could interfere. But the households where the problem lives add noise, a parent on night shift, three children in two rooms, and a bus that comes once an hour. The adolescents who get the least rest are given the earliest classes, and they are also the ones with the least control over when the house goes quiet. So any rule about the best hour to learn is also a rule about who can afford that hour, and nobody has yet shown that a later start closes the gap between the busiest households and the quietest ones."
+      },
+      {
+        "label": "G",
+        "text": "What can be said with care? Sleep is neither a reward for good effort nor a switch that a tired student can flip at will. It is the stage at which the day is filed away, and the filing is imperfect, favouring the striking and the connected over the merely required. Teachers can put the hardest material where the day's file is strongest, and can stop treating the first hour of the morning as free, since it is the hour most likely to be overwritten. Schools can shorten the working day of the youngest pupils before they attempt to lengthen the sleep of the oldest. None of this buys back hours a household never had, which is why the honest version of the finding is smaller than the headline. A classroom that respects the clock will lose less, and no timetable can put anything back."
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "type": "true_false_notgiven",
+      "number": 1,
+      "statement": "In the Greifwald experiment, a second night of sleep improved recall once again.",
+      "answer": "FALSE",
+      "answer_label": "B",
+      "answer_paragraph": "B",
+      "answer_quote": "the gain did not grow again on the second night",
+      "explanation_zh": "B 段说令研究组意外的是第二晚不再增加收益，保存发生在第一个夜间，故题为 FALSE。"
+    },
+    {
+      "id": "q2",
+      "type": "true_false_notgiven",
+      "number": 2,
+      "statement": "The Greifwald study was paid for by a national examinations authority.",
+      "answer": "NOTGIVEN",
+      "answer_label": "C",
+      "answer_paragraph": "B",
+      "answer_quote": "fifty-six students memorised pairs of words at eight in the evening",
+      "explanation_zh": "B 段只交代研究者、人数与设计，未提经费来源，属 NOT GIVEN；不要把它当作被反驳的信息。"
+    },
+    {
+      "id": "q3",
+      "type": "true_false_notgiven",
+      "number": 3,
+      "statement": "In the picture test, ordinary images were remembered better when they had appeared beside striking ones.",
+      "answer": "TRUE",
+      "answer_label": "A",
+      "answer_paragraph": "C",
+      "answer_quote": "the ordinary ones that happened to be shown beside them",
+      "explanation_zh": "C 段：不安的图片记得更牢，而恰好排在它们旁边的普通图片同样记得更牢，即「与有价值的内容结伴」，故 TRUE。"
+    },
+    {
+      "id": "q4",
+      "type": "true_false_notgiven",
+      "number": 4,
+      "statement": "In the island-map study, the group that simply rested did worse than the group that went straight to lessons.",
+      "answer": "FALSE",
+      "answer_label": "B",
+      "answer_paragraph": "D",
+      "answer_quote": "The nap group placed twenty per cent more towns correctly, the quiet room came second, and the day of lessons came last",
+      "explanation_zh": "D 段给出排序：午睡组最好、安静休息组第二、直接上课一组最差，即休息组优于上课组，题面相反。"
+    },
+    {
+      "id": "q5",
+      "type": "heading_match",
+      "number": 5,
+      "paragraph_label": "A",
+      "prompt": "Choose the correct heading for paragraph A from the list of headings below.",
+      "answer": "i",
+      "answer_paragraph": "A",
+      "answer_quote": "decided by a clock that most timetables ignore",
+      "explanation_zh": "A 段用教室里的现象引出问题：上学的一天有一部分由被课表忽略的时钟决定，对应 i「属于课表的谜题」。",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "A puzzle that belongs to the timetable"
+        },
+        {
+          "i": "ii",
+          "text": "What the night does to the day's lessons"
+        },
+        {
+          "i": "iii",
+          "text": "Sleep keeps some things and discards others"
+        },
+        {
+          "i": "iv",
+          "text": "Why the loudest problem in the room is not the lesson"
+        },
+        {
+          "i": "v",
+          "text": "A privilege that only some households can afford"
+        },
+        {
+          "i": "vi",
+          "text": "New learning crowds out the old"
+        },
+        {
+          "i": "vii",
+          "text": "What the young lose first"
+        },
+        {
+          "i": "viii",
+          "text": "A change that costs more than an hour"
+        },
+        {
+          "i": "ix",
+          "text": "The evidence is narrower than the claim"
+        }
+      ]
+    },
+    {
+      "id": "q6",
+      "type": "heading_match",
+      "number": 6,
+      "paragraph_label": "C",
+      "prompt": "Choose the correct heading for paragraph C from the list of headings below.",
+      "answer": "iii",
+      "answer_paragraph": "C",
+      "answer_quote": "Sleep does not preserve everything equally",
+      "explanation_zh": "C 段说明睡眠并非等量保存一切，而是偏袒有情绪色彩或与旧知相连的材料，对应 iii「留一些、弃一些」。",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "A puzzle that belongs to the timetable"
+        },
+        {
+          "i": "ii",
+          "text": "What the night does to the day's lessons"
+        },
+        {
+          "i": "iii",
+          "text": "Sleep keeps some things and discards others"
+        },
+        {
+          "i": "iv",
+          "text": "Why the loudest problem in the room is not the lesson"
+        },
+        {
+          "i": "v",
+          "text": "A privilege that only some households can afford"
+        },
+        {
+          "i": "vi",
+          "text": "New learning crowds out the old"
+        },
+        {
+          "i": "vii",
+          "text": "What the young lose first"
+        },
+        {
+          "i": "viii",
+          "text": "A change that costs more than an hour"
+        },
+        {
+          "i": "ix",
+          "text": "The evidence is narrower than the claim"
+        }
+      ]
+    },
+    {
+      "id": "q7",
+      "type": "heading_match",
+      "number": 7,
+      "paragraph_label": "D",
+      "prompt": "Choose the correct heading for paragraph D from the list of headings below.",
+      "answer": "vi",
+      "answer_paragraph": "D",
+      "answer_quote": "fresh learning seems to crowd out what was filed only that morning",
+      "explanation_zh": "D 段的核心是醒来后的新学习把上午存入的内容挤掉，对应 vi「新学习挤掉旧学习」。iii 是 C 段内容，此处为干扰项。",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "A puzzle that belongs to the timetable"
+        },
+        {
+          "i": "ii",
+          "text": "What the night does to the day's lessons"
+        },
+        {
+          "i": "iii",
+          "text": "Sleep keeps some things and discards others"
+        },
+        {
+          "i": "iv",
+          "text": "Why the loudest problem in the room is not the lesson"
+        },
+        {
+          "i": "v",
+          "text": "A privilege that only some households can afford"
+        },
+        {
+          "i": "vi",
+          "text": "New learning crowds out the old"
+        },
+        {
+          "i": "vii",
+          "text": "What the young lose first"
+        },
+        {
+          "i": "viii",
+          "text": "A change that costs more than an hour"
+        },
+        {
+          "i": "ix",
+          "text": "The evidence is narrower than the claim"
+        }
+      ]
+    },
+    {
+      "id": "q8",
+      "type": "heading_match",
+      "number": 8,
+      "paragraph_label": "E",
+      "prompt": "Choose the correct heading for paragraph E from the list of headings below.",
+      "answer": "viii",
+      "answer_paragraph": "E",
+      "answer_quote": "a contract with bus companies, sports fixtures, evening work and the childcare of two thousand families",
+      "explanation_zh": "E 段讲推迟上课牵动的不只是时间，而是公交、运动赛程与两千家庭的托管，即「不止一小时的成本」，对应 viii。ix（证据比宣称窄）也属本段局部信息，但全段重心在改课表的代价。",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "A puzzle that belongs to the timetable"
+        },
+        {
+          "i": "ii",
+          "text": "What the night does to the day's lessons"
+        },
+        {
+          "i": "iii",
+          "text": "Sleep keeps some things and discards others"
+        },
+        {
+          "i": "iv",
+          "text": "Why the loudest problem in the room is not the lesson"
+        },
+        {
+          "i": "v",
+          "text": "A privilege that only some households can afford"
+        },
+        {
+          "i": "vi",
+          "text": "New learning crowds out the old"
+        },
+        {
+          "i": "vii",
+          "text": "What the young lose first"
+        },
+        {
+          "i": "viii",
+          "text": "A change that costs more than an hour"
+        },
+        {
+          "i": "ix",
+          "text": "The evidence is narrower than the claim"
+        }
+      ]
+    },
+    {
+      "id": "q9",
+      "type": "heading_match",
+      "number": 9,
+      "paragraph_label": "F",
+      "prompt": "Choose the correct heading for paragraph F from the list of headings below.",
+      "answer": "v",
+      "answer_paragraph": "F",
+      "answer_quote": "they are also the ones with the least control over when the house goes quiet",
+      "explanation_zh": "F 段指出睡得最少的青少年被排上最早的课，且最无法决定家里何时安静，关于最佳学习时刻的规则其实是负担能力的规则，对应 v「只有部分家庭负担得起的待遇」。",
+      "options_headings": [
+        {
+          "i": "i",
+          "text": "A puzzle that belongs to the timetable"
+        },
+        {
+          "i": "ii",
+          "text": "What the night does to the day's lessons"
+        },
+        {
+          "i": "iii",
+          "text": "Sleep keeps some things and discards others"
+        },
+        {
+          "i": "iv",
+          "text": "Why the loudest problem in the room is not the lesson"
+        },
+        {
+          "i": "v",
+          "text": "A privilege that only some households can afford"
+        },
+        {
+          "i": "vi",
+          "text": "New learning crowds out the old"
+        },
+        {
+          "i": "vii",
+          "text": "What the young lose first"
+        },
+        {
+          "i": "viii",
+          "text": "A change that costs more than an hour"
+        },
+        {
+          "i": "ix",
+          "text": "The evidence is narrower than the claim"
+        }
+      ]
+    },
+    {
+      "id": "q10",
+      "type": "sentence_completion",
+      "number": 10,
+      "prompt": "The advantage of sleep in the word-pair study depended on how long the students slept and not on how ______ they slept.",
+      "word_limit": 2,
+      "answer": "deeply",
+      "accepted_alternatives": [
+        "deep"
+      ],
+      "answer_paragraph": "B",
+      "answer_quote": "did not depend on how deeply they had slept",
+      "explanation_zh": "定位 B 段：睡得好不好并不影响优势大小，影响的是睡了多久，故填 deeply（写 deep 亦给分）。"
+    },
+    {
+      "id": "q11",
+      "type": "sentence_completion",
+      "number": 11,
+      "prompt": "In the island-map design it was the ______ that followed the morning's learning that did the damage.",
+      "word_limit": 2,
+      "answer": "traffic",
+      "accepted_alternatives": [
+        "the traffic",
+        "traffic of lessons"
+      ],
+      "answer_paragraph": "D",
+      "answer_quote": "what damaged the map was the traffic that followed it",
+      "explanation_zh": "D 段末句：破坏地图记忆的是随后而来的「交通」，即后续学习对新记忆的干扰，答案 traffic。"
+    },
+    {
+      "id": "q12",
+      "type": "sentence_completion",
+      "number": 12,
+      "prompt": "The writer advises schools to stop treating the first hour of the morning as ______.",
+      "word_limit": 2,
+      "answer": "free",
+      "accepted_alternatives": [
+        "free time",
+        "unused"
+      ],
+      "answer_paragraph": "G",
+      "answer_quote": "can stop treating the first hour of the morning as free",
+      "explanation_zh": "G 段：早晨第一小时最可能被覆盖，不应视作「免费的」，应把最难的材料放在日档最强处。"
+    },
+    {
+      "id": "q13",
+      "type": "multiple_choice",
+      "number": 13,
+      "prompt": "What is the writer's view of the evidence about later school start times?",
+      "options": [
+        "A. It is weaker than the confidence shown in it.",
+        "B. It proves that better attendance raises test scores.",
+        "C. It shows that naps are useless without a full night's sleep.",
+        "D. It has already been tested in most school districts."
+      ],
+      "answer": "A",
+      "answer_paragraph": "E",
+      "answer_quote": "though the evidence is thinner than the confidence behind it",
+      "explanation_zh": "E 段首句直言证据比信心「更薄」，且该区试验分数毫无变化，故选 A；B 把出勤上升与成绩混为一谈，C、D 无依据。"
+    }
+  ]
+}
