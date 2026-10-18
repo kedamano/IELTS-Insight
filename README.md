@@ -15,6 +15,8 @@
 ![tests](https://img.shields.io/badge/tests-625%20passed-brightgreen?style=flat-square)
 ![offline](https://img.shields.io/badge/works_offline-yes-green?style=flat-square)
 ![telemetry](https://img.shields.io/badge/telemetry-none-blue?style=flat-square)
+![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)
+![content](https://img.shields.io/badge/content%20license-CC%20BY--NC%204.0-yellow?style=flat-square)
 
 ![概览（浅色主题 · 演示数据）](docs/assets/screenshots/overview-light.png)
 
@@ -40,6 +42,7 @@
 - [设计与主题](#设计与主题)
 - [质量门](#质量门)
 - [数据位置与凭据纪律](#数据位置与凭据纪律)
+- [许可](#许可)
 - [已知限制](#已知限制)
 - [给贡献者：先读这三个文件](#给贡献者先读这三个文件)
 
@@ -173,7 +176,7 @@ powershell -ExecutionPolicy Bypass -File scripts\build.ps1
 
 ## 题库内容
 
-`backend/app/data/ielts/` 共 **36 套**：speaking 18 / listening 4 / reading 4 / writing 10，按 `<module>/*.json` 装载（`manifest.json` 不是题集）。全部为本项目原创或 AI 生成后人工校对，**不含剑桥真题、官方样题或教材原文**（CONSTITUTION §2 的硬约束）；听力音频由 edge-tts 合成后缓存本机。
+`backend/app/data/ielts/` 共 **36 套**：speaking 18 / listening 4 / reading 4 / writing 10，按 `<module>/*.json` 装载（`manifest.json` 不是题集）。36 套的 `source` 字段**全部记录为 `hand`**（本项目自写），**不含剑桥真题、官方样题或教材原文**（CONSTITUTION §2 的硬约束）；听力音频由 edge-tts 合成后缓存本机。
 
 内容 schema 与 `set_id` 命名规则见 [spec-contracts.md §10.1](docs/specs/ielts/spec-contracts.md)，机器化校验：
 
@@ -210,6 +213,14 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
 
 麦克风：Tauri 没有「麦克风」权限项，能否录音由 **WebView2（Chromium）媒体权限 + Windows 隐私设置**决定。处理方式（`main.rs` 设 `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--use-fake-ui-for-media-stream`）、失败提示与回退方案见 [mic-on-windows.md](docs/specs/ielts/mic-on-windows.md)。
 
+## 许可
+
+**代码 = MIT**（[LICENSE](LICENSE)）：随便用、改、商用，保留版权声明即可。
+**题库与截图 = CC BY-NC 4.0**（[LICENSE-CONTENT.md](LICENSE-CONTENT.md)）：自用、给学生、改编都行，不许打包进付费产品。
+分开的理由很实际 —— 这个项目里最值钱、最容易被白嫖的是 36 套原创题目，不是代码；一刀切 MIT 等于把内容也送人。
+
+字体（Sora / Manrope）为 SIL OFL 1.1，`edge-tts`（LGPL-3.0）、`PyInstaller`（GPL-2.0 + booting exception）、`openai-whisper`（MIT）、`torch`（BSD-3-Clause）各自保留原许可；逐项见 [LICENSE-CONTENT.md §2](LICENSE-CONTENT.md)。
+
 ## 已知限制
 
 诚实清单，按影响排序：
@@ -222,7 +233,7 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
 - 题库只有 36 套（内容生产是本项目最慢的一环），刷完需要自己扩；扩题只需往 `backend/app/data/ielts/<module>/` 放 JSON 并通过校验脚本。
 - 两处**首次**需要联网（之后缓存本机）：听力音频由 edge-tts 现合成（TTS 缓存目录不随包分发），口语转写用的 whisper `base.pt`（约 145 MB）首次加载时从官方源下载。在那之前对应功能会走可见降级（听力「看原文精读」、口语键盘输入）。
 - 前端全量测试在机器高负载下偶发 `findBy*` 超时红灯（jsdom + msw 回调被挤），根因是 `src/test/setup.ts` 未挂全局 RTL cleanup；已把 `asyncUtilTimeout` 放宽到 4s，未做全局 cleanup（9 个测试文件各自显式调用了 `cleanup()`，需逐个核对再挂全局）。
-- 本仓库当前**未附带 LICENSE 文件**；字体为 SIL OFL 1.1（见 [LICENSE.md](frontend/src/assets/fonts/LICENSE.md)），题库文本为本项目原创。
+- `backend/app/data/dictionary.json`（392 词条：音标 + 中文释义 + 难度）的**来源未在本仓库留档**，无法确认是自写还是从公开词典整理而来，因此 [LICENSE-CONTENT.md §3](LICENSE-CONTENT.md) 未对它声明任何版权主张；要复用到发布包请先自行核对原始许可。
 
 ## 给贡献者：先读这三个文件
 
