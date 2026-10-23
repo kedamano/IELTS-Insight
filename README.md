@@ -12,13 +12,13 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.139-009485?style=flat-square&logo=fastapi&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=flat-square&logo=python&logoColor=white)
-![tests](https://img.shields.io/badge/tests-625%20passed-brightgreen?style=flat-square)
+![tests](https://img.shields.io/badge/tests-645%20passed-brightgreen?style=flat-square)
 ![offline](https://img.shields.io/badge/works_offline-yes-green?style=flat-square)
 ![telemetry](https://img.shields.io/badge/telemetry-none-blue?style=flat-square)
 ![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![content](https://img.shields.io/badge/content%20license-CC%20BY--NC%204.0-yellow?style=flat-square)
 
-![概览（浅色主题 · 演示数据）](docs/assets/screenshots/overview-light.png)
+![报告（浅色主题 · Bento 摘要区 · 演示数据）](docs/assets/screenshots/report-bento-light.png)
 
 </div>
 
@@ -63,10 +63,15 @@
 | 阅读：800–950 词原创篇章 + 13 题限时 | 写作：四维批改 + 逐句证据 + 句子升级 |
 | --- | --- |
 | ![阅读练习](docs/assets/screenshots/reading-light.png) | ![写作批改](docs/assets/screenshots/writing-feedback-light.png) |
-| **深色 · 概览**：目标 Band、倒计时、四科当前分与迷你趋势 | **深色 · 报告**：分项 Band、题型正确率、错误类型分布 |
-| ![概览深色](docs/assets/screenshots/overview-dark.png) | ![报告深色](docs/assets/screenshots/report-analytics-dark.png) |
+| **浅色 · 概览**：目标 Band、倒计时、四科当前分与迷你趋势 | **深色 · 概览**：同一屏的夜航配色 |
+| ![概览浅色](docs/assets/screenshots/overview-light.png) | ![概览深色](docs/assets/screenshots/overview-dark.png) |
+| **深色 · 报告摘要**：Bento 磁贴 —— hero 给综合 Band 与综合走势，墨面给累计时长与逐周柱状 | **深色 · 报告明细**：题型正确率、跨练习累积的错误类型与练习时长热力 |
+| ![报告深色磁贴](docs/assets/screenshots/report-bento-dark.png) | ![报告深色明细](docs/assets/screenshots/report-analytics-dark.png) |
 
 阅读屏右上角的 `已恢复上次草稿` 是断点续做：中途关掉窗口，答案还在本地草稿里。
+
+报告摘要区**没有一块磁贴是占位假数**：某科近 8 周没有作答就不渲染那一块（而不是显示 0%），
+分差不足两次就不给「整体 ±0.0」的结论，生词本只有 `created_at` 所以提示老实写成「近 7 天新增」。
 
 ## 核心能力
 
@@ -78,7 +83,7 @@
 | 阅读 | 800–950 词原创篇章 + 13 题，20 分钟限时、段落定位高亮、选词查释义、TFNG / 配对 / 完成句子 / 选择 |
 | 写作 | Task 1 由 `chart.data` 本地 SVG 渲染（饼 / 线 / 柱 / 表 / 动态对比），Task 2 议论文；四维批改 + 证据引用 + 升级表达 + 范文 |
 | 生词本 / 错题本 | 跨模块积累、话题标签、按错误类型筛选、CSV / Anki 导出 |
-| 报告 | Band 趋势（0–9 固定轴）、分项 Band、题型正确率、错误类型分布、近 8 周练习时长热力 |
+| 报告 | Bento 摘要区（综合 Band 与目标、累计时长与逐周柱状、分科正确率、TOP 错误、分项 Band 四维）、Band 趋势（0–9 固定轴）、题型正确率、错误类型分布、近 8 周练习时长热力 |
 | 设置 | 目标分、考试日期、口音与音色语速、录音设备与增益、AI 端点、主题 |
 
 客观题（听力 / 阅读）判分是**纯本地规则**：答案归一化（拼写变体、单词限制、题号与大小写）+ 官方 raw→Band 换算表，不依赖任何网络。
@@ -186,7 +191,7 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
 
 ## 设计与主题
 
-两层令牌（[src/index.css](frontend/src/index.css)）：语义名（`--paper` / `--ink-muted` / `--accent` / `--rule` / `--band-*` / `--heat-*` / `--chart-*`）在两套主题里**不变**，只有取值分两套 —— 浅色「晨读」（暖纸面 + 墨绿青 + 琥珀）与深色「夜航」（石墨 + 紫青 + 琥珀）。`useTheme` 解析「浅色 / 深色 / 跟随系统」后只写 `html[data-theme]`，因此切换主题不需要逐屏改色，**组件内出现任何字面色值都算违规**（已核对：全仓 `.tsx` 无 hex / rgba 字面量，规则见 [spec-contracts.md §8](docs/specs/ielts/spec-contracts.md)）。
+两层令牌（[src/index.css](frontend/src/index.css)）：语义名（`--paper` / `--ink-muted` / `--accent` / `--rule` / `--band-*` / `--heat-*` / `--chart-*` / `--hero-*` / `--tile-solid*`）在两套主题里**不变**，只有取值分两套 —— 浅色「晨读」（暖纸面 + 靛蓝 + 琥珀）与深色「夜航」（石墨 + 亮靛 + 琥珀）。`useTheme` 解析「浅色 / 深色 / 跟随系统」后只写 `html[data-theme]`，因此切换主题不需要逐屏改色，**组件内出现任何字面色值都算违规**（已核对：全仓 `.tsx` 无 hex / rgba 字面量，规则见 [spec-contracts.md §8](docs/specs/ielts/spec-contracts.md)）。
 
 对比度是**取值规则**而不是事后调优：任何当文字用的 token 与其最坏落点（正文小字落在 `--paper-sunken` 上，不是白卡上）必须 ≥ 4.5:1。图表网格线、色阶、骨架屏各有专用 token，不许拿分隔线凑。逐条数值见 [spec-contracts.md §8](docs/specs/ielts/spec-contracts.md)。
 
@@ -196,9 +201,9 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
 
 | 门 | 当前状态 |
 | --- | --- |
-| `npx tsc --noEmit` | 无错误 |
-| 前端 `cd frontend ; npm test` | **31 个文件 / 328 个用例全通过**（vitest + jsdom + msw 契约测试） |
-| 后端 `cd backend ; .\venv\Scripts\python.exe -m pytest` | **297 个用例全通过**（约 6s） |
+| `npx tsc -b` | 无错误 |
+| 前端 `cd frontend ; npm test` | **32 个文件 / 340 个用例全通过**（vitest + jsdom + msw 契约测试） |
+| 后端 `cd backend ; .\venv\Scripts\python.exe -m pytest` | **305 个用例全通过**（约 7s） |
 
 后端测试通过 `IELTS_DB_PATH` / `IELTS_TTS_CACHE_DIR` / `IELTS_ONLINE` 指向临时目录与离线模式，**绝不写**真实本地库（CONSTITUTION §6）。真实 LLM 质量测试标 `@pytest.mark.integration`，默认跳过，需 `RUN_INTEGRATION=1`。`pyinstaller_entry.py` 只是打包入口，测试进程不经过它。
 
@@ -232,7 +237,10 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
 - 应用给的是 **AI 估计分**，不是官方成绩；口语发音分依赖 Whisper 转写质量（转写置信度 <0.5 时界面会提示重录或改用文本）。
 - 题库只有 36 套（内容生产是本项目最慢的一环），刷完需要自己扩；扩题只需往 `backend/app/data/ielts/<module>/` 放 JSON 并通过校验脚本。
 - 两处**首次**需要联网（之后缓存本机）：听力音频由 edge-tts 现合成（TTS 缓存目录不随包分发），口语转写用的 whisper `base.pt`（约 145 MB）首次加载时从官方源下载。在那之前对应功能会走可见降级（听力「看原文精读」、口语键盘输入）。
-- 前端全量测试在机器高负载下偶发 `findBy*` 超时红灯（jsdom + msw 回调被挤），根因是 `src/test/setup.ts` 未挂全局 RTL cleanup；已把 `asyncUtilTimeout` 放宽到 4s，未做全局 cleanup（9 个测试文件各自显式调用了 `cleanup()`，需逐个核对再挂全局）。
+- 设置屏的用例曾约 1/8 概率偶发红灯。根因**不是**机器负载、也不是缺全局 RTL cleanup（此前这条写错了），
+  而是测试助手的竞态：`openSettings()` 只等标签出现，而 GET 回填时 `DraftField` 的 `[value]` effect
+  会把草稿刷回服务端值，抢在它前面写入的断言（「未保存」徽标、越界 alert、密钥「已保存」提示）就被覆盖。
+  助手现在等回填落地才返回，单文件连跑 12 次全绿。教训：**这类「填了值就断言」的用例要等数据落地，别只等元素出现**。
 - `backend/app/data/dictionary.json`（392 词条：音标 + 中文释义 + 难度）的**来源未在本仓库留档**，无法确认是自写还是从公开词典整理而来，因此 [LICENSE-CONTENT.md §3](LICENSE-CONTENT.md) 未对它声明任何版权主张；要复用到发布包请先自行核对原始许可。
 
 ## 给贡献者：先读这三个文件

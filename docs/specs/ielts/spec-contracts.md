@@ -539,7 +539,11 @@ Wave 1 交付时 agent 提出的契约含糊点，逐条定稿。**Wave 2 所有
   而 `.sql` 不是 `.py`，PyInstaller 不会随模块收集）→ **打包版完全起不来，端口 8765 永不绑定**。
   修法：`datas` 增加 `("app/db/schema.sql", "app/db")`。这条是"构建成功 ≠ 能运行"的实例（CONSTITUTION §7-5）。
 - **顺带清掉的死数据**：`app/data/scenes_free.json` / `scenes_pro.json` 全仓零引用（旧付费剧本内容，宪法禁止再随包分发），已删除。
-- 冻结包 CORS 实测为 `DEBUG=False` → `['tauri://localhost','http://tauri.localhost','https://tauri.localhost','http://localhost:5173']`，符合契约。
+- CORS 名单由 `app.main.cors_allow_origins(debug)` 给出，`Settings.DEBUG` **默认 False**（此前默认 True，
+  等于把通配当成出厂值；打包脚本里没有任何地方设过 `DEBUG`，所以旧实测的 `DEBUG=False` 是靠启动环境碰上的，不是代码保证）。
+  默认放行 `['tauri://localhost','http://tauri.localhost','https://tauri.localhost','http://localhost:5173','http://127.0.0.1:5173']`
+  —— 两种 vite host 写法都要收，否则收紧默认值会顺手打断开发链路。要通配请显式 `DEBUG=true`。
+  行为由 `tests/test_cors_policy.py` 钉住（含「陌生 origin 的预检拿不到 allow-origin 头」）。
 - 体积：`dist/backend.exe` 单文件 **347MB**（上一版 249MB；`collect_all` 收了 whisper/av/tiktoken/torch）。首启解包到 `%TEMP%\_MEIxxxx` 约需 20–30s 才绑定端口，
   期间前端由 `useBackendReady()` 显示「正在启动本地引擎」（AC-G1），不是白屏。若体积/启动时间成为问题，可考虑 `--onedir`（待用户决定，未擅自改）。
 - 三个 `.ps1` 必须以 **UTF-8 with BOM** 保存，否则 Windows PowerShell 5.1 解析中文报错（pkg 已踩过并修好，后续别再存成无 BOM）。
@@ -594,9 +598,13 @@ key 由调用方 shell 环境变量提供（`key_source: "env"`）。**结论都
   `DraftField`（Field 内联 alert），同一句错误读两遍。改为只在字段内联显示，密钥**清除**失败的 Toast 保留。
 - **`/health` 状态行被 JSX 注释拆成多个文本节点（已修）**：`… · TTS 可用 ·\nAI 配置 …` 中间夹注释会让
   `·` 与「AI 配置」之间的那个空格在编译后消失，实测文本为 `… ·AI 配置 …`。抽成 `healthSummary()` 返回单条字符串。
-- **gate 2 满负载时偶发红灯（已修，不改断言）**：29 个文件并发 + dev server 占核时 `findBy*` 的 1s 默认上限会饿死，
-  同一份代码单跑必绿、全跑偶发失败。`src/test/setup.ts` 里 `configure({ asyncUtilTimeout: 4000 })`：
-  只放宽等待上限，断言与期望值一个都没动。
+- **设置屏用例的偶发红灯（已修，此前诊断是错的）**：原先记成「满负载饿死 `findBy*`，单跑必绿」——
+  实测**不成立**：`SettingsPage.test.tsx` 单独跑同样约 1/8 概率红，且红在三个不同用例之间跳。
+  插桩给出确定证据：红的那次 `writeInto('setting-daily-goal','90')` 之后输入框是 `60`，
+  即用户填的草稿被迟到的 GET 回填覆盖（`DraftField` 的 `[value]` effect 会把草稿刷成服务端值）。
+  修法在测试助手：`openSettings()` 除了等标签出现，还要等回填落地（`daily-goal` 是 number、
+  `target-band` 是 text，两个锚点各盯一类输入）。修后单文件连跑 12 次全绿。
+  `asyncUtilTimeout: 4000` 保留（它当初确实解掉了另一类跨文件并发的超时），但**别把它当根因**。
 - **本次补的测试**（dead agent 遗留范围由主控吸收）：`settings/SettingsPage.test.tsx` 15 例、
   `shared/VocabBook.test.tsx`（含「改备注必须整行回传，否则后端 upsert 清空 context/来源/标签」）、
   `shared/ReviewBook.test.tsx`（首屏零写请求、「已掌握」只手动、删除需确认）、`report/format.test.ts`。
