@@ -26,10 +26,12 @@ import {
   REPORT_SUMMARY,
   REPORT_TRENDS,
   REPORT_VOCAB,
+  REPORT_ATTEMPTS,
   createReportSpies,
   reportHandlers,
   type ReportSpies,
 } from './testHandlers';
+import type { AttemptSummary } from '../../types/ielts';
 
 type Metric =
   | 'overall'
@@ -159,12 +161,60 @@ describe('ReportPage bento 摘要区', () => {
     expect(within(criteria).getByText('FC')).toBeInTheDocument();
     expect(within(criteria).getByText('GRA')).toBeInTheDocument();
     expect(within(criteria).queryByText('TR')).not.toBeInTheDocument();
-    expect(within(criteria).getByText('口语 · 最近一次')).toBeInTheDocument();
+    expect(within(criteria).getByText('最近一次 · 口语')).toBeInTheDocument();
+    // 大数字属于哪一科必须写在单位里，不能光写「总分」
+    expect(within(criteria).getByText('口语总分')).toBeInTheDocument();
     // 目标 7.0：只有发音 7.0 达标
     expect(criteria.querySelectorAll('[data-reached="true"]')).toHaveLength(1);
     expect(criteria.querySelectorAll('[data-reached="false"]')).toHaveLength(3);
     expect(within(criteria).getByText('达标')).toBeInTheDocument();
     expect(within(criteria).getByText('未达标')).toBeInTheDocument();
+  });
+
+  // 实拍抓出的文案缺陷：演示库口语与写作都有最近一次，大块里两行并列，
+  // 但提示语只写「口语 · 最近一次」，读者会以为写作那行是同一份成绩。
+  it('分项 BAND 并列两科时，提示语覆盖列出的每一科', async () => {
+    const writingAttempt: AttemptSummary = {
+      id: 'at-wr-1',
+      module: 'writing',
+      task_ref: 'wr_t2_carcity_02',
+      part: null,
+      title_zh: 'Is it good that more people live in cities?',
+      band_overall: 6,
+      band_sub: {
+        task_response: 6,
+        coherence_cohesion: 6.5,
+        lexical_resource: 5.5,
+        grammatical_range_accuracy: 6,
+      },
+      duration_sec: 2040,
+      // 刻意比口语那次（2026-10-16）更早：大块 lead 取的是 `createdAt` 倒序第一条，
+      // 所以这里 lead 仍是口语，写作排在下方。
+      started_at: '2026-10-14T06:10:00Z',
+      created_at: '2026-10-14T06:44:00Z',
+      ai_used: true,
+      approximate: false,
+      model: 'glm-4.6',
+    };
+    install(
+      ...reportHandlers(spies, {
+        summary: structuredClone(REPORT_SUMMARY),
+        trends: structuredClone(REPORT_TRENDS),
+        analytics: structuredClone(REPORT_ANALYTICS),
+        settings: structuredClone(REPORT_SETTINGS),
+        attempts: [...REPORT_ATTEMPTS, writingAttempt],
+      }),
+    );
+    render(<ReportPage />);
+
+    const criteria = await metric('criteria');
+    // 两科的四维同时在场：口语 FC + 写作 TR
+    expect(within(criteria).getByText('FC')).toBeInTheDocument();
+    expect(within(criteria).getByText('TR')).toBeInTheDocument();
+    expect(within(criteria).getByText('最近一次 · 口语 / 写作')).toBeInTheDocument();
+    // 大数字仍是 lead（口语）的总分，单位必须点名
+    expect(within(criteria).getByText('口语总分')).toBeInTheDocument();
+    expect(within(criteria).queryByText(/口语 · 最近一次/)).not.toBeInTheDocument();
   });
 
   it('客观题错因的中文显示名仍在大块位生效（不能露出 reason 代码）', async () => {

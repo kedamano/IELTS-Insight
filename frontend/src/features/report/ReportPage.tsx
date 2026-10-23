@@ -360,8 +360,16 @@ export function ReportPage({
             surface="plain"
             label="分项 Band"
             value={leadCriterion?.overall != null ? formatBand(leadCriterion.overall) : '—'}
-            unit={leadCriterion?.overall != null ? '总分' : undefined}
-            hint={leadCriterion ? `${MODULE_LABEL_ZH[leadCriterion.module]} · 最近一次` : '尚无口语或写作评分'}
+            unit={
+              leadCriterion?.overall != null
+                ? `${MODULE_LABEL_ZH[leadCriterion.module]}总分`
+                : undefined
+            }
+            hint={
+              criterionEntries.length > 0
+                ? `最近一次 · ${criterionEntries.map((entry) => MODULE_LABEL_ZH[entry.module]).join(' / ')}`
+                : '尚无口语或写作评分'
+            }
             className="col-span-2 lg:col-span-3"
           >
             {criterionEntries.length > 0 ? (
