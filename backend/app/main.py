@@ -56,15 +56,26 @@ async def lifespan(_: FastAPI):
     yield
 
 
-# CORS：开发阶段允许所有；生产环境放行 Tauri v1/v2 各平台 webview origin
+# CORS：默认只放行 Tauri webview 与本机 vite 开发服务器；显式 `DEBUG=true` 才开成通配。
 # Tauri v2: Windows/Linux/Android 为 http://tauri.localhost，macOS/iOS 为 tauri://localhost
 # Tauri v1: 全平台为 tauri://localhost
-allow_origins = ["*"] if settings.DEBUG else [
+TAURI_ORIGINS = [
     "tauri://localhost",
     "http://tauri.localhost",
     "https://tauri.localhost",
-    "http://localhost:5173",
 ]
+# vite 的两种写法都要收：只写 localhost 会让用 127.0.0.1 打开的开发页拿不到数据。
+DEV_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+
+def cors_allow_origins(debug: bool) -> list[str]:
+    return ["*"] if debug else [*TAURI_ORIGINS, *DEV_ORIGINS]
+
+
+allow_origins = cors_allow_origins(settings.DEBUG)
 
 app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION, lifespan=lifespan)
 

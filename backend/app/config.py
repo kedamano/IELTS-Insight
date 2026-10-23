@@ -48,7 +48,9 @@ class Settings(BaseSettings):
 
     APP_NAME: str = "IELTS Insight"
     APP_VERSION: str = APP_VERSION
-    DEBUG: bool = True
+    # 默认值就是打包出去的值：sidecar 没有 .env，True 会把 CORS 开成通配，
+    # 用户浏览器里的任意网页都能读写本机库。本地联调要通配请显式 `DEBUG=true`。
+    DEBUG: bool = False
     API_HOST: str = "127.0.0.1"
     API_PORT: int = 8765
 
