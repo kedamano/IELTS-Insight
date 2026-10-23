@@ -49,6 +49,14 @@ async function openSettings(options = {}) {
   server.use(...ctx.handlers);
   render(<SettingsPage />);
   await screen.findByLabelText('目标 Band');
+  // 标签出现 ≠ 回填完成。GET 落地时 `DraftField` 的 `[value]` effect 会把草稿刷成服务端值，
+  // 抢在它之前写入的用例会被覆盖 —— 这是「未保存」徽标与校验 alert 偶发找不到的根因。
+  // 两个锚点分别盯 number 与 text 两类输入，任一被默认值撞同也不至于失效。
+  const snapshot = ctx.snapshot();
+  await waitFor(() => {
+    expect(input('setting-daily-goal')).toHaveValue(snapshot.daily_goal_minutes);
+    expect(input('setting-target-band')).toHaveValue(String(snapshot.target_band));
+  });
   return ctx;
 }
 
