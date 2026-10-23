@@ -44,7 +44,7 @@ export function Stat({
 
   return (
     <div className={cx('flex flex-col gap-1', className)}>
-      <span className={cx('text-xs', hero ? 'text-hero-ink/70' : 'text-ink-muted')}>{label}</span>
+      <span className={cx('text-xs', hero ? 'text-hero-ink-muted' : 'text-ink-muted')}>{label}</span>
       <span className="flex items-baseline gap-1">
         <span
           style={color}
@@ -58,11 +58,11 @@ export function Stat({
           {value}
         </span>
         {unit != null ? (
-          <span className={cx('text-xs', hero ? 'text-hero-ink/70' : 'text-ink-secondary')}>{unit}</span>
+          <span className={cx('text-xs', hero ? 'text-hero-ink-muted' : 'text-ink-secondary')}>{unit}</span>
         ) : null}
       </span>
       {hint != null ? (
-        <span className={cx('text-xs', hero ? 'text-hero-ink/70' : 'text-ink-secondary')}>{hint}</span>
+        <span className={cx('text-xs', hero ? 'text-hero-ink-muted' : 'text-ink-secondary')}>{hint}</span>
       ) : null}
     </div>
   );

@@ -17,6 +17,7 @@ import type {
   ProgressSummary,
   Settings,
   TrendPoint,
+  VocabNote,
 } from '../../types/ielts';
 import { envelope, fail } from '../shared/testKit';
 
@@ -96,6 +97,12 @@ export const REPORT_ANALYTICS: Analytics = {
     { question_type: 'gap_fill', correct: 18, total: 20, accuracy: 0.9 },
     { question_type: 'multiple_choice', correct: 7, total: 15, accuracy: 0.4667 },
   ],
+  // 与上面同源的另一种切法（听力做了 gap_fill、阅读做了 multiple_choice）：
+  // 两处的 correct/total 合计必须相等，否则分科磁贴与题型表会互相打脸。
+  by_module: [
+    { module: 'listening', correct: 18, total: 20, accuracy: 0.9 },
+    { module: 'reading', correct: 7, total: 15, accuracy: 0.4667 },
+  ],
   by_error_type: [
     { error_type: 'spelling', count: 4, latest_quote: '环境写成 environment' },
     { error_type: 'grammar', count: 2, latest_quote: 'He go to school every day.' },
@@ -108,6 +115,7 @@ export const REPORT_ANALYTICS: Analytics = {
 
 export const EMPTY_ANALYTICS: Analytics = {
   by_question_type: [],
+  by_module: [],
   by_error_type: [],
   minutes_by_day: [],
 };
@@ -235,6 +243,27 @@ export const ALL_DETAILS: Record<string, AttemptDetail> = {
   'at-lc-1': LISTENING_DETAIL,
 };
 
+/** `progressTrend()` 不带 module 时的综合走势（后端 `composite_trend`：四科按日均值）。 */
+export const REPORT_COMPOSITE: TrendPoint[] = [
+  { date: '2026-09-20', band: 5.5 },
+  { date: '2026-10-04', band: 6 },
+  { date: '2026-10-16', band: 6 },
+];
+
+export const EMPTY_COMPOSITE: TrendPoint[] = [];
+
+/**
+ * 生词本 fixture：`created_at` 用相对「今天」的偏移，否则「近 7 天新增」这条派生
+ * 会在跨天后随机翻脸。
+ */
+const daysAgo = (n: number): string => new Date(Date.now() - n * 86_400_000).toISOString();
+
+export const REPORT_VOCAB: VocabNote[] = [
+  { word: 'environment', context: 'The environment programme…', source_module: 'listening', source_ref: 'ls_1', note_zh: '环境', tags: [], created_at: daysAgo(2) },
+  { word: 'rewarding', context: 'a rewarding experience', source_module: 'speaking', source_ref: 'sp_1', note_zh: '有收获的', tags: [], created_at: daysAgo(1) },
+  { word: 'however', context: 'however, …', source_module: 'writing', source_ref: 'wr_1', note_zh: '然而', tags: [], created_at: daysAgo(30) },
+];
+
 // ============================================================
 // spies + handler 工厂
 // ============================================================
@@ -245,6 +274,7 @@ export interface ReportSpies {
   attemptsQueries: Array<{ module: string | null; limit: string | null; offset: string | null }>;
   trendQueries: string[];
   detailFetches: string[];
+  vocabCalls: number;
   summaryCalls: number;
   settingsCalls: number;
 }
@@ -256,6 +286,7 @@ export function createReportSpies(): ReportSpies {
     attemptsQueries: [],
     trendQueries: [],
     detailFetches: [],
+    vocabCalls: 0,
     summaryCalls: 0,
     settingsCalls: 0,
   };
@@ -265,7 +296,10 @@ export interface ReportFixtures {
   summary?: ProgressSummary;
   plan?: PlanTodayResult;
   trends?: Partial<Record<Module, TrendPoint[]>>;
+  /** 综合走势（`GET /progress/trend` 不带 module）；缺省用 `REPORT_COMPOSITE`。 */
+  composite?: TrendPoint[];
   analytics?: Analytics;
+  vocab?: VocabNote[];
   settings?: Settings;
   attempts?: AttemptSummary[];
   attemptsTotal?: number;
@@ -282,7 +316,9 @@ export function reportHandlers(spies: ReportSpies, fixtures: ReportFixtures = {}
   const summary = fixtures.summary ?? REPORT_SUMMARY;
   const plan = fixtures.plan ?? REPORT_PLAN;
   const trends = fixtures.trends ?? REPORT_TRENDS;
+  const composite = fixtures.composite ?? REPORT_COMPOSITE;
   const analytics = fixtures.analytics ?? REPORT_ANALYTICS;
+  const vocab = fixtures.vocab ?? REPORT_VOCAB;
   const settings = fixtures.settings ?? REPORT_SETTINGS;
   const attempts = fixtures.attempts ?? REPORT_ATTEMPTS;
   const details = fixtures.details ?? ALL_DETAILS;
@@ -314,8 +350,13 @@ export function reportHandlers(spies: ReportSpies, fixtures: ReportFixtures = {}
       const url = new URL(request.url);
       const module = url.searchParams.get('module');
       spies.trendQueries.push(module ?? '');
-      const points = module ? (trends[module as Module] ?? []) : [];
+      const points = module ? (trends[module as Module] ?? []) : composite;
       return envelope<{ points: TrendPoint[] }>({ points });
+    }),
+
+    http.get(`${API_BASE}/vocab`, () => {
+      spies.vocabCalls += 1;
+      return envelope({ items: vocab });
     }),
 
     http.get(`${API_BASE}/progress/analytics`, () => envelope(analytics)),

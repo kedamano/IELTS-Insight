@@ -4,15 +4,23 @@ import { WRITING_ERROR_LABEL_ZH, WRITING_ERROR_TYPES } from '../../types/ielts';
 /**
  * features/shared/errorTypes.ts —— 跨报告与错题本共用的归类文本。
  *
- * `error_type` 跨四科不收敛为枚举（契约 §10.2），只有写作 7 类有官方中文名
- * （`WRITING_ERROR_LABEL_ZH`）；其余科别原样显示后端归类字符串，不猜测翻译。
+ * `error_type` 跨四科不收敛为枚举（契约 §10.2）：写作 7 类有官方中文名
+ * （`WRITING_ERROR_LABEL_ZH`），听力/阅读用的是 `answer_norm` 的 reason 闭集（下面 4 个）；
+ * 两者都不在列表里的字符串一律原样显示，不猜测翻译。
  */
+const OBJECTIVE_ERROR_LABEL_ZH: Record<string, string> = {
+  wrong: '答案不正确',
+  unanswered: '未作答',
+  spelling_variant_rejected: '拼写被判不一致',
+  over_word_limit: '超出字数限制',
+};
+
 export function errorTypeLabel(errorType: string | null | undefined): string {
   if (!errorType) return '未分类';
   if ((WRITING_ERROR_TYPES as readonly string[]).includes(errorType)) {
     return WRITING_ERROR_LABEL_ZH[errorType as keyof typeof WRITING_ERROR_LABEL_ZH];
   }
-  return errorType;
+  return OBJECTIVE_ERROR_LABEL_ZH[errorType] ?? errorType;
 }
 
 /**

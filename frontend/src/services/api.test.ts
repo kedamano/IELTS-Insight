@@ -676,7 +676,7 @@ describe('记录、进度与计划', () => {
     expect(trendUrl.searchParams.get('module')).toBe('listening');
     expect(trendUrl.searchParams.get('days')).toBe('30');
 
-    mockOnce('get', '/progress/analytics', { by_question_type: [], by_error_type: [], minutes_by_day: [] });
+    mockOnce('get', '/progress/analytics', { by_question_type: [], by_module: [], by_error_type: [], minutes_by_day: [] });
     await progressAnalytics({ weeks: 8 });
     expect(new URL(last().url).searchParams.get('weeks')).toBe('8');
   });

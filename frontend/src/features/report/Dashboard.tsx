@@ -77,11 +77,11 @@ export function Dashboard({ className }: DashboardProps) {
         />
         <div className="relative flex flex-wrap items-start gap-x-9 gap-y-4">
           <div className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-xs font-medium tracking-[0.14em] text-hero-ink/70">目标 Band</span>
+            <span className="text-xs font-medium tracking-[0.14em] text-hero-ink-muted">目标 Band</span>
             <span className="font-code text-[46px] leading-none">
               {data ? formatBand(data.target_band) : '—'}
             </span>
-            <span className="text-xs text-hero-ink/70">
+            <span className="text-xs text-hero-ink-muted">
               {data
                 ? `最近练习 ${formatDateTime(data.last_practice_at)} · 共 ${safeNumber(data.attempts_total)} 次`
                 : summary.loading

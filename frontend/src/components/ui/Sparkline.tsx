@@ -6,7 +6,7 @@ export type SparklineProps = {
   points: ReadonlyArray<number>;
   width?: number;
   height?: number;
-  tone?: Tone | 'accent';
+  tone?: Tone | 'accent' | 'inherit';
   /** 默认自动取 [min,max]；band 趋势建议传 [0,9] */
   domain?: readonly [number, number];
   ariaLabel?: string;
@@ -24,7 +24,8 @@ export function Sparkline({
   className,
 }: SparklineProps) {
   const clean = points.filter((p) => Number.isFinite(p));
-  const stroke = tone === 'accent' ? 'var(--accent)' : TONE_VAR[tone];
+  // `inherit` 走 currentColor：hero 面上 `var(--accent)` 的靛蓝压在同色渐变里几乎看不见
+  const stroke = tone === 'accent' ? 'var(--accent)' : tone === 'inherit' ? 'currentColor' : TONE_VAR[tone];
 
   if (clean.length === 0) {
     return (

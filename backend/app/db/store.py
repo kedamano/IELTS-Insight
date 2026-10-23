@@ -26,6 +26,8 @@ from app.config import settings as _cfg
 SCHEMA_PATH = Path(__file__).resolve().parent / "schema.sql"
 
 MODULES = ("speaking", "listening", "reading", "writing")
+# 客观题两科：只有它们有 `attempt_items` 逐题对错，因此也只有它们能算「分科正确率」。
+OBJECTIVE_MODULES = ("listening", "reading")
 
 # 旧库指纹（剧本跟读时代的表）与新库指纹，供 migrate 判断
 LEGACY_MARKER_TABLE = "scenes"
@@ -849,6 +851,49 @@ def question_type_accuracy(weeks: int = 8) -> list[dict[str, Any]]:
         out.append(
             {
                 "question_type": qt,
+                "correct": correct,
+                "total": total,
+                "accuracy": round(correct / total, 4) if total else 0.0,
+            }
+        )
+    return out
+
+
+def module_accuracy(weeks: int = 8) -> list[dict[str, Any]]:
+    """按科目（听力/阅读）的正确率，契约 §1 行 28 的 `by_module`。
+
+    与 `question_type_accuracy` **同源同过滤**（都取 `question_type` 非空的 `attempt_items` 行），
+    所以两处的题量必须相等 —— 报告屏的分科磁贴和题型表因此不会互相打脸。
+    口语/写作没有逐题对错，不会出现在结果里（不是 0%，是不显示）。
+    """
+    cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(weeks=max(1, weeks))
+    conn = connect()
+    try:
+        rows = conn.execute(
+            "SELECT a.module AS module, i.correct AS correct "
+            "FROM attempt_items i JOIN attempts a ON a.id = i.attempt_id "
+            "WHERE a.created_at >= ? AND i.question_type IS NOT NULL",
+            (cutoff.isoformat(),),
+        ).fetchall()
+    finally:
+        conn.close()
+    acc: dict[str, dict[str, int]] = {}
+    for row in rows:
+        if row["module"] not in OBJECTIVE_MODULES:
+            continue
+        bucket = acc.setdefault(row["module"], {"correct": 0, "total": 0})
+        bucket["total"] += 1
+        if row["correct"]:
+            bucket["correct"] += 1
+    out = []
+    for module in OBJECTIVE_MODULES:
+        if module not in acc:
+            continue
+        total = acc[module]["total"]
+        correct = acc[module]["correct"]
+        out.append(
+            {
+                "module": module,
                 "correct": correct,
                 "total": total,
                 "accuracy": round(correct / total, 4) if total else 0.0,

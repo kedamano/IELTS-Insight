@@ -34,30 +34,32 @@
 }
 
 :root {
-  /* ---------- 面与墨（浅色 = 方向 A 晨读）---------- */
+  /* ---------- 面与墨（浅色 = 靛蓝 Bento）---------- */
   --paper: #ffffff;
   /* 画布比卡面深一档，否则白卡贴在白底上等于没有层次 */
-  --paper-sunken: #f1f0ea;
+  --paper-sunken: #f4f4f7;
   --paper-raised: #ffffff;
   --panel-backdrop: rgba(255, 255, 255, 0.82);
 
-  --ink: #14181d;
-  --ink-secondary: #4b5560;
-  /* 4.7:1 —— 画布底色是 --paper-sunken 而不是白卡，muted 文字大多落在那里，
-   * 原来的 #6a7280 在 sunken 上只有 4.25:1，正文级小字不达 AA。 */
-  --ink-muted: #636b78;
-  --rule: rgba(20, 24, 29, 0.1);
+  --ink: #171725;
+  --ink-secondary: #4e4e63;
+  /* 5.1:1 —— muted 文字大多落在冷画布 --paper-sunken 而不是白卡上，
+   * 样机那档 #75758B 在 #F4F4F7 上只有 4.09:1，正文级小字不达 AA。 */
+  --ink-muted: #666678;
+  --rule: rgba(23, 23, 37, 0.1);
 
-  /* 主色：墨绿青（替换原学院蓝 #1f4e79 —— 后者偏公文感） */
-  --accent: #0f6e63;
-  --accent-soft: #e6f2ef;
-  --accent-strong: #0b5a51;
+  /* 主色：靛蓝（替换原墨绿青 #0F6E63 —— 换色的代价是「晨读暖纸」这套身份整体让位给冷灰画布） */
+  --accent: #4b3ae0;
+  --accent-soft: #efefff;
+  --accent-strong: #3a2cb3;
   /* 按钮前景仍写 `text-paper`：浅色下是白、深色下是深墨，两套都过 AA */
 
-  /* 琥珀强调：只用于进度、连续天数、图表高亮等**非文字**元素（对比度不足 4.5:1） */
-  --highlight: #e8a33d;
-  --highlight-soft: #fdf1df;
-  --highlight-ink: #8a5a12; /* 需要把琥珀当文字色时用这个（AA 达标） */
+  /* 琥珀强调：--highlight 只用于**非文字**图形（进度条、色块）。
+   * 从样机的 #E8A33D 提到 #C97A16 是为了过 WCAG 1.4.11 的 3:1（画布 3.05 / 白卡 3.34）；
+   * 核对过全站组件不消费裸 `--highlight`，所以这次提色没有连带影响。 */
+  --highlight: #c97a16;
+  --highlight-soft: #fff3dc;
+  --highlight-ink: #4a3308; /* 需要把琥珀当文字色时用这个（AA 达标） */
 
   /* band 语义色：≥7 / 5.5–6.5 / ≤5。这些值同时用于文字与色块，
    * 因此按「最坏落点 = --paper-sunken」取 AA 达标的暗一档，而不是只对白卡调。 */
@@ -66,29 +68,40 @@
   --band-poor: #b02f26;
 
   /* 图表与骨架：与 --rule 分开，否则深色下「分隔线」与「网格线/骨架」需要的强度完全不同 */
-  --chart-grid: rgba(20, 24, 29, 0.16);
-  --chart-area: rgba(15, 110, 99, 0.12);
-  --skeleton-base: rgba(20, 24, 29, 0.07);
-  --skeleton-shine: rgba(20, 24, 29, 0.02);
-  /* 练习时长热力 5 档（第 0 档 = 纸面凹陷，1–4 档主色递增） */
-  --heat-0: #f1f0ea;
-  --heat-1: #b9d0c8;
-  --heat-2: #8bb6ad;
-  --heat-3: #53958c;
-  --heat-4: #0f6e63;
+  --chart-grid: rgba(23, 23, 37, 0.16);
+  --chart-area: rgba(75, 58, 224, 0.12);
+  --skeleton-base: rgba(23, 23, 37, 0.07);
+  --skeleton-shine: rgba(23, 23, 37, 0.02);
+  /* 练习时长热力 5 档（第 0 档 = 画布凹陷，1–4 档主色递增）。
+   * 每档单独给值而不是透明度递增：相邻档至少 1.3:1 才看得出「深浅」两档以上。 */
+  --heat-0: #f4f4f7;
+  --heat-1: #d9d5f2;
+  --heat-2: #b2a7ea;
+  --heat-3: #7d68e0;
+  --heat-4: #4b3ae0;
 
   /* hero 卡：唯一允许渐变的面 */
-  --hero-a: #0f6e63;
-  --hero-b: #134e6b;
-  --hero-ink: #f4fbf9;
-  --canvas-glow-a: rgba(15, 110, 99, 0.13);
-  --canvas-glow-b: rgba(232, 163, 61, 0.16);
+  --hero-a: #5a47ee;
+  --hero-b: #3e2dbb;
+  --hero-ink: #ffffff;
+  /* hero 上的次要文字必须是**实色**而不是 `--hero-ink` 的透明度档：
+   * 白字要过 4.5:1 得 α≥0.83，那样和主文字没差别；#E8E5FF 在渐变 A 端 4.78:1。 */
+  --hero-ink-muted: #e8e5ff;
+  /* 磁贴深色面（§8.1）：浅色下做「近黑墨面 + 亮墨」，与琥珀暖面形成硬对比。
+   * 数值对照过 AA：ink 15.73:1、muted 8.03:1。 */
+  --tile-solid: #171725;
+  --tile-solid-ink: #f1f1f6;
+  --tile-solid-muted: #a8aec4;
+  --canvas-glow-a: rgba(75, 58, 224, 0.13);
+  --canvas-glow-b: rgba(201, 122, 22, 0.16);
 
   --radius: 14px;
   --radius-control: 10px;
-  --shadow-1: 0 1px 2px rgba(20, 24, 29, 0.05), 0 2px 6px rgba(20, 24, 29, 0.04);
-  --shadow-2: 0 1px 2px rgba(20, 24, 29, 0.06), 0 10px 26px rgba(20, 24, 29, 0.07);
-  --shadow-3: 0 2px 4px rgba(20, 24, 29, 0.06), 0 18px 44px rgba(15, 110, 99, 0.14);
+  /* 磁贴比卡面略圆：读起来是「数据块」而不是「卡片」 */
+  --radius-tile: 16px;
+  --shadow-1: 0 1px 2px rgba(23, 23, 37, 0.05), 0 2px 6px rgba(23, 23, 37, 0.04);
+  --shadow-2: 0 1px 2px rgba(23, 23, 37, 0.06), 0 10px 26px rgba(23, 23, 37, 0.07);
+  --shadow-3: 0 2px 4px rgba(23, 23, 37, 0.06), 0 18px 44px rgba(75, 58, 224, 0.14);
 
   --font-display: "Sora", "Segoe UI Variable Display", "Microsoft YaHei", sans-serif;
   --font-text: "Manrope", "Segoe UI Variable Text", "Microsoft YaHei", system-ui, sans-serif;
@@ -144,11 +157,22 @@
   --heat-3: #7a6cc9;
   --heat-4: #a99cff;
 
-  --hero-a: rgba(169, 156, 255, 0.34);
-  --hero-b: rgba(52, 216, 192, 0.18);
+  /* 深色 hero 用**不透明**靛蓝而不是透明档：透明叠在 #1b2230 卡面上会糊成灰紫，
+   * 实拍里两块大磁贴（hero / solid）明度几乎相同，「大色块」的层次就没了。
+   * #4b3ae0 → #2c2199：主墨 6.00 / 10.02，次要墨 #d8d4fa 4.94 / 8.25（都 ≥ 4.5）。
+   * 注意：直接把浅色的 #5a47ee 搬过来时，次要墨只有 3.79:1，所以深色单独给一档。 */
+  --hero-a: #4b3ae0;
+  --hero-b: #2c2199;
   --hero-ink: #e8ecff;
+  --hero-ink-muted: #d8d4fa;
+  /* 深色下磁贴面要比卡面（#1b2230）亮一档，否则「solid」和卡糊在一起。
+   * #2a3444 与卡面只差 1.27:1（实拍时确认看不出是一块「墨面」），提到 #3a4a68 = 1.79:1；
+   * 亮墨沿用 --ink 与 --ink-secondary：7.50:1 / 4.94:1。 */
+  --tile-solid: #3a4a68;
+  --tile-solid-ink: #e7ecf3;
+  --tile-solid-muted: #b6c2d4;
   --canvas-glow-a: rgba(169, 156, 255, 0.2);
-  --canvas-glow-b: rgba(52, 216, 192, 0.15);
+  --canvas-glow-b: rgba(240, 178, 74, 0.15);
 
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.42), 0 12px 32px rgba(0, 0, 0, 0.4);
@@ -177,6 +201,11 @@
   --color-band-mid: var(--band-mid);
   --color-band-poor: var(--band-poor);
   --color-hero-ink: var(--hero-ink);
+  --color-hero-ink-muted: var(--hero-ink-muted);
+  /* 磁贴三块面（§8.1）：warm 面直接用现成的 --highlight-soft / --highlight-ink，不新增 */
+  --color-tile-solid: var(--tile-solid);
+  --color-tile-solid-ink: var(--tile-solid-ink);
+  --color-tile-solid-muted: var(--tile-solid-muted);
 
   --font-sans: var(--font-text);
   --font-serif: var(--font-display);
@@ -184,7 +213,9 @@
 
   --radius-card: var(--radius);
   --radius-control: var(--radius-control);
+  --radius-tile: var(--radius-tile);
   --shadow-elevated: var(--shadow-2);
+  --shadow-tile: var(--shadow-1);
 }
 
 @layer base {

@@ -52,7 +52,7 @@
 | 25 | `DELETE /attempts/{attempt_id}` | – | `{deleted: true}`（重算趋势） | 新 |
 | 26 | `GET /progress/summary` | – | `{target_band, exam_date, days_left, current: {module: band\|null}, delta_vs_previous, attempts_total, minutes_total, last_practice_at}` | 新 |
 | 27 | `GET /progress/trend?module=&days=` | `days` 缺省 90，范围 1–36600（要"整个历史"就传大值，服务端不设 3 年这种人为上限） | `{points: [{date, band}]}`，按 date 升序 | 新 |
-| 28 | `GET /progress/analytics?weeks=8` | – | `{by_question_type: [{question_type, correct, total, accuracy}], by_error_type: [{error_type, count, latest_quote}], minutes_by_day: [{date, minutes}]}` | 新 |
+| 28 | `GET /progress/analytics?weeks=8` | – | `{by_question_type: [{question_type, correct, total, accuracy}], by_module: [{module, correct, total, accuracy}], by_error_type: [{error_type, count, latest_quote}], minutes_by_day: [{date, minutes}]}` | 新 |
 | 29 | `GET /plan/today` | – | `{items: PlanTask[], generated_at}` | 新 |
 | 30 | `POST /plan/{task_id}/done` | `{done: bool}` | `{ok: true}` | 新 |
 | 31 | `GET /review/errors?module=&status=&error_type=` | – | `{items: ReviewItem[]}` | 新 |
@@ -323,34 +323,98 @@ src/services/api.ts src/types/ielts.ts
 **组件内不得出现任何字面色值**（已机器化核对：全仓 `.tsx` 无 hex/rgba 字面量）。
 主题由 `useTheme` 解析后只写 `html[data-theme]`，CSS 里不出现 `prefers-color-scheme` 分支。
 
-当前取值（浅色 = 晨读：暖纸面 + 墨绿青 + 琥珀；深色 = 夜航：石墨 + 紫青 + 琥珀）：
+当前取值（**Wave 5 换色**：浅色 = 靛蓝 Bento（冷灰画布 + 靛蓝主色 + 琥珀暖面），深色 = 夜航石墨 + 靛蓝亮档。
+原「晨读暖纸 + 墨绿青」已整体替换，两套主题的**变量名一个没改**，只动取值）：
 ```css
-/* 浅色 */ --paper:#FFFFFF; --paper-sunken:#F1F0EA; --paper-raised:#FFFFFF;
---ink:#14181D; --ink-secondary:#4B5560; --ink-muted:#636B78; --rule:rgba(20,24,29,.10);
---accent:#0F6E63; --accent-soft:#E6F2EF; --highlight:#E8A33D; --highlight-ink:#8A5A12;
+/* 浅色 */ --paper:#FFFFFF; --paper-sunken:#F4F4F7; --paper-raised:#FFFFFF;
+--ink:#171725; --ink-secondary:#4E4E63; --ink-muted:#666678; --rule:rgba(23,23,37,.10);
+--accent:#4B3AE0; --accent-soft:#EFEFFF; --accent-strong:#3A2CB3;
+--highlight:#C97A16; --highlight-soft:#FFF3DC; --highlight-ink:#4A3308;
 --band-good:#17784F; --band-mid:#8C600D; --band-poor:#B02F26;
---chart-grid:rgba(20,24,29,.16); --chart-area:rgba(15,110,99,.12); --heat-0..4:#F1F0EA→#0F6E63;
+--chart-grid:rgba(23,23,37,.16); --chart-area:rgba(75,58,224,.12); --heat-0..4:#F4F4F7→#4B3AE0;
+--hero-a:#5A47EE; --hero-b:#3E2DBB; --hero-ink:#FFFFFF; --hero-ink-muted:#E8E5FF;
+--tile-solid:#171725; --tile-solid-ink:#F1F1F6; --tile-solid-muted:#A8AEC4;   /* 磁贴面，见 §8.1 */
 /* 深色 */ --paper:#161B22; --paper-sunken:#0D1117; --paper-raised:#1B2230;
 --ink:#E7ECF3; --ink-secondary:#B6C2D4; --ink-muted:#98A4B8; --rule:rgba(255,255,255,.15);
 --accent:#A99CFF; --accent-soft:rgba(169,156,255,.16); --highlight:#F0B24A;
 --band-good:#37D39A; --band-mid:#F0B24A; --band-poor:#FF7A6B;
 --chart-grid:rgba(255,255,255,.22); --chart-area:rgba(169,156,255,.30); --heat-0..4:#262E3D→#A99CFF;
---radius:14px; --radius-control:10px; --font-display:"Sora"; --font-text:"Manrope"; --font-mono:"JetBrains Mono";
+--hero-a:#4B3AE0; --hero-b:#2C2199; --hero-ink:#E8ECFF; --hero-ink-muted:#D8D4FA;
+--tile-solid:#3A4A68; --tile-solid-ink:#E7ECF3; --tile-solid-muted:#B6C2D4;
+--radius:14px; --radius-control:10px; --radius-tile:16px; --font-display:"Sora"; --font-text:"Manrope"; --font-mono:"JetBrains Mono";
 --motion-fast:140ms; --motion-base:200ms; --motion-slow:280ms;   /* 原「≤150ms」上限让切换像硬切 */
 ```
+
+**换色不是抄样机取值，是抄了取值还要过对比度**（样机 `b-bento` 有两处按 WCAG 不达标，落地时已改）：
+次要墨色样机给 `#75758B`，落在新画布 `#F4F4F7` 上只有 **4.09:1** → 取 `#666678`（5.12:1）；
+hero 与 cool 面上的次要文字样机用 `opacity:.62`（白字 3.24:1、亮墨 7.40:1）→ 白字那侧**不能靠透明度**，
+`rgba(255,255,255,α)` 要过 4.5 得 α≥0.83，观感等于没有层级，故新增实色令牌 `--hero-ink-muted:#E8E5FF`（4.78:1）。
 
 **对比度是取值规则，不是事后调优**（WCAG AA，按「最坏落点」算：正文小字落在 `--paper-sunken` 上，
 不是落在白卡上）：
 1. 任何会被当**文字**用的 token，与其最坏落点的对比度 ≥ 4.5:1。深色 `--accent` 因此取 `#A99CFF`
    而不是 `#8B7CF6` —— 后者在 `bg-accent-soft` 上只有 4.14:1（导航选中项、筛选 chip 就是这个组合）；
-   浅色 `--ink-muted` 取 `#636B78`（4.71:1，原 `#6A7280` 在 sunken 上 4.25:1）、`--band-mid` 取 `#8C600D`
-   （4.85:1，原 `#9A6A10` 4.14:1）。琥珀 `--highlight` 永远不当文字用，要当文字用 `--highlight-ink`。
+   浅色 `--ink-muted` 取 `#666678`（换色后最坏落点是冷画布 `#F4F4F7`，5.12:1；样机的 `#75758B` 只有 4.09:1）、
+   `--band-mid` 取 `#8C600D`（新画布上 5.04:1）。琥珀 `--highlight` 永远不当文字用，要当文字用 `--highlight-ink`。
 2. **图表网格线与分隔线分家**：`--rule` 是 1px 发丝线（深色 1.58:1 足够），SVG 网格/坐标轴另用
    `--chart-grid`（深色 1.91:1）。用 `--rule` 画网格的话，深色下 1.3:1 直接看不见。
 3. **色阶不能只靠透明度**：`--heat-0..4` 每档单独给值。深色下「主色 + 0.3 透明」只有 1.56:1，
    热力图前两档会糊成一片；空档反过来要比卡面**亮**（`#262E3D`），因为格子坐在卡上而不是画布上。
 4. 骨架屏用 `--skeleton-base/--skeleton-shine`（深色差 1.3:1 的可见闪光），
    不要拿 `--rule` 与 `--paper-raised` 凑 —— 深色下两者只差 1.2:1，看起来像一块死灰。
+
+### 8.1 磁贴（Bento tile）面契约 —— 报告屏摘要区（`src/components/ui/Tile.tsx`）
+
+磁贴是**只读数据块**：小号大写标签（11px / 600 / `.04em`）+ 大号数值 + 可选一行提示 + 可选右下角内嵌图。
+数值用 `--font-display`（Sora，Tailwind 里映射成 `font-serif`）配 `tabular-nums` 与 `-0.03em` 字距，
+**不用 `--font-mono`** —— 等宽面要的是列对齐，磁贴要的是字重与气势；计时器那类才继续用 `--font-code`。
+`chart` 槽位绝对定位在右下（样机的 `.spark`），图一律用 `currentColor`（`Sparkline` 的 `tone="inherit"`、
+`MiniBars` 的 `fill="currentColor"`）：hero 面上再画 `var(--accent)` 的靛蓝等于隐形，实测压在同色渐变里读不出来。
+交互控件（按钮、chip）不进磁贴，归 `Card` 的 `actions`。四种面全部走语义 token，**新增的只有 `--tile-solid*` 三个**：
+
+| `surface` | 底色来源 | 主墨色 | 次要文字 |
+|---|---|---|---|
+| `plain` | `--paper-raised`（与 `Card` 同源） | `--ink` | `--ink-muted` |
+| `hero` | `.surface-hero`（`--hero-a`→`--hero-b`，全站唯一允许渐变的面） | `--hero-ink` | `--hero-ink-muted`（**不能用 `--hero-ink` 的透明度档**，见上） |
+| `solid` | `--tile-solid`（新） | `--tile-solid-ink`（新） | `--tile-solid-muted`（新） |
+| `warm` | `--highlight-soft`（复用琥珀软面，**不新增 token**） | `--highlight-ink`（禁止用 `--highlight` 当文字） | `--ink-secondary`（两套同令牌：浅 7.37 / 深 6.35） |
+
+`--tile-solid*` 取值理由：浅色下做**近黑墨面**（`#171725` = `--ink`）配亮墨，深色下面要比卡面亮一档才不会被
+`--paper-raised` 吃掉 —— 实拍时 `#2A3444` 与卡面只差 1.27:1，肉眼看不出那是一块墨面，故取 `#3A4A68`（与卡面 1.79:1）。
+`--radius-tile:16px` 比卡面 14px 略圆，让磁贴读起来是"块"而不是"卡"。
+
+对比度实测（半透明面按最坏落点 `--paper-raised` 合成后再算）：`solid` 浅 15.73 / 8.03、深 7.50 / 4.94；
+`warm` 浅 10.81（`--highlight-ink`）/ 7.37（`--ink-secondary`）、深 7.74 / 6.35（同 `--ink-secondary`）；
+`hero` 浅 A 端 5.88 ～ B 端 9.14（`--hero-ink-muted` A 端 4.78）、深 6.00 / 10.02（`--hero-ink-muted` A 端 4.94）；
+`plain` 沿用上面已有数值。全部 ≥ 4.5:1。
+磁贴**不带 band 色条**（色条是 `Card` 的 `tone`，叠在琥珀面上会与暖底抢注意力），值本身已经带三档语义；
+磁贴上的琥珀指示一律用 `--highlight-soft` 面本身，不再叠裸 `--highlight` 图形。
+
+~~⚠️ 已知未修项~~ **Wave 5 已修**：`--highlight` 原 `#E8A33D` 画在画布上只有 1.89:1，不达 WCAG 1.4.11 非文字 3:1。
+换色时核对全站 `.tsx` 发现**裸 `--highlight` 没有任何消费者**（组件只用 `-soft` / `-ink`），因此直接把值提到
+`#C97A16`（画布 3.05:1 / 白卡 3.34:1 / 琥珀面 3.04:1），零改动成本关掉这笔债。深色 `#F0B24A` 本来就 3:1 以上，不动。
+
+### 8.2 报告屏摘要栅格（对齐 b-bento 样机，`src/features/report/ReportPage.tsx`）
+
+6 列栅格（`grid-cols-6`，`gap:12px`，行高按内容自然撑开，不用 `grid-auto-rows` 硬钉），
+块序与跨列**必须**是样机那一套，换窄屏时按断点降级而不是改顺序：
+
+| 块 | 跨列 | 面 | 内容 |
+|---|---|---|---|
+| 综合 Band | `span 3 × 2 行` | `hero` | `当前 → 目标`，右下角内嵌 sparkline（`--trend` 的 composite 点，纯 SVG，无图表库） |
+| 练习时长 | `span 3 × 2 行` | `solid` | 累计分钟，右下角内嵌周柱状图（`minutes_by_day` 按 7 天分桶） |
+| 阅读正确率 / 听力正确率 / 生词本 | 各 `span 2` | `plain` | 前两块的分子分母来自 `analytics.by_module`（**新端点字段**）；生词本只有总数与近 7 天新增，见下方诚实条款 |
+| TOP 错误类型 | `span 3` | `warm` | 最高频 `error_type` 的中文显示名 + 出现次数 |
+| 分项 BAND | `span 3` | `plain` | 写作四维（TR/CC/LR/GRA）小格 + 达标/未达标图例 |
+
+断点：`<sm` 全部 `span 6`（单列）；`sm~lg` hero/solid/warm/分项 用 `span 6`，三块 `plain` 用 `span 2`（一行放得下）；
+`≥xl` 才是上表的完整 6 列形态。
+
+**诚实条款（覆盖样机文案）**：样机里「生词本 214 · 已掌握 96 · 待复习 41」的**掌握/复习状态后端不存在**
+（`vocab` 表只有 `word/context/source_*/note_zh/tags/created_at/phonetics_json`，见 §5），
+落地时该块提示改成 `近 7 天新增 N`；不许为了对齐样机而造字段。
+`by_module` 缺某科数据（该科近 8 周没做过客观题）时**整块不渲染**该磁贴，不显示 `—`、更不显示 0%。
+页头右上「整体 +N.N」pill 用 `progress.summary.delta_vs_previous` 四科均值的差，四科不足两科时不显示。
 
 视觉规则：纸面感、细分隔线、无金属渐变与螺丝/表盘装饰；分数用大号 `--font-mono` + 语义色条；
 图表为素色 SVG；`prefers-reduced-motion` 关闭过渡与抬升。
@@ -380,6 +444,9 @@ Wave 1 交付时 agent 提出的契约含糊点，逐条定稿。**Wave 2 所有
 - `settings.ai.key_source`：`'env' | 'settings' | 'none'`。
 - `SpeakingPrompt.audio_url`：`string | null`（离线为 null）；口语题卡另有 `bullets?: string[]`。
 - `error_type` 跨四科不收敛为枚举：类型上是 `string`，写作 7 类用 `WRITING_ERROR_TYPES` 常量表达；`review_items.error_type` 直接存该字符串。
+  前端显示名（`features/shared/errorTypes.ts`）覆盖两套已知闭集：写作 7 类 + 听力/阅读的 `answer_norm` reason
+  （`wrong` / `unanswered` / `spelling_variant_rejected` / `over_word_limit`）；**未知字符串原样显示，不猜翻译**。
+  这条是因为报告页把「最常犯的错误」提到了大标题位，露出 `wrong` 这种代码字符串就成了缺陷。
 - **`/phoneme-tip/{phoneme}` 废弃**（§1 保留行不再生效）；发音细节改由口语报告 `pronunciation_detail.problem_words[]` 承载。词条查询只有 `GET /api/vocab?word=`。
 - `/api/tts`（#39）保留；`/api/stt` 保留但只由后端内部与口语 turn 复用，前端屏不直接调。
 - `score_service.py` 的 WER 规则分只作为 `pronunciation_detail.score_0_100` 的辅助值，用户可见主分数一律 0–9 band（AC-G5）。

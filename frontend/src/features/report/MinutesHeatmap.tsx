@@ -26,8 +26,8 @@ const LEVEL_STYLE: ReadonlyArray<{ label: string; backgroundColor: string }> = L
   backgroundColor: LEVEL_VARS[index],
 }));
 
-/** 本地日历日 → 周一为一周起点（不引入日期库，纯 Date 运算）。 */
-function startOfWeek(day: Date): Date {
+/** 本地日历日 → 周一为一周起点（不引入日期库，纯 Date 运算）。报告屏的周柱状图共用这个周界。 */
+export function startOfWeek(day: Date): Date {
   const copy = new Date(day.getFullYear(), day.getMonth(), day.getDate());
   const weekday = (copy.getDay() + 6) % 7; // 周一=0
   copy.setDate(copy.getDate() - weekday);

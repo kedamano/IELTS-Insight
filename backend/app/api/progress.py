@@ -78,6 +78,8 @@ def progress_analytics(weeks: int = Query(8, ge=1, le=52)):
     return ok(
         {
             "by_question_type": store.question_type_accuracy(weeks),
+            # 分科正确率：报告屏的「阅读 78% / 听力 82%」两块磁贴用它（题型表推不出科目）
+            "by_module": store.module_accuracy(weeks),
             "by_error_type": store.error_type_stats(weeks),
             "minutes_by_day": store.minutes_by_day(weeks),
         }

@@ -970,6 +970,17 @@ export interface AccuracyByQuestionType {
 }
 
 /**
+ * §1 #28 的 `by_module`：只有客观题两科（听力/阅读）有逐题对错，
+ * 所以这里刻意不用 `Module` 而是它的一个子集类型；缺某科就是数组里没有该项，不是 0。
+ */
+export interface AccuracyByModule {
+  module: 'listening' | 'reading';
+  correct: number;
+  total: number;
+  accuracy: number;
+}
+
+/**
  * 错题/错误的类型。写作有固定 7 类（FR-W4）；听力/阅读/口语由后端归类，
  * 因此这里放宽为 string（见 `WRITING_ERROR_TYPES` 常量）。
  */
@@ -988,6 +999,7 @@ export interface MinutesByDay {
 
 export interface Analytics {
   by_question_type: AccuracyByQuestionType[];
+  by_module: AccuracyByModule[];
   by_error_type: ErrorTypeStat[];
   minutes_by_day: MinutesByDay[];
 }

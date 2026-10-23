@@ -125,9 +125,28 @@ def test_FR_P3_analytics_的_quote_来自考生原文(client, envelope, clean_st
         assert quote is None or (isinstance(quote, str) and quote.strip()), f"latest_quote 异常：{row!r}"
 
 
+def test_FR_P3_analytics_按科目拆分正确率(client, envelope, clean_state):
+    """契约 §1 行 28 的 `by_module`：报告屏要分科显示「阅读 78% / 听力 82%」，
+    而 `by_question_type` 只有题型，两者不能互相推导 —— 缺这个字段前端就只能显示合计。"""
+    data = envelope(client.get("/api/progress/analytics", params={"weeks": 52}))
+    assert "by_module" in data, f"analytics 缺 by_module：{sorted(data)}"
+    rows = data["by_module"]
+    assert rows, "seed 里有听力/阅读客观题，分科统计不该为空"
+    for row in rows:
+        assert {"module", "correct", "total", "accuracy"} <= set(row), f"分科统计字段不全：{row!r}"
+        assert row["module"] in {"listening", "reading"}, f"只有客观题两科能算正确率：{row!r}"
+        assert 0 < row["total"] and row["correct"] <= row["total"], f"分子分母异常：{row!r}"
+        assert 0.0 <= float(row["accuracy"]) <= 1.0, f"accuracy 应在 0–1（不是百分数）：{row!r}"
+        assert abs(float(row["accuracy"]) - row["correct"] / row["total"]) < 1e-3, f"accuracy 与分子分母不符：{row!r}"
+    # 与题型统计同源（都取 attempt_items 里 question_type 非空的行），两处的题量必须对得上
+    assert sum(r["total"] for r in rows) == sum(r["total"] for r in data["by_question_type"]), (
+        f"分科题量与分题型题量不一致：module={rows!r} vs question_type={data['by_question_type']!r}"
+    )
+
+
 def test_AC_P3_analytics_空库返回空数组(client, envelope):
     data = envelope(client.get("/api/progress/analytics", params={"weeks": 4}))
-    for key in ("by_question_type", "by_error_type", "minutes_by_day"):
+    for key in ("by_question_type", "by_module", "by_error_type", "minutes_by_day"):
         assert isinstance(data[key], list) and data[key] == [], f"空态 {key} 应为 []：{data[key]!r}"
 
 

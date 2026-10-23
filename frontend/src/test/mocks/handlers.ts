@@ -596,6 +596,10 @@ export const progressHandlers = [
         { question_type: 'multiple_choice', correct: 7, total: 10, accuracy: 0.7 },
       ],
       by_error_type: [{ error_type: 'grammar', count: 4, latest_quote: 'people is' }],
+      by_module: [
+        { module: 'listening', correct: 9, total: 10, accuracy: 0.9 },
+        { module: 'reading', correct: 7, total: 10, accuracy: 0.7 },
+      ],
       minutes_by_day: [{ date: '2026-10-18', minutes: 45 }],
     };
     return ok(analytics);
