@@ -10,7 +10,7 @@
  * 页面上也没有任何「升级 / 解锁 / 专业版」字样 —— 这是个人本地应用，全部功能默认开放。
  */
 import { useCallback, useEffect, useState } from 'react';
-import { Badge, Button, Card, ScoreBand, Toast, cx } from '../../components/ui';
+import { Badge, Button, Card, ScoreBand, Tile, Toast, cx } from '../../components/ui';
 import { useApi } from '../../hooks/useApi';
 import { useTheme } from '../../hooks/useTheme';
 import { getSettings, patchSettings } from '../../services/api';
@@ -23,6 +23,7 @@ import {
   type SettingsPatch,
   type ThemeMode,
 } from '../../types/ielts';
+import { formatDateOnly } from '../report/format';
 import { AiPanel, type AiPatch } from './AiPanel';
 import { AudioDeviceField } from './AudioDeviceField';
 import { ChoiceField, DraftField, ToggleField, numberRule, type ChoiceFieldProps } from './fields';
@@ -125,6 +126,7 @@ export function SettingsPage({ className }: SettingsPageProps) {
   const speedRule = numberRule({ label: '语速', min: 0.5, max: 1.5 });
   const goalRule = numberRule({ label: '每日目标分钟', min: 5, max: 720, integer: true });
   const voiceRule = (raw: string) => (raw.trim() ? null : '音色名不能为空');
+  const ai = settings.ai ?? AI_PLACEHOLDER;
 
   return (
     <div className={cx('flex flex-col gap-3', className)}>
@@ -154,6 +156,34 @@ export function SettingsPage({ className }: SettingsPageProps) {
           </p>
         )}
       </Card>
+
+      {/* 磁贴条（契约 §8.3）：条上只有后端回读值。「未保存 / 已保存」是 DraftField 的字段级反馈，
+          磁贴去抢这套文案就会出现两份互相过期的状态，所以这里一律不写保存态。
+          目标 Band 也不上条——字段旁边那块 ScoreBand 已经在读同一个值了。 */}
+      <dl aria-label="设置关键指标" className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        <Tile
+          metric="settings.daily-goal"
+          label="每日目标"
+          value={String(settings.daily_goal_minutes)}
+          unit="分钟"
+          hint="决定今日计划量与热力图分档"
+        />
+        <Tile
+          metric="settings.exam"
+          label="考试日期"
+          value={settings.exam_date ? formatDateOnly(settings.exam_date) : '未设置'}
+          hint={settings.exam_date ? '概览页的倒计时按这一天算' : '填好后概览页才有倒计时'}
+        />
+        {ai.configured ? null : (
+          <Tile
+            metric="settings.ai"
+            surface="warm"
+            label="AI 评分"
+            value="未填写"
+            hint="口语与写作改用本地近似评分"
+          />
+        )}
+      </dl>
 
       <Card title="目标与节奏">
         <div className="flex flex-col gap-3.5">
@@ -298,7 +328,7 @@ export function SettingsPage({ className }: SettingsPageProps) {
         </div>
       </Card>
 
-      <AiPanel ai={settings.ai ?? AI_PLACEHOLDER} onPatch={(ai) => patch({ ai })} onKeyChanged={reload} />
+      <AiPanel ai={ai} onPatch={(aiPatch) => patch({ ai: aiPatch })} onKeyChanged={reload} />
     </div>
   );
 }

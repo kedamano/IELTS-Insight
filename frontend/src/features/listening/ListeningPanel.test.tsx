@@ -77,6 +77,22 @@ async function openSet(titleZh: string = listeningMeta.title_zh) {
   await screen.findByRole('region', { name: '答题' });
 }
 
+/** 顶部磁贴条容器（契约 §8.3）：aria-label 是条的身份。 */
+function strip(): Promise<HTMLElement> {
+  return screen.findByLabelText('听力关键指标');
+}
+
+/**
+ * 磁贴条（契约 §8.3）只按 `data-metric` 取块：class 与文案都会随设计改动，
+ * 磁贴身份不会（与 report/Dashboard.test.tsx 同一套选择器）。
+ */
+async function metric(name: string): Promise<HTMLElement> {
+  const grid = await strip();
+  const node = grid.querySelector<HTMLElement>(`[data-metric="${name}"]`);
+  if (!node) throw new Error(`找不到 data-metric="${name}" 的磁贴`);
+  return node;
+}
+
 afterEach(() => {
   cleanup();
   server.resetHandlers();
@@ -167,7 +183,10 @@ describe('AC-L1b 音频不可用的可见降级', () => {
     await openSet();
 
     expect(await screen.findByText(AUDIO_UNAVAILABLE_TEXT)).toBeInTheDocument();
-    expect(screen.getByText('音频不可用')).toBeInTheDocument();
+    // 「音频不可用」现在同时是卡头 Badge 与 §8.3 暖面磁贴的标签，整页 getByText 会两处命中；
+    // 断言收紧到卡头所在的练习卡（意图不变：Badge 仍然给出降级状态）。
+    const headerCard = screen.getByRole('region', { name: listeningMeta.title_zh });
+    expect(within(headerCard).getByText('音频不可用')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: '听力音频' })).toBeInTheDocument();
     expect(audioElement()).toBeNull();
     expect(fieldNode('q1')).toBeInTheDocument();
@@ -175,7 +194,10 @@ describe('AC-L1b 音频不可用的可见降级', () => {
     fireEvent.click(screen.getAllByRole('button', { name: TRANSCRIPT_ENTRY_TEXT })[0]);
     expect(await screen.findByRole('region', { name: '原文精读' })).toBeInTheDocument();
     expect(screen.getByText(new RegExp(TRANSCRIPT_MARK))).toBeInTheDocument();
-    expect(screen.getByText(/已按 AC-L1b 进入原文精读模式/)).toBeInTheDocument();
+    // 同上：磁贴 hint 也含「已按 AC-L1b」，收紧到精读卡（意图不变：精读视图说明降级生效）。
+    expect(
+      within(screen.getByRole('region', { name: '原文精读' })).getByText(/已按 AC-L1b 进入原文精读模式/),
+    ).toBeInTheDocument();
 
     answerEverything();
     fireEvent.click(screen.getByRole('button', { name: '提交批改' }));
@@ -332,5 +354,86 @@ describe('FR-W2 草稿恢复', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '退出' }));
     expect(await screen.findByText('选择听力套题')).toBeInTheDocument();
+  });
+});
+
+describe('听力磁贴条（契约 §8.3：只在作答阶段出现）', () => {
+  it('作答屏给已答/用时/可重听三块读数，音频就绪时不渲染降级块', async () => {
+    const ctx = createListeningHandlers();
+    server.use(...ctx.handlers);
+    render(<ListeningPanel ready />);
+    await openSet();
+
+    const answered = await metric('listening.answered');
+    expect(within(answered).getByText('已作答')).toBeInTheDocument();
+    expect(within(answered).getByText('0/20')).toBeInTheDocument();
+
+    const replay = await metric('listening.replay');
+    expect(within(replay).getByText('4')).toBeInTheDocument();
+    expect(within(replay).getByText('句')).toBeInTheDocument();
+
+    // 时钟读数只在磁贴里出现一次：卡头那个「已用时 0:00」span 已按规则 4 删掉
+    // （磁贴的 dt 是纯标签「已用时」，不带数字，所以这里匹配「标签 + 读数」连排的那个旧形态）
+    expect(within(await metric('listening.elapsed')).getByText(/^\d+:\d{2}$/)).toBeInTheDocument();
+    expect(screen.queryByText(/已用时\s+\d/)).not.toBeInTheDocument();
+
+    // 分子只算 trim 后非空的题
+    fireEvent.change(fieldNode('q1'), { target: { value: listeningAnswerKey.q1 } });
+    expect(await within(answered).findByText('1/20')).toBeInTheDocument();
+    fireEvent.change(fieldNode('q1'), { target: { value: '   ' } });
+    expect(await within(answered).findByText('0/20')).toBeInTheDocument();
+
+    const grid = await strip();
+    expect(grid.querySelector('[data-metric="listening.degraded"]')).toBeNull();
+    expect(grid.querySelectorAll('[data-surface="warm"]')).toHaveLength(0);
+    expect(grid.querySelectorAll('[data-surface="hero"], [data-surface="solid"]')).toHaveLength(0);
+  });
+
+  it('音频 503 时唯一的暖面块是「音频不可用」，提示给出下一步（§8.3 规则 1）', async () => {
+    const ctx = createListeningHandlers({ audio: 'unavailable' });
+    server.use(...ctx.handlers);
+    render(<ListeningPanel ready />);
+    await openSet();
+
+    const degraded = await metric('listening.degraded');
+    expect(degraded).toHaveAttribute('data-surface', 'warm');
+    expect(within(degraded).getByText('音频不可用')).toBeInTheDocument();
+    expect(within(degraded).getByText('已按 AC-L1b 进入原文精读模式')).toBeInTheDocument();
+
+    const grid = await strip();
+    expect(grid.querySelectorAll('[data-surface="warm"]')).toHaveLength(1);
+    expect(grid.querySelectorAll('[data-surface="hero"], [data-surface="solid"]')).toHaveLength(0);
+    // 就绪/加载中都不该有块：没有行动价值的读数不进磁贴
+    expect(grid.textContent).not.toMatch(/加载中/);
+  });
+
+  it('题面为空时仍渲染已答/用时两块（读数 0/0 是真的），没有句子就不摆重听块', async () => {
+    const ctx = createListeningHandlers({ set: { ...listeningSetDoc, questions: [], sentences: [] } });
+    server.use(...ctx.handlers);
+    render(<ListeningPanel ready />);
+    await openSet();
+
+    const answered = await metric('listening.answered');
+    expect(within(answered).getByText('0/0')).toBeInTheDocument();
+    await metric('listening.elapsed');
+
+    const grid = await strip();
+    expect(grid.querySelector('[data-metric="listening.replay"]')).toBeNull();
+    expect(grid.querySelectorAll('[data-surface="warm"]')).toHaveLength(0);
+  });
+
+  it('选题与批改阶段不插磁贴条（答题区版式一律不动）', async () => {
+    const ctx = createListeningHandlers();
+    server.use(...ctx.handlers);
+    render(<ListeningPanel ready />);
+
+    expect(await screen.findByText(listeningMeta.title_zh)).toBeInTheDocument();
+    expect(screen.queryByLabelText('听力关键指标')).not.toBeInTheDocument();
+
+    await openSet();
+    answerEverything();
+    fireEvent.click(screen.getByRole('button', { name: '提交批改' }));
+    expect(await screen.findByText('听力批改结果')).toBeInTheDocument();
+    expect(screen.queryByLabelText('听力关键指标')).not.toBeInTheDocument();
   });
 });

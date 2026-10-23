@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { readDraft } from '../../hooks/useDraftAutosave';
 import { resetGradingJobs } from '../../hooks/useGradingJobs';
@@ -38,6 +38,17 @@ async function startTask(name: RegExp) {
 
 function writeText(box: HTMLElement, value: string) {
   fireEvent.change(box, { target: { value } });
+}
+
+/**
+ * 磁贴条（契约 §8.3）只按 `data-metric` 取块，class/文案不作钩子。
+ * 「词数 / 已用时」从原读数搬进磁贴后，断言一律收紧到磁贴容器。
+ */
+async function metric(name: string): Promise<HTMLElement> {
+  const grid = await screen.findByLabelText('写作关键指标');
+  const node = grid.querySelector<HTMLElement>(`[data-metric="${name}"]`);
+  if (!node) throw new Error(`找不到 data-metric="${name}" 的磁贴`);
+  return node;
 }
 
 afterEach(() => {
@@ -268,5 +279,51 @@ describe('WritingPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: '换一题' }));
     const again = await startTask(new RegExp(`开始 ${task2Agree.title_zh}`));
     expect(again).toHaveValue('');
+  });
+
+  // ---------- 顶部磁贴条（契约 §8.3）：只加在正文作答阶段 ----------
+
+  it('作答磁贴条给出词数/已用时/草稿，未达线时带唯一暖面「还差词数」（§8.3）', async () => {
+    const ctx = createWritingHandlers();
+    server.use(...ctx.handlers);
+    render(<WritingPanel ready initialKind="task2" />);
+    writeText(await startTask(new RegExp(`开始 ${task2Agree.title_zh}`)), essay(10));
+
+    // 词数读数搬进磁贴后，原「你的作文」卡头 span 与卡内 Stat 已删（§8.3 规则 4 去重）
+    const words = await metric('writing.words');
+    expect(within(words).getByText('10')).toBeInTheDocument();
+    expect(within(words).getByText('/ 250')).toBeInTheDocument();
+
+    const elapsed = await metric('writing.elapsed');
+    expect(within(elapsed).getByText(/^\d+:\d{2}$/)).toBeInTheDocument();
+
+    const draft = await metric('writing.draft');
+    // 刚输入 dirty=true → value 恒为「待保存」；用精确匹配避开 hint「尚未保存过」
+    // （正则 /未保存/ 会同时命中 value 与 hint，收紧到磁贴内的值本身）。
+    expect(within(draft).getByText('待保存', { exact: true })).toBeInTheDocument();
+
+    const short = await metric('writing.short');
+    expect(within(short).getByText('240')).toBeInTheDocument();
+    expect(within(short).getByText('词')).toBeInTheDocument();
+
+    // 面数量：本屏唯一暖块是「还差词数」；hero/solid 禁止走出报告屏（§8.3 规则 1）
+    const grid = await screen.findByLabelText('写作关键指标');
+    expect(grid.querySelectorAll('[data-surface="warm"]')).toHaveLength(1);
+    expect(grid.querySelectorAll('[data-surface="hero"], [data-surface="solid"]')).toHaveLength(0);
+  });
+
+  it('达到最低词数后「还差词数」整块不渲染，暖面归零（§8.3 规则 3）', async () => {
+    const ctx = createWritingHandlers();
+    server.use(...ctx.handlers);
+    render(<WritingPanel ready initialKind="task2" />);
+    writeText(await startTask(new RegExp(`开始 ${task2Agree.title_zh}`)), essay(250));
+
+    const words = await metric('writing.words');
+    expect(within(words).getByText('250')).toBeInTheDocument();
+
+    const grid = await screen.findByLabelText('写作关键指标');
+    // 已达线：暖块不出现（也不显示 0）
+    expect(grid.querySelector('[data-metric="writing.short"]')).toBeNull();
+    expect(grid.querySelectorAll('[data-surface="warm"]')).toHaveLength(0);
   });
 });

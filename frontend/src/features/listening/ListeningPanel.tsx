@@ -8,7 +8,7 @@
  * 答案的唯一真源是 `useDraftAutosave` 里的 JSON 串，避免组件状态与本地存储两份数据打架。
  */
 import { useCallback, useMemo, useState } from 'react';
-import { Badge, Button, Card, Toast } from '../../components/ui';
+import { Badge, Button, Card, Tile, Toast } from '../../components/ui';
 import { useApi } from '../../hooks/useApi';
 import { useBackendReady } from '../../hooks/useBackendReady';
 import { useDraftAutosave } from '../../hooks/useDraftAutosave';
@@ -24,6 +24,7 @@ import TranscriptPanel from './TranscriptPanel';
 import {
   DEFAULT_SPEED,
   LISTENING_ACCENTS,
+  answeredCount,
   audioTextOf,
   decodeAnswers,
   draftKeyOf,
@@ -118,6 +119,9 @@ export function ListeningPanel({
   const draftKey = setId ? draftKeyOf(setId) : 'listening_none';
   const draft = useDraftAutosave(draftKey, '', { enabled: !!setId });
   const answers = useMemo<AnswerMap>(() => decodeAnswers(draft.value), [draft.value]);
+  // 磁贴条读数（契约 §8.3 规则 2）一律现算自本屏已有的 answers / timer / sentences，
+  // 不许为填一块磁贴多发一次请求。
+  const answeredTotal = useMemo(() => answeredCount(questions, answers), [questions, answers]);
 
   const setAnswer = useCallback(
     (questionId: string, next: string) => {
@@ -236,7 +240,6 @@ export function ListeningPanel({
         actions={
           <div className="flex items-center gap-2">
             <Badge tone="neutral">{accentLabel}</Badge>
-            <span className="font-code text-sm text-ink-secondary">已用时 {formatClock(elapsed.elapsedSec)}</span>
             <Button size="sm" variant="ghost" onClick={backToPicker}>
               退出
             </Button>
@@ -259,6 +262,25 @@ export function ListeningPanel({
           </Button>
         </div>
       </Card>
+
+      {/* 磁贴条（契约 §8.3）：只在作答阶段出现，答题区版式与交互一律不动。
+          面只有 plain，唯一的暖面给「音频不可用」这个降级信号；缺数据的块整块不渲染。 */}
+      <dl aria-label="听力关键指标" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Tile metric="listening.answered" label="已作答" value={`${answeredTotal}/${questions.length}`} />
+        <Tile metric="listening.elapsed" label="已用时" value={formatClock(elapsed.elapsedSec)} />
+        {sentences.length > 0 ? (
+          <Tile metric="listening.replay" label="可逐句重听" value={sentences.length} unit="句" />
+        ) : null}
+        {audio.status === 'unavailable' ? (
+          <Tile
+            metric="listening.degraded"
+            surface="warm"
+            label="音频不可用"
+            value="已降级"
+            hint="已按 AC-L1b 进入原文精读模式"
+          />
+        ) : null}
+      </dl>
 
       {setApi.error ? <Toast tone="danger">{`题面加载失败：${setApi.error}`}</Toast> : null}
       {draft.error ? <Toast tone="warn">{draft.error}</Toast> : null}

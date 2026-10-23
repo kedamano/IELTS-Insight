@@ -83,13 +83,20 @@ async function openBook(list: ReviewItem[], options = {}): Promise<ReviewTestCon
   return ctx;
 }
 
-/** Stat 的形状是「标签 span + 值 span」相邻；徽标里也有同名词，所以按兄弟节点取值。 */
-function statValue(labelText: string): string {
-  const label = screen
-    .getAllByText(labelText)
-    .find((node) => node.nextElementSibling != null && /^\d+$/.test(node.nextElementSibling.textContent ?? ''));
-  if (!label) throw new Error(`${labelText} 的统计值没有渲染`);
-  return (label.nextElementSibling?.textContent ?? '').trim();
+/**
+ * 磁贴条（契约 §8.3）只按 `data-metric` 取块：class 与文案都会随设计改动，磁贴身份不会。
+ * 取不到时抛错，方便定位是「该渲染的没渲染」而不是断言静默通过。
+ */
+async function metric(name: string): Promise<HTMLElement> {
+  const grid = await screen.findByLabelText('错题本关键指标');
+  const node = grid.querySelector<HTMLElement>(`[data-metric="${name}"]`);
+  if (!node) throw new Error(`找不到 data-metric="${name}" 的磁贴`);
+  return node;
+}
+
+/** 顶部磁贴条容器（可能整条不渲染时用 query 版本自行判定）。 */
+async function grid(): Promise<HTMLElement> {
+  return screen.findByLabelText('错题本关键指标');
 }
 
 afterEach(() => {
@@ -143,8 +150,10 @@ describe('AC-V2 默认视图与筛选', () => {
     await waitFor(() => expect(ctx.queries.at(-1)?.get('status')).toBe('all'));
     await screen.findByText('another');
 
-    expect(statValue('未掌握')).toBe('1');
-    expect(statValue('已掌握')).toBe('1');
+    // 这两个读数原先挂在 Card 内的 `<Stat>` 上，§8.3 规则 4 去重后搬进了磁贴条，
+    // 断言随之收紧到对应 `data-metric` 的块内（期望值不变，只是换了读数位置）。
+    expect(within(await metric('review.open')).getByText('1')).toBeInTheDocument();
+    expect(within(await metric('review.resolved')).getByText('1')).toBeInTheDocument();
   });
 
   it('已掌握的行不再提供「已掌握」按钮', async () => {
@@ -214,3 +223,64 @@ describe('AC-V2 手动动作', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('错题本读取失败：本机数据库被占用');
   });
 });
+
+describe('错题本顶部磁贴条（契约 §8.3）', () => {
+  it('磁贴读数正确：未掌握/已掌握/顽固错误/涉及科目', async () => {
+    // rv_1 听力未掌握 seen 2（顽固），rv_2 写作已掌握 seen 1（不顽固）——切到全部后两科齐活。
+    const ctx = await openBook([
+      item(),
+      item({ id: 'rv_2', module: 'writing', error_type: 'article', status: 'resolved', quote: 'another', seen_count: 1 }),
+    ]);
+    fireEvent.change(screen.getByLabelText('状态'), { target: { value: 'all' } });
+    await waitFor(() => expect(ctx.queries.at(-1)?.get('status')).toBe('all'));
+    await screen.findByText('another');
+
+    expect(within(await metric('review.open')).getByText('1')).toBeInTheDocument();
+    expect(within(await metric('review.resolved')).getByText('1')).toBeInTheDocument();
+    expect(within(await metric('review.stubborn')).getByText('1')).toBeInTheDocument();
+    const modules = await metric('review.modules');
+    expect(within(modules).getByText('2')).toBeInTheDocument();
+    expect(within(modules).getByText('科')).toBeInTheDocument();
+    expect(within(modules).getByText(/听力/)).toBeInTheDocument();
+    expect(within(modules).getByText(/写作/)).toBeInTheDocument();
+  });
+
+  it('整条只有一块暖面（未掌握），渐变面与墨面禁止走出报告屏（§8.3 规则 1）', async () => {
+    await openBook([item()]);
+    const strip = await grid();
+
+    expect(strip.querySelectorAll('[data-surface="warm"]')).toHaveLength(1);
+    expect(strip.querySelectorAll('[data-surface="hero"], [data-surface="solid"]')).toHaveLength(0);
+  });
+
+  it('默认 status=open 时「已掌握」永远是 0，属假数，整块不渲染（§8.3 规则 3）', async () => {
+    await openBook([item()]);
+    const strip = await grid();
+
+    expect(strip.querySelector('[data-metric="review.resolved"]')).toBeNull();
+    // 未掌握是本屏唯一的待处理信号，默认视图必须有它
+    expect(strip.querySelector('[data-metric="review.open"]')).not.toBeNull();
+  });
+
+  it('无顽固条目（全部 seen_count=1）时不渲染 review.stubborn', async () => {
+    await openBook([item({ seen_count: 1 })]);
+    const strip = await grid();
+
+    expect(strip.querySelector('[data-metric="review.stubborn"]')).toBeNull();
+  });
+
+  it('筛到「已掌握」后未掌握读数为 0，暖面整块撤下（暖面是行动召唤，0 就不该召唤）', async () => {
+    const ctx = await openBook([item(), item({ id: 'rv_2', status: 'resolved', quote: 'another' })]);
+
+    fireEvent.change(screen.getByLabelText('状态'), { target: { value: 'resolved' } });
+    await waitFor(() => expect(ctx.queries.at(-1)?.get('status')).toBe('resolved'));
+    await screen.findByText('another');
+
+    const strip = await grid();
+    expect(strip.querySelector('[data-metric="review.open"]')).toBeNull();
+    expect(strip.querySelectorAll('[data-surface="warm"]')).toHaveLength(0);
+    // 同屏的 plain 读数照常工作，撤下的只是那块琥珀
+    expect(within(await metric('review.resolved')).getByText('1')).toBeInTheDocument();
+  });
+});
+

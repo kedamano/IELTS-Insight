@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, Field, Modal, Toast, cx } from '../../components/ui';
+import { Badge, Button, Card, Field, Modal, Tile, Toast, cx } from '../../components/ui';
 import { useApi } from '../../hooks/useApi';
 import { useTTS } from '../../hooks/useTTS';
 import { addVocab, removeVocab, vocabExportUrl, vocabList } from '../../services/api';
@@ -80,6 +80,14 @@ export function VocabBook({ className }: VocabBookProps) {
     for (const row of rows) for (const tag of row.tags ?? []) set.add(tag);
     return [...set].sort();
   }, [rows]);
+
+  // 磁贴条（契约 §8.3）只吃这份已拉回的 rows：不许为填一块磁贴多加一次请求。
+  const recentCutoff = Date.now() - 7 * 86400_000;
+  const recentCount = rows.filter((item) => {
+    const stamp = item.created_at ? Date.parse(item.created_at) : Number.NaN;
+    return Number.isFinite(stamp) && stamp >= recentCutoff;
+  }).length;
+  const noNoteCount = rows.filter((item) => !(item.note_zh ?? '').trim()).length;
 
   const saveNote = async (): Promise<void> => {
     if (!editing) return;
@@ -208,6 +216,34 @@ export function VocabBook({ className }: VocabBookProps) {
           </div>
         ) : null}
       </Card>
+
+      {/* 磁贴条（契约 §8.3）：暖面只给「尚无备注」这个待处理信号，其余 plain。
+          「近 7 天新增」即便为 0 也保留——「没加新词」本身是信息（本条契约给的唯一例外）。 */}
+      {rows.length > 0 ? (
+        <dl aria-label="生词本关键指标" className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <Tile
+            metric="vocab.total"
+            label="词条总数"
+            value={String(rows.length)}
+            hint={`当前显示 ${visible.length} 条`}
+          />
+          <Tile
+            metric="vocab.recent"
+            label="近 7 天新增"
+            value={String(recentCount)}
+            hint={recentCount > 0 ? undefined : '最近 7 天没有新增'}
+          />
+          {noNoteCount > 0 ? (
+            <Tile
+              metric="vocab.no-note"
+              surface="warm"
+              label="尚无备注"
+              value={String(noNoteCount)}
+              hint="选中单词后可补中文备注"
+            />
+          ) : null}
+        </dl>
+      ) : null}
 
       {visible.length === 0 ? (
         <Card>

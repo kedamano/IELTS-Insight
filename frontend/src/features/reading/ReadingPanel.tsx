@@ -10,7 +10,7 @@
  * - 题面无答案（§2-R），「定位」只用 `paragraph_label` 或题干关键词，绝不猜答案位置。
  */
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Badge, Button, Card, Stat, Toast } from '../../components/ui';
+import { Badge, Button, Card, Tile, Toast } from '../../components/ui';
 import { getSettings, postReadingAttempt, readingSet, readingSets } from '../../services/api';
 import { useApi } from '../../hooks/useApi';
 import { useDraftAutosave } from '../../hooks/useDraftAutosave';
@@ -171,6 +171,9 @@ export function ReadingExam({ set, highlight, onSubmitted, onExit }: ReadingExam
 
   const total = set.questions.length;
   const answered = answeredCount(answers);
+  // 磁贴条读数（契约 §8.3 规则 2）：全取本屏已有的草稿 / 计时 / 篇章状态，不另发请求。
+  const blank = total - answered;
+  const paragraphs = set.passage?.paragraphs?.length ?? 0;
 
   // onExpire 与 submit 互相引用：submit 走 ref，timer 只调用最新那一份。
   const submitRef = useRef<((timedOut: boolean) => Promise<void>) | null>(null);
@@ -242,8 +245,6 @@ export function ReadingExam({ set, highlight, onSubmitted, onExit }: ReadingExam
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-rule bg-paper-raised px-3 py-2 shadow-elevated">
         <div className="flex flex-wrap items-center gap-4">
           <Timer remainingSec={timer.remainingSec} expired={timer.expired} running={timer.running} />
-          <Stat label="已作答" value={`${answered}/${total}`} size="sm" />
-          <Stat label="用时" value={formatClock(timer.elapsedSec)} size="sm" />
           {draft.restored ? <Badge tone="mid">已恢复上次草稿</Badge> : null}
           {draft.available ? null : <Badge tone="poor">本地草稿不可用</Badge>}
           {draft.error ? <Badge tone="poor">{draft.error}</Badge> : null}
@@ -264,10 +265,31 @@ export function ReadingExam({ set, highlight, onSubmitted, onExit }: ReadingExam
         </div>
       </div>
 
+      {/* 磁贴条（契约 §8.3）：紧跟工具条、只在作答阶段出现，双栏答题区一行不动。
+          面只有 plain，唯一暖面给「未作答」这个待处理信号；
+          「篇章词数」没进条是因为篇章卡头已有该读数（规则 4 不许同屏两份同源数字）。 */}
+      <dl aria-label="阅读关键指标" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Tile metric="reading.answered" label="已作答" value={`${answered}/${total}`} />
+        <Tile metric="reading.elapsed" label="用时" value={formatClock(timer.elapsedSec)} />
+        {blank > 0 ? (
+          <Tile
+            metric="reading.blank"
+            surface="warm"
+            label="未作答"
+            value={blank}
+            unit="题"
+            hint="未答题按 0 分计入总分"
+          />
+        ) : null}
+        {paragraphs > 0 ? (
+          <Tile metric="reading.paragraphs" label="段落" value={paragraphs} unit="段" />
+        ) : null}
+      </dl>
+
       {confirming ? (
         <Toast tone="warn">
           <div className="flex flex-col gap-2">
-            <span>还有 {total - answered} 题未作答，未答题会按 unanswered 计 0 分。</span>
+            <span>还有 {total - answered} 题未作答，未答题会按 0 分计入总分。</span>
             <div className="flex gap-2">
               <Button size="sm" variant="primary" onClick={() => void submit(false)}>
                 仍然提交

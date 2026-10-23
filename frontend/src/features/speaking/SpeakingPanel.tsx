@@ -10,7 +10,7 @@
  * 轮询到终态再出 §3-S 报告；Part 3 先取 `followups`，AI 不可用时用预置 `fallback_questions`。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Badge, Button, Card, Toast } from '../../components/ui';
+import { Badge, Button, Card, Tile, Toast } from '../../components/ui';
 import { useApi } from '../../hooks/useApi';
 import { useBackendReady } from '../../hooks/useBackendReady';
 import { forgetJob, markJobViewed, trackJob, useGradingJobs, type TrackedJob } from '../../hooks/useGradingJobs';
@@ -436,6 +436,26 @@ export function SpeakingPanel({
           {session.finished ? <Badge tone="good" dot>本题组已作答，可评分</Badge> : null}
         </div>
       </Card>
+
+      {/* 磁贴条（契约 §8.3）：只吃本地会话状态，不加新请求；本屏不用暖面（hero/solid 禁止走出报告屏）。 */}
+      <dl aria-label="口语会话关键指标" className="grid grid-cols-2 gap-3">
+        <Tile
+          metric="speaking.progress"
+          label="本题组进度"
+          value={`${session.turns.length}/${session.total}`}
+          hint="已提交作答的题数；全部答完才能评分"
+        />
+        {/* 独白上限只有 Part 2 题卡才有；Part 1/3 不出现这块（§8.3 规则 3：缺数整块不渲染）。 */}
+        {isCueCard && card ? (
+          <Tile
+            metric="speaking.monologue"
+            label="独白时长上限"
+            value={card.speaking_sec / 60}
+            unit="分钟"
+            hint="Part 2 到点自动交卷"
+          />
+        ) : null}
+      </dl>
 
       {error ? <Toast tone="danger" onDismiss={() => setError(null)}>{error}</Toast> : null}
       {notice ? <Toast tone="warn" onDismiss={() => setNotice(null)}>{notice}</Toast> : null}

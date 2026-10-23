@@ -9,7 +9,7 @@
  * CONSTITUTION §3：批改失败显示后端 `detail`/`error` 原文并提供重试；草稿不可用、离线降级一律显式标记。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Badge, Button, Card, Countdown, Field, Stat, TabPanel, Tabs, Toast, bandTone } from '../../components/ui';
+import { Badge, Button, Card, Countdown, Field, TabPanel, Tabs, Tile, Toast, bandTone } from '../../components/ui';
 import { useApi } from '../../hooks/useApi';
 import { useBackendReady } from '../../hooks/useBackendReady';
 import { useDraftAutosave } from '../../hooks/useDraftAutosave';
@@ -450,20 +450,28 @@ export function WritingPanel({
         </div>
       </Card>
 
+      {/* 磁贴条（契约 §8.3）：正文作答阶段的读数，全部来自本地草稿状态与计时器，不新增请求。
+          原「你的作文」卡头的 词数/已用时 span 与卡内两个 Stat 已搬到这里并删除（规则 4 去重）。 */}
+      <dl aria-label="写作关键指标" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Tile metric="writing.words" label="词数" value={wordCount} unit={minWords ? `/ ${minWords}` : undefined} />
+        <Tile metric="writing.elapsed" label="已用时" value={formatClock(timer.elapsedSec)} />
+        <Tile
+          metric="writing.draft"
+          label="草稿"
+          value={draft.dirty ? '待保存' : draft.savedAt ? '已保存' : '未保存'}
+          hint={draft.savedAt ? new Date(draft.savedAt).toLocaleTimeString() : '尚未保存过'}
+        />
+        {/* 未达最低词数才出现，且是本屏唯一暖块；已达线整块不渲染（不显示 0）。 */}
+        {minWords && !reached ? (
+          <Tile metric="writing.short" surface="warm" label="还差词数" value={shortBy} unit="词" />
+        ) : null}
+      </dl>
+
       {isTask1(task) ? <Task1ChartCard chart={task.chart} /> : null}
 
       {draft.error ? <Toast tone="warn">{draft.error}</Toast> : null}
 
-      <Card
-        title="你的作文"
-        subtitle="本地草稿自动保存，刷新后可恢复（AC-W2）"
-        actions={
-          <div className="flex items-baseline gap-3">
-            <span className="font-code text-sm text-ink">{wordCount} 词</span>
-            <span className="font-code text-xs text-ink-muted">已用时 {formatClock(timer.elapsedSec)}</span>
-          </div>
-        }
-      >
+      <Card title="你的作文" subtitle="本地草稿自动保存，刷新后可恢复（AC-W2）">
         <div className="flex flex-col gap-3">
           <Field
             label="正文（英文）"
@@ -485,20 +493,6 @@ export function WritingPanel({
           </Field>
 
           <div className="flex flex-wrap items-end justify-between gap-4">
-            <div className="flex flex-wrap items-end gap-5">
-              <Stat label="词数" value={wordCount} unit={`/ ${minWords}`} mono size="sm" tone={reached ? 'good' : 'poor'} />
-              <div className="min-w-40">
-                <Stat
-                  label="草稿状态"
-                  value={draft.dirty ? '待保存' : draft.savedAt ? '已保存' : '未保存'}
-                  mono={false}
-                  size="sm"
-                />
-                <span className="font-code text-xs text-ink-muted">
-                  {draft.savedAt ? new Date(draft.savedAt).toLocaleTimeString() : '—'}
-                </span>
-              </div>
-            </div>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="ghost" disabled={submitting || !draft.value} onClick={() => draft.setValue('')}>
                 清空重写

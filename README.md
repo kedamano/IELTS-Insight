@@ -12,7 +12,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.139-009485?style=flat-square&logo=fastapi&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=flat-square&logo=python&logoColor=white)
-![tests](https://img.shields.io/badge/tests-645%20passed-brightgreen?style=flat-square)
+![tests](https://img.shields.io/badge/tests-672%20passed-brightgreen?style=flat-square)
 ![offline](https://img.shields.io/badge/works_offline-yes-green?style=flat-square)
 ![telemetry](https://img.shields.io/badge/telemetry-none-blue?style=flat-square)
 ![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)
@@ -202,7 +202,7 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
 | 门 | 当前状态 |
 | --- | --- |
 | `npx tsc -b` | 无错误 |
-| 前端 `cd frontend ; npm test` | **32 个文件 / 340 个用例全通过**（vitest + jsdom + msw 契约测试） |
+| 前端 `cd frontend ; npm test` | **32 个文件 / 367 个用例全通过**（vitest + jsdom + msw 契约测试） |
 | 后端 `cd backend ; .\venv\Scripts\python.exe -m pytest` | **305 个用例全通过**（约 7s） |
 
 后端测试通过 `IELTS_DB_PATH` / `IELTS_TTS_CACHE_DIR` / `IELTS_ONLINE` 指向临时目录与离线模式，**绝不写**真实本地库（CONSTITUTION §6）。真实 LLM 质量测试标 `@pytest.mark.integration`，默认跳过，需 `RUN_INTEGRATION=1`。`pyinstaller_entry.py` 只是打包入口，测试进程不经过它。

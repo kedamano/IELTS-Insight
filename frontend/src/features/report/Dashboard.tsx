@@ -5,6 +5,7 @@ import {
   ScoreBand,
   Sparkline,
   Stat,
+  Tile,
   Toast,
   bandTone,
   cx,
@@ -61,6 +62,19 @@ export function Dashboard({ className }: DashboardProps) {
   const planTasks = plan.data?.items ?? [];
   const error = summary.error ?? plan.error ?? trends.error;
   const noDataAtAll = data != null && MODULES.every((module) => data.current[module] == null);
+
+  // 磁贴条（契约 §8.3）只吃这份 summary / plan 里已有的数：不许为填一块磁贴多加一次请求。
+  const scored = MODULES.map((module) => ({ module, band: data?.current[module] ?? null })).filter(
+    (entry): entry is { module: Module; band: number } => entry.band != null,
+  );
+  const weakest = scored.length > 0 ? scored.reduce((low, entry) => (entry.band < low.band ? entry : low)) : null;
+  const deltas = MODULES.map((module) => ({ module, delta: data?.delta_vs_previous[module] ?? null })).filter(
+    (entry): entry is { module: Module; delta: number } => typeof entry.delta === 'number' && Number.isFinite(entry.delta),
+  );
+  // 涨跌都算，取绝对值最大的一科；`sort` 稳定，所以并列时保留 `MODULES` 里先出现的那一科。
+  const lead = deltas.length > 0 ? [...deltas].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))[0] : null;
+  const deltaCopy = lead == null ? null : lead.delta === 0 ? '0.0' : `${lead.delta > 0 ? '+' : '-'}${Math.abs(lead.delta).toFixed(1)}`;
+  const doneTasks = planTasks.filter((task) => task.done).length;
 
   return (
     <div className={cx('flex flex-col gap-4', className)}>
@@ -123,6 +137,40 @@ export function Dashboard({ className }: DashboardProps) {
           </button>
         </div>
       </section>
+
+      {/* 磁贴条（契约 §8.3）：暖面只给「最弱一科」，其余 plain；缺数的块整块不渲染。 */}
+      {weakest != null || lead != null || planTasks.length > 0 ? (
+        <dl aria-label="概览关键指标" className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          {weakest != null ? (
+            <Tile
+              metric="overview.weakest"
+              surface="warm"
+              label="最弱一科"
+              value={formatBand(weakest.band)}
+              unit={MODULE_LABEL_ZH[weakest.module]}
+              hint={bandGapHint(weakest.band, data?.target_band)}
+            />
+          ) : null}
+          {deltaCopy != null && lead != null ? (
+            <Tile
+              metric="overview.delta"
+              label="最近变化"
+              value={deltaCopy}
+              unit={MODULE_LABEL_ZH[lead.module]}
+              hint="四科里变动最大的一次"
+            />
+          ) : null}
+          {planTasks.length > 0 ? (
+            <Tile
+              metric="overview.plan"
+              label="今日计划"
+              value={`${doneTasks}/${planTasks.length}`}
+              unit="项"
+              hint="勾选完成项会立即重算"
+            />
+          ) : null}
+        </dl>
+      ) : null}
 
       {noDataAtAll ? (
         <p className="text-xs text-ink-muted">

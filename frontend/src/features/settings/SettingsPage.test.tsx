@@ -40,6 +40,18 @@ function mockDevices(devices: MediaDeviceInfo[]) {
   });
 }
 
+/**
+ * 磁贴条（契约 §8.3）只按 `data-metric` 取块。
+ * 注意这里不能借用 `getByText('目标 Band')` 之类的整句文案：那条查询和字段 `<label>`
+ * 撞名，而磁贴的身份本来就不靠文案。
+ */
+async function metric(name: string): Promise<HTMLElement> {
+  const grid = await screen.findByLabelText('设置关键指标');
+  const node = grid.querySelector<HTMLElement>(`[data-metric="${name}"]`);
+  if (!node) throw new Error(`找不到 data-metric="${name}" 的磁贴`);
+  return node;
+}
+
 function mic(deviceId: string, label: string): MediaDeviceInfo {
   return { deviceId, label, kind: 'audioinput', groupId: `group-${deviceId}` } as MediaDeviceInfo;
 }
@@ -331,5 +343,57 @@ describe('AC-C4 录音输入设备', () => {
     expect(select).toHaveValue('dev-gone');
     expect(within(select).getByRole('option', { name: '已保存的设备（当前不可用）' })).toBeInTheDocument();
     expect(ctx.patchBodies).toHaveLength(0);
+  });
+});
+
+describe('磁贴条（契约 §8.3）', () => {
+  it('读数直接取自 GET /settings 的回读值，且只有 AI 那一块是暖面', async () => {
+    await openSettings({
+      settings: { ...settingsFixture(), daily_goal_minutes: 45, exam_date: '2026-12-01' },
+    });
+
+    const goal = await metric('settings.daily-goal');
+    expect(within(goal).getByText('45')).toBeInTheDocument();
+    expect(within(goal).getByText('分钟')).toBeInTheDocument();
+
+    const exam = await metric('settings.exam');
+    expect(within(exam).getByText('2026-12-01')).toBeInTheDocument();
+
+    // fixture 里 ai.configured=false → 未配置是本屏唯一的「待处理」信号
+    const ai = await metric('settings.ai');
+    expect(ai).toHaveAttribute('data-surface', 'warm');
+    expect(within(ai).getByText('未填写')).toBeInTheDocument();
+
+    const grid = await screen.findByLabelText('设置关键指标');
+    expect(grid.querySelectorAll('[data-surface="hero"], [data-surface="solid"]')).toHaveLength(0);
+    // 目标 Band 不进磁贴：字段旁已经有 ScoreBand 在同一份回读值上读数
+    expect(grid.querySelector('[data-metric="settings.target-band"]')).not.toBeInTheDocument();
+  });
+
+  it('保存考试日期后磁贴跟着后端回读值走，但条上绝不出现字段级的保存状态文案', async () => {
+    const ctx = await openSettings();
+    const grid = await screen.findByLabelText('设置关键指标');
+    // 「未保存 / 已保存」是 DraftField 的字段级反馈，磁贴去抢这套文案就会有两份状态。
+    expect(grid.textContent).not.toMatch(/未保存|已保存/);
+
+    writeInto('setting-exam-date', '2026-12-01');
+    fireEvent.click(commitOf('setting-exam-date'));
+    await waitFor(() => expect(ctx.patchBodies).toHaveLength(1));
+    await waitFor(() => expect(within(grid).getByText('2026-12-01')).toBeInTheDocument());
+    expect(grid.textContent).not.toMatch(/未保存/);
+  });
+
+  it('配好密钥后 AI 那块整块消失，不给「已配置」留一块报平安的砖', async () => {
+    const ctx = await openSettings();
+    expect(await metric('settings.ai')).toBeInTheDocument();
+
+    const box = input('setting-ai-key') as HTMLInputElement;
+    fireEvent.change(box, { target: { value: 'sk-strip-check' } });
+    fireEvent.click(commitOf('setting-ai-key'));
+    await screen.findByText('已配置');
+    expect(ctx.snapshot().ai.configured).toBe(true);
+
+    const grid = await screen.findByLabelText('设置关键指标');
+    expect(grid.querySelector('[data-metric="settings.ai"]')).not.toBeInTheDocument();
   });
 });

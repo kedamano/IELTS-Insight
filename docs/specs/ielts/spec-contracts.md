@@ -420,6 +420,69 @@ hero 与 cool 面上的次要文字样机用 `opacity:.62`（白字 3.24:1、亮
 图表为素色 SVG；`prefers-reduced-motion` 关闭过渡与抬升。
 排版基线：三栏（左导航 216px / 主区 min 720px / 右辅助 320px 可折叠）；题目用 `number` 前缀与官方缩进风格。
 
+### 8.3 各屏顶部磁贴条（Wave 6：把 §8.1 的磁贴语言推广到其余八屏）
+
+报告屏以外的每一屏，在**标题区之后、主区之前**插一条 2–4 块的磁贴条；主区（列表 / 表单 / 答题区）
+**版式一律不动**。用户裁定的是「加一行磁贴」而不是「整屏重排」，所以各屏原有交互与既有断言
+（题号导航、逐句重听、草稿恢复、`DraftField` 竞态）必须原样成立。
+
+容器与 §8.2 同形：`<dl aria-label="<屏名>关键指标" className="grid grid-cols-2 gap-3 lg:grid-cols-<2..4>">`，
+块内只用 `Tile`，测试选择器一律 `data-metric`，身份写成 `<屏>.<键>`。
+
+**四条硬规则**（违反任何一条按缺陷处理，不当风格分歧）：
+
+1. **面**：只允许 `plain`；每屏**最多一块 `warm`**，且必须承载该屏的「待处理 / 降级」信号
+   （未掌握错题、音频不可用、未作答、AI 未配置）。`hero` 与 `solid` **禁止出现在报告屏以外** ——
+   渐变面全站 1 处、墨面 1 处才有层级，到处铺大色块等于没有重点。
+2. **数值只准来自该屏已经发出的请求或已有的本地状态**。不许为填一块磁贴新增一次 `useApi`：
+   九屏各多一个请求，首屏延迟和 msw fixture 的维护面都会翻倍，而这些数字在报告屏本来就有。
+3. **缺数据整块不渲染**，不出现 `—`、不出现 `0%`（与 §8.2 诚实条款同源）。唯一例外是「没有值」本身
+   就是信息：概览的距考试在未填考试日期时保留磁贴，hint 写「尚未设置考试日期，可在设置中填写」。
+   反过来，**被筛选条件清零的指标也不渲染** —— 错题本默认 `status=open`，此时「已掌握」永远是 0，
+   那是一块假数，切到「全部」才出现。
+   **暖面读数为 0 时整块撤下**（`review.open`、`vocab.no-note`、`reading.blank`、`writing.short`）：
+   琥珀面在视觉上就是「这里有东西要处理」，摆一个 0 等于一边报警一边说没事。
+   状态型暖面同理：`settings.ai` 在密钥配好后整块消失，不给「已配置」留一块报平安的砖。
+   plain 面的「0」不受这条约束，按语义判断 —— `vocab.recent` 为 0 照样渲染，因为「近 7 天没加新词」是陈述而不是召唤。
+4. **不许与同屏既有读数重复**。把数字搬进磁贴就同时删掉原处（阅读工具条的两个 `Stat`、
+   写作卡头的 `词数 / 已用时` span），否则同一屏会出现两份刷新时机不同的同源数字。
+
+每屏清单（`data-metric` → 值 → 来源 → 面）：
+
+| 屏 | 磁贴 | 来源 | 面 |
+|---|---|---|---|
+| 概览 | `overview.weakest` 最弱一科 band + 与目标差距 | `progress.summary.current` / `target_band` | warm |
+| | `overview.delta` `delta_vs_previous` **绝对值最大**的一科（涨跌都算，并列按 `MODULES` 顺序取先出现的） | 同一份 summary | plain |
+| | `overview.plan` 今日计划 `完成/总数` | `plan.today.items` | plain |
+| 错题本 | `review.open` 未掌握 / `review.resolved` 已掌握 | 当前筛选结果 | warm / plain |
+| | `review.stubborn` `seen_count > 1` 的顽固条目 | 同上 | plain |
+| | `review.modules` 涉及的科目数 | 分组后的组数 | plain |
+| 生词本 | `vocab.total` 词条总数 | `GET /vocab` | plain |
+| | `vocab.recent` 近 7 天新增（按 `created_at`） | 同上 | plain |
+| | `vocab.no-note` 尚无备注的条目 | 同上 | warm |
+| 口语 | `speaking.progress` 已答 / 总题 | `session.turns`、`session.total` | plain |
+| | `speaking.monologue` Part 2 独白上限秒数 | `cue_card.speaking_sec`（仅 Part 2 渲染） | plain |
+| 听力 | `listening.answered` 已答 / 总题 | `answers` × `questions` | plain |
+| | `listening.elapsed` 已用时（原卡头 span 删除） | `useTimer.elapsedSec` | plain |
+| | `listening.replay` 可逐句重听的句数 | `sentences.length` | plain |
+| | `listening.degraded` 音频不可用（仅 `unavailable`） | `audio.status` | warm |
+| 阅读 | `reading.answered` / `reading.elapsed` | 从工具条搬来（两个 `Stat` 删除） | plain |
+| | `reading.blank` 未作答 n 题（仅 n > 0） | `total - answered` | warm |
+| | `reading.paragraphs` 段落数（仅 >0） | `set.passage.paragraphs` | plain |
+| 写作 | `writing.words`（原 `词数` Stat 删除）/ `writing.elapsed`（原卡头 span 删除） | 本地状态 | plain |
+| | `writing.draft` 草稿状态 + 最近保存时刻 | `useDraftAutosave` | plain |
+| | `writing.short` 还差 n 词（仅未达最低词数） | `minWords - wordCount` | warm |
+| 设置 | `settings.daily-goal` 每日目标分钟 / `settings.exam` 考试日期 | `GET /settings` | plain |
+| | `settings.ai` AI 未填写（仅 `!ai.configured`，配好密钥后整块消失） | 同上 | warm |
+
+设置屏的磁贴**不显示任何「未保存」状态**：条上只有后端回读值，未保存/已保存的反馈继续留在
+`DraftField` 字段内。刚修好的 `SettingsPage.test.tsx` 竞态就依赖这个分工，磁贴去抢这套文案会把它带回红灯。
+`settings.target-band` 也按规则 4 砍掉了 —— 「目标 Band」字段右侧的 `ScoreBand` 已经在读同一个值，
+再铺一块就是两份刷新时机不同的同源读数；倒计时同理不在设置屏出现（`days_left` 由概览的
+`progress.summary` 给出，本屏只有一次 `GET /settings`，前端不许自己推算日期差）。
+阅读屏同理**不做 `reading.words`**：`PassageView.tsx` 篇章卡头已经有 `{set.word_count} 词` 的 Badge，
+条上第 4 块让给「段落数」（正文只按 `[A]` 分段显示，段落总数原本没有任何地方读）。
+
 ## 10. Wave 1 定稿决议（对 §1–§9 的补丁；与本节冲突以本节为准）
 
 Wave 1 交付时 agent 提出的契约含糊点，逐条定稿。**Wave 2 所有人按本节实现，不要再自行发明字段。**

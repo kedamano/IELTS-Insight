@@ -20,6 +20,18 @@ import {
   reportHandlers,
   type ReportSpies,
 } from './testHandlers';
+import type { PlanTodayResult } from '../../types/ielts';
+
+/**
+ * 磁贴条（契约 §8.3）只按 `data-metric` 取块：class 与文案都会随设计改动，
+ * 磁贴身份不会。
+ */
+async function metric(name: string): Promise<HTMLElement> {
+  const grid = await screen.findByLabelText('概览关键指标');
+  const node = grid.querySelector<HTMLElement>(`[data-metric="${name}"]`);
+  if (!node) throw new Error(`找不到 data-metric="${name}" 的磁贴`);
+  return node;
+}
 
 describe('Dashboard 概览页', () => {
   let spies: ReportSpies;
@@ -50,10 +62,14 @@ describe('Dashboard 概览页', () => {
     first.unmount();
 
     install(...reportHandlers(spies, { summary: structuredClone(REPORT_SUMMARY) }));
-    render(<Dashboard />);
+    const second = render(<Dashboard />);
     await waitFor(() => expect(screen.getByText('7.5')).toBeInTheDocument());
     expect(spies.summaryCalls).toBe(2);
-    expect(screen.getByText('4.5')).toBeInTheDocument();
+    // 听力 4.5 现在同时出现在「最弱一科」磁贴和听力卡片上，断言必须落在卡片里，
+    // 否则 getByText 会因为两处同值而报 multiple matches。
+    const listening = second.container.querySelector<HTMLElement>('section[aria-label="听力 · 当前 Band"]');
+    if (!listening) throw new Error('找不到听力当前 Band 卡片');
+    expect(within(listening).getByText('4.5')).toBeInTheDocument();
   });
 
   it('null band 显示「尚无数据」，整页没有 NaN / Invalid Date（AC-P3 / AC-G5）', async () => {
@@ -144,5 +160,46 @@ describe('Dashboard 概览页', () => {
 
     const speaking = container.querySelector<HTMLElement>('section[aria-label="口语 · 当前 Band"]');
     expect(speaking ? within(speaking).getByText('3 个数据点') : null).toBeInTheDocument();
+  });
+
+  // ---------- 磁贴条（契约 §8.3）----------
+
+  it('磁贴条给出最弱一科的差距、变动最大的一科与今日计划完成度', async () => {
+    install(...reportHandlers(spies, { summary: structuredClone(REPORT_SUMMARY) }));
+    render(<Dashboard />);
+    await screen.findByText('目标 Band');
+
+    // 听力 4.5 是四科里唯一的最低值（写作为 null 不参与）
+    const weakest = await metric('overview.weakest');
+    expect(within(weakest).getByText('4.5')).toBeInTheDocument();
+    expect(within(weakest).getByText('听力')).toBeInTheDocument();
+    expect(within(weakest).getByText('距目标 2.5')).toBeInTheDocument();
+
+    // 口语 +0.5 与听力 -0.5 绝对值并列，按 MODULES 顺序取先出现的口语
+    const delta = await metric('overview.delta');
+    expect(within(delta).getByText('+0.5')).toBeInTheDocument();
+    expect(within(delta).getByText('口语')).toBeInTheDocument();
+
+    const plan = await metric('overview.plan');
+    expect(within(plan).getByText('1/2')).toBeInTheDocument();
+  });
+
+  it('整条只有「最弱一科」一块暖面；渐变面与墨面禁止走出报告屏（§8.3 规则 1）', async () => {
+    install(...reportHandlers(spies, { summary: structuredClone(REPORT_SUMMARY) }));
+    render(<Dashboard />);
+
+    const grid = await screen.findByLabelText('概览关键指标');
+    expect(grid.querySelectorAll('[data-surface="warm"]')).toHaveLength(1);
+    expect(grid.querySelectorAll('[data-surface="hero"], [data-surface="solid"]')).toHaveLength(0);
+  });
+
+  it('四科无记录且今日计划为空时整条不渲染，不摆 0 或 —（§8.3 规则 3）', async () => {
+    const emptyPlan: PlanTodayResult = { items: [], generated_at: '2026-10-18T07:30:00Z' };
+    install(...reportHandlers(spies, { summary: structuredClone(EMPTY_SUMMARY), plan: emptyPlan }));
+    render(<Dashboard />);
+    await screen.findByText('目标 Band');
+
+    expect(screen.queryByLabelText('概览关键指标')).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/NaN|Invalid Date|undefined/);
   });
 });

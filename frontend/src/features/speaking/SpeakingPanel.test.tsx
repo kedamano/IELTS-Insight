@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { resetGradingJobs } from '../../hooks/useGradingJobs';
 import { server } from '../../test/mocks/server';
@@ -67,6 +67,17 @@ async function assess(ctx: ReturnType<typeof createSpeakingHandlers>) {
   }
   fireEvent.click(await screen.findByRole('button', { name: '开始评分' }));
   await waitFor(() => expect(ctx.assessAsyncCalls).toEqual(['ses_test_0001']));
+}
+
+/**
+ * 磁贴条（契约 §8.3）只按 `data-metric` 取块：class 与文案都会随设计改动，磁贴身份不会。
+ * 与报告屏 `Dashboard.test.tsx` 的 `metric()` 同一模式。
+ */
+async function metric(name: string): Promise<HTMLElement> {
+  const grid = await screen.findByLabelText('口语会话关键指标');
+  const node = grid.querySelector<HTMLElement>(`[data-metric="${name}"]`);
+  if (!node) throw new Error(`找不到 data-metric="${name}" 的磁贴`);
+  return node;
 }
 
 beforeAll(() => {
@@ -274,5 +285,40 @@ describe('SpeakingPanel', () => {
       screen.getByRole('button', { name: /Is talent more important than practice\?/ }),
     ).toBeInTheDocument();
     expect(screen.queryByText('Why do some people learn faster than others?')).not.toBeInTheDocument();
+  });
+
+  // ---------- 顶部磁贴条（契约 §8.3）：只加在 session 阶段 ----------
+
+  it('session 磁贴条给出本题组进度；Part 1 无题卡不渲染独白上限，且整条无暖面（§8.3 规则 1/3）', async () => {
+    const ctx = createSpeakingHandlers();
+    server.use(...ctx.handlers);
+    render(<SpeakingPanel ready />);
+    await startPart1();
+
+    const progress = await metric('speaking.progress');
+    expect(within(progress).getByText('0/3')).toBeInTheDocument();
+
+    const grid = await screen.findByLabelText('口语会话关键指标');
+    // Part 1 的 cueCardOf 返回 null（prompt 为空），独白块整块不出现
+    expect(grid.querySelector('[data-metric="speaking.monologue"]')).toBeNull();
+    // 本屏一律 plain：暖面与 hero/solid 都不该出现（hero/solid 禁止走出报告屏）
+    expect(grid.querySelectorAll('[data-surface="warm"]')).toHaveLength(0);
+    expect(grid.querySelectorAll('[data-surface="hero"], [data-surface="solid"]')).toHaveLength(0);
+  });
+
+  it('session 磁贴条：Part 2 题卡渲染独白时长上限 2 分钟，进度 0/1（契约 §8.3）', async () => {
+    const ctx = createSpeakingHandlers();
+    server.use(...ctx.handlers);
+    render(<SpeakingPanel ready />);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Part 2' }));
+    fireEvent.click(screen.getByRole('button', { name: /开始 想学的技能/ }));
+
+    // 先进入 session（进度块立即可得），独白块要等题面 set 拉回来
+    expect(within(await metric('speaking.progress')).getByText('0/1')).toBeInTheDocument();
+    const grid = await screen.findByLabelText('口语会话关键指标');
+    await waitFor(() => expect(grid.querySelector('[data-metric="speaking.monologue"]')).not.toBeNull());
+    const mono = grid.querySelector('[data-metric="speaking.monologue"]') as HTMLElement;
+    expect(within(mono).getByText('2')).toBeInTheDocument();
+    expect(within(mono).getByText('分钟')).toBeInTheDocument();
   });
 });

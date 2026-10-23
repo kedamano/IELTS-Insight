@@ -67,6 +67,26 @@ async function openBook(list: VocabRow[], options = {}): Promise<VocabTestContex
   return ctx;
 }
 
+/**
+ * 磁贴条（契约 §8.3）只按 `data-metric` 取块：class 与文案都会随设计改动，磁贴身份不会。
+ */
+async function metric(name: string): Promise<HTMLElement> {
+  const grid = await screen.findByLabelText('生词本关键指标');
+  const node = grid.querySelector<HTMLElement>(`[data-metric="${name}"]`);
+  if (!node) throw new Error(`找不到 data-metric="${name}" 的磁贴`);
+  return node;
+}
+
+/** 顶部磁贴条容器（可能整条不渲染时用 query 版本自行判定）。 */
+async function grid(): Promise<HTMLElement> {
+  return screen.findByLabelText('生词本关键指标');
+}
+
+/** 相对「今天」往前 N 天的 ISO 串：让「近 7 天」读数与测试运行时刻无关。 */
+function daysAgo(n: number): string {
+  return new Date(Date.now() - n * 86400_000).toISOString();
+}
+
 beforeEach(() => {
   vi.stubGlobal('scrollTo', vi.fn());
 });
@@ -230,3 +250,47 @@ describe('AC-X4 导出', () => {
     expect(csv).toHaveAttribute('download');
   });
 });
+
+describe('生词本顶部磁贴条（契约 §8.3）', () => {
+  it('磁贴读数正确：总数按全量、近 7 天新增按 created_at、尚无备注计数', async () => {
+    await openBook([
+      row({ word: 'plausible', created_at: daysAgo(1), note_zh: '' }),
+      row({ word: 'sample', context: 'a small sample', created_at: daysAgo(30), note_zh: '有备注' }),
+    ]);
+
+    // 总数是全量 rows.length（2），不是筛后的 visible.length
+    const total = await metric('vocab.total');
+    expect(within(total).getByText('2')).toBeInTheDocument();
+    expect(within(total).getByText(/当前显示 2 条/)).toBeInTheDocument();
+    // 只有 1 天那条落在最近 7 个自然日内
+    expect(within(await metric('vocab.recent')).getByText('1')).toBeInTheDocument();
+    // plausible 备注为空 → 尚无备注 1 条
+    expect(within(await metric('vocab.no-note')).getByText('1')).toBeInTheDocument();
+  });
+
+  it('整条只有一块暖面（尚无备注），渐变面与墨面禁止走出报告屏（§8.3 规则 1）', async () => {
+    await openBook([row({ word: 'plausible', note_zh: '' }), row({ word: 'sample', context: 'a small sample' })]);
+    const strip = await grid();
+
+    expect(strip.querySelectorAll('[data-surface="warm"]')).toHaveLength(1);
+    expect(strip.querySelectorAll('[data-surface="hero"], [data-surface="solid"]')).toHaveLength(0);
+  });
+
+  it('全部词条都有备注时不渲染 vocab.no-note，但总数/近 7 天仍在', async () => {
+    await openBook([row({ word: 'plausible' }), row({ word: 'sample', context: 'a small sample' })]);
+    const strip = await grid();
+
+    expect(strip.querySelector('[data-metric="vocab.no-note"]')).toBeNull();
+    expect(strip.querySelector('[data-metric="vocab.total"]')).not.toBeNull();
+    expect(strip.querySelector('[data-metric="vocab.recent"]')).not.toBeNull();
+  });
+
+  it('近 7 天没有新增时该块照样渲染并给出说明（本契约唯一例外）', async () => {
+    await openBook([row({ word: 'plausible', created_at: daysAgo(30) })]);
+    const recent = await metric('vocab.recent');
+
+    expect(within(recent).getByText('0')).toBeInTheDocument();
+    expect(within(recent).getByText('最近 7 天没有新增')).toBeInTheDocument();
+  });
+});
+

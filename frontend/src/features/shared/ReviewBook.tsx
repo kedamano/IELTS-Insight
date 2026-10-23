@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, Button, Card, Field, Modal, Stat, Toast, cx } from '../../components/ui';
+import { Badge, Button, Card, Field, Modal, Tile, Toast, cx } from '../../components/ui';
 import { useApi } from '../../hooks/useApi';
 import { deleteReview, resolveReview, reviewErrors } from '../../services/api';
 import {
@@ -77,6 +77,11 @@ export function ReviewBook({ className }: ReviewBookProps) {
   })).filter((group) => group.rows.length > 0);
   const unclassified = items.filter((item) => !(MODULES as readonly string[]).includes(String(item.module)));
 
+  // 磁贴条（契约 §8.3）只吃这份已拉回的 items：不许为填一块磁贴多加一次请求。
+  const openCount = items.filter((item) => item.status === 'open').length;
+  const resolvedCount = items.filter((item) => item.status === 'resolved').length;
+  const stubbornCount = items.filter((item) => item.seen_count > 1).length;
+
   const runAction = async (action: () => Promise<unknown>): Promise<void> => {
     setError(null);
     try {
@@ -152,12 +157,45 @@ export function ReviewBook({ className }: ReviewBookProps) {
             </select>
           </Field>
         </div>
-
-        <div className="mt-3 flex items-center gap-6">
-          <Stat label="未掌握" size="sm" value={String(items.filter((item) => item.status === 'open').length)} />
-          <Stat label="已掌握" size="sm" value={String(items.filter((item) => item.status === 'resolved').length)} />
-        </div>
       </Card>
+
+      {/* 磁贴条（契约 §8.3）：暖面只给「未掌握」这个待处理信号，其余 plain。
+          原先这两个读数挂在 Card 内的 Stat 上，去重后整块搬进这里（§8.3 规则 4）。 */}
+      {items.length > 0 ? (
+        <dl aria-label="错题本关键指标" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {/* 暖面是「有东西要处理」的行动召唤，读数为 0 就没有召唤可言，整块不渲染；
+              「近 7 天新增 0」那种纯陈述的 plain 块不适用这条（契约 §8.3 规则 3）。 */}
+          {openCount > 0 ? (
+            <Tile
+              metric="review.open"
+              surface="warm"
+              label="未掌握"
+              value={String(openCount)}
+              hint="不会自动销账，重做后需手动标「已掌握」"
+            />
+          ) : null}
+          {/* 默认 status=open 时后端永远不返回已掌握，写死的 0 是假数（§8.3 规则 3），
+              只在筛选可能返回已掌握条目（all / resolved）时才出现。 */}
+          {status !== 'open' ? <Tile metric="review.resolved" label="已掌握" value={String(resolvedCount)} /> : null}
+          {stubbornCount > 0 ? (
+            <Tile
+              metric="review.stubborn"
+              label="顽固错误"
+              value={String(stubbornCount)}
+              hint="同一条错第二次以上"
+            />
+          ) : null}
+          {grouped.length > 0 ? (
+            <Tile
+              metric="review.modules"
+              label="涉及科目"
+              value={String(grouped.length)}
+              unit="科"
+              hint={grouped.map((group) => MODULE_LABEL_ZH[group.module]).join('、')}
+            />
+          ) : null}
+        </dl>
+      ) : null}
 
       {items.length === 0 && !list.loading ? (
         <Card>

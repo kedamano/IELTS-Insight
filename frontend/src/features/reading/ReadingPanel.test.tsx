@@ -55,6 +55,30 @@ async function openSetByTitle(titleZh: string) {
   await screen.findByTestId('passage-scroll');
 }
 
+/** 顶部磁贴条容器（契约 §8.3）：aria-label 是条的身份。 */
+function strip(): Promise<HTMLElement> {
+  return screen.findByLabelText('阅读关键指标');
+}
+
+/**
+ * 磁贴条（契约 §8.3）只按 `data-metric` 取块：class 与文案都会随设计改动，
+ * 磁贴身份不会（与 report/Dashboard.test.tsx 同一套选择器）。
+ */
+async function metric(name: string): Promise<HTMLElement> {
+  const grid = await strip();
+  const node = grid.querySelector<HTMLElement>(`[data-metric="${name}"]`);
+  if (!node) throw new Error(`找不到 data-metric="${name}" 的磁贴`);
+  return node;
+}
+
+/** 把 SHORT_SET 的两题都答上（判断题点 TRUE + 填空写 metres）。 */
+function answerBothShortSetQuestions() {
+  fireEvent.click(
+    within(screen.getByRole('radiogroup', { name: '第 1 题判断' })).getByRole('radio', { name: /TRUE/ }),
+  );
+  fireEvent.change(screen.getByLabelText('第 10 题答案'), { target: { value: 'metres' } });
+}
+
 /** 假时钟下 RTL 的 `findBy*` 轮询定时器不会自己走，所以用推进假时钟代替真实等待。 */
 async function driveUntil(present: () => boolean, steps = 40, stepMs = 50) {
   for (let index = 0; index < steps; index += 1) {
@@ -344,5 +368,82 @@ describe('讲评 → 回看原文', () => {
     await openSetByTitle(FIXTURE_SHORT_SET.title_zh);
     fireEvent.click(screen.getByRole('button', { name: '退出练习' }));
     expect(await screen.findByText('选择阅读套题')).toBeInTheDocument();
+  });
+});
+
+describe('阅读磁贴条（契约 §8.3：只在作答阶段出现）', () => {
+  it('工具条下方给已答/用时/未答/段落四块，唯一暖面是「未作答」', async () => {
+    render(<ReadingPanel />);
+    await openSetByTitle(FIXTURE_READING_SET.title_zh);
+
+    const answered = await metric('reading.answered');
+    expect(within(answered).getByText('已作答')).toBeInTheDocument();
+    expect(within(answered).getByText('0/13')).toBeInTheDocument();
+    const blank = await metric('reading.blank');
+    expect(blank).toHaveAttribute('data-surface', 'warm');
+    expect(within(blank).getByText('13')).toBeInTheDocument();
+    expect(within(blank).getByText('未答题按 0 分计入总分')).toBeInTheDocument();
+    expect(within(await metric('reading.paragraphs')).getByText('5')).toBeInTheDocument();
+    expect(within(await metric('reading.elapsed')).getByText(/^\d+:\d{2}$/)).toBeInTheDocument();
+
+    const grid = await strip();
+    expect(grid.querySelectorAll('[data-metric]')).toHaveLength(4);
+    expect(grid.querySelectorAll('[data-surface="warm"]')).toHaveLength(1);
+    expect(grid.querySelectorAll('[data-surface="hero"], [data-surface="solid"]')).toHaveLength(0);
+    // 磁贴是给学习者看的，不许出现后端 reason 码原文（实拍时 `unanswered` 曾直接露在暖面上）。
+    expect(grid.textContent).not.toMatch(/unanswered|over_word_limit/);
+
+    // §8.3 规则 4：工具条里的两个 `Stat` 已删，同源读数整页只剩磁贴这一处
+    // （题目区每张卡的「n/13 已作答」是连排文本，不会被这两个精确串命中）
+    expect(screen.getAllByText('已作答')).toHaveLength(1);
+    expect(screen.getAllByText('用时')).toHaveLength(1);
+
+    // 分子分母来自同一份本地状态：答一题后两块读数一起动
+    fireEvent.change(screen.getByLabelText('第 10 题答案'), { target: { value: 'metres' } });
+    expect(await within(answered).findByText('1/13')).toBeInTheDocument();
+    expect(await within(blank).findByText('12')).toBeInTheDocument();
+  });
+
+  it('全部答完后「未作答」整块不渲染，条里只剩 3 块（§8.3 规则 3）', async () => {
+    render(<ReadingPanel />);
+    await openSetByTitle(FIXTURE_SHORT_SET.title_zh);
+    await metric('reading.blank');
+
+    answerBothShortSetQuestions();
+
+    const grid = await strip();
+    await waitFor(() => expect(grid.querySelector('[data-metric="reading.blank"]')).toBeNull());
+    expect(grid.querySelectorAll('[data-metric]')).toHaveLength(3);
+    expect(grid.querySelectorAll('[data-surface="warm"]')).toHaveLength(0);
+    expect(within(await metric('reading.answered')).getByText('2/2')).toBeInTheDocument();
+  });
+
+  it('篇章没有段落数据时不摆「段落」块，也不出现 0 / — / NaN（§8.3 规则 3）', async () => {
+    server.use(
+      http.get(`${API_BASE}/reading/sets/:setId`, () =>
+        HttpResponse.json({ data: { ...FIXTURE_SHORT_SET, passage: { paragraphs: [] } } }),
+      ),
+    );
+    render(<ReadingPanel />);
+    await openSetByTitle(FIXTURE_SHORT_SET.title_zh);
+
+    const grid = await strip();
+    await metric('reading.answered');
+    expect(grid.querySelector('[data-metric="reading.paragraphs"]')).toBeNull();
+    expect(grid.textContent).not.toMatch(/—|NaN|undefined/);
+  });
+
+  it('选题与讲评阶段不插磁贴条（答题区版式一律不动）', async () => {
+    render(<ReadingPanel />);
+    expect(await screen.findByText('选择阅读套题')).toBeInTheDocument();
+    expect(screen.queryByLabelText('阅读关键指标')).not.toBeInTheDocument();
+
+    await openSetByTitle(FIXTURE_SHORT_SET.title_zh);
+    expect(await strip()).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '提交作答' }));
+    fireEvent.click(await screen.findByRole('button', { name: '仍然提交' }));
+    await screen.findByText('本组成绩');
+    expect(screen.queryByLabelText('阅读关键指标')).not.toBeInTheDocument();
   });
 });
