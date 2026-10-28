@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator, Optional
 
 from app.config import settings as _cfg
+from app.db import migrations
 
 SCHEMA_PATH = Path(__file__).resolve().parent / "schema.sql"
 
@@ -33,6 +34,11 @@ OBJECTIVE_MODULES = ("listening", "reading")
 LEGACY_MARKER_TABLE = "scenes"
 NEW_MARKER_TABLE = "attempts"
 
+# 新库的结构版本（契约 §14.2：唯一真源）。库内真相是 `PRAGMA user_version`。
+# 改动结构 = 在这里抬高一格 **并且** 往 app/db/migrations.py 追加同号的步骤；
+# 只改常量不加步骤会被 validate_chain 拒绝启动（那等于假装升级完成）。
+SCHEMA_VERSION = 2
+
 PRIVATE_SETTING_KEYS = frozenset({"ai_key"})
 
 # ---------------------------------------------------------------------------
@@ -40,6 +46,9 @@ PRIVATE_SETTING_KEYS = frozenset({"ai_key"})
 # ---------------------------------------------------------------------------
 
 _schema_ready = False
+# 「结构未就绪」闩（§14.2）：结构升级失败时闩住，让每个读写都明确返回
+# schema_upgrade_failed，而不是带着半迁移结构继续写。
+_schema_failed: Optional[str] = None
 
 
 def connect() -> sqlite3.Connection:
@@ -52,11 +61,18 @@ def connect() -> sqlite3.Connection:
 
 
 def ensure_schema() -> None:
-    """幂等建表。首次 `connect()` 时懒执行，避免测试/脚本绕过 lifespan。
+    """幂等建表 + 结构升级。首次 `connect()` 时懒执行，避免测试/脚本绕过 lifespan。
 
     先置位再执行：`migrate` 内部只用裸连接，但若它在完成前再次回调本函数会形成递归。
+
+    两种失败的待遇不一样（§14.6「失败必须可重试」与 §14.2「禁止半迁移状态继续跑」的交界）：
+    - 结构升级失败 → 闩住并立刻上抛。每个请求都重跑一遍升级会在 backups 里堆快照，
+      而且同一条 ALTER 第二次必然报错；重试的正确姿势是修好之后 `reset_schema_state()` 或重启。
+    - 其它失败（锁库、磁盘忙）→ 不闩，下次调用自然重试。
     """
-    global _schema_ready
+    global _schema_ready, _schema_failed
+    if _schema_failed is not None:
+        raise migrations.SchemaUpgradeError(_schema_failed)
     if _schema_ready:
         return
     _schema_ready = True
@@ -64,9 +80,32 @@ def ensure_schema() -> None:
 
     try:
         migrate.ensure_schema()
+    except migrations.SchemaUpgradeError as exc:
+        _schema_ready = False
+        _schema_failed = exc.detail
+        raise
     except Exception:
         _schema_ready = False
         raise
+
+
+def mark_schema_failed(detail: str) -> None:
+    """把 app 置为「结构未就绪」（§14.2）。lifespan 捕获升级异常后调用。"""
+    global _schema_ready, _schema_failed
+    _schema_ready = False
+    _schema_failed = detail
+
+
+def reset_schema_state() -> None:
+    """清掉建表/升级缓存与失败闩，让下一次 `connect()` 重新尝试（§14.6 的可重试面）。"""
+    global _schema_ready, _schema_failed
+    _schema_ready = False
+    _schema_failed = None
+
+
+def schema_failed_detail() -> Optional[str]:
+    """当前是否处于「结构未就绪」；给健康检查与设置屏用。"""
+    return _schema_failed
 
 
 @contextmanager
@@ -123,6 +162,20 @@ def practice_at(alias: str = "") -> str:
     """带表别名的练习时间表达式（JOIN 时用，如 `practice_at('a')`）。"""
     prefix = f"{alias}." if alias else ""
     return f"COALESCE(NULLIF({prefix}started_at, ''), {prefix}created_at)"
+
+
+ALIVE = "deleted_at IS NULL"
+"""未删除记录的 SQL 谓词（契约 §14.4）。
+
+凡是从 `attempts` 派生数字的地方都必须带上它 —— 已软删的记录对用户不可见，
+但行还在表里，漏一处的后果是「趋势长期偏低而用户在列表里看不见那条记录」。
+`review_items` 不在此列（它自成一张表，与 attempts 无 JOIN，见 §14.4 订正）。
+"""
+
+
+def alive(alias: str = "") -> str:
+    prefix = f"{alias}." if alias else ""
+    return f"{prefix}deleted_at IS NULL"
 
 
 # ---------------------------------------------------------------------------
@@ -478,18 +531,28 @@ def _attempt_summary(row: sqlite3.Row) -> dict[str, Any]:
         "approximate": bool(row["approximate"]),
         "started_at": row["started_at"],
         "created_at": row["created_at"],
+        "deleted_at": row["deleted_at"],
     }
 
 
 def list_attempts(
-    module: Optional[str] = None, limit: int = 50, offset: int = 0
+    module: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    *,
+    trashed: bool = False,
 ) -> tuple[list[dict[str, Any]], int]:
+    """`trashed=False` 是存档列表（只给未删的），`True` 是回收站（只给已删的）。"""
     conn = connect()
     try:
-        where, params = ("module = ? AND 1=1", [module]) if module else ("1=1", [])
-        total = conn.execute(f"SELECT COUNT(*) FROM attempts WHERE {where}", params).fetchone()[0]
+        where, params = [ALIVE if not trashed else "deleted_at IS NOT NULL"], []
+        if module:
+            where.append("module = ?")
+            params.append(module)
+        clause = " AND ".join(where)
+        total = conn.execute(f"SELECT COUNT(*) FROM attempts WHERE {clause}", params).fetchone()[0]
         rows = conn.execute(
-            f"SELECT * FROM attempts WHERE {where} "
+            f"SELECT * FROM attempts WHERE {clause} "
             f"ORDER BY {practice_at()} DESC, created_at DESC, id DESC LIMIT ? OFFSET ?",
             params + [limit, offset],
         ).fetchall()
@@ -499,9 +562,12 @@ def list_attempts(
 
 
 def get_attempt(attempt_id: str) -> Optional[dict[str, Any]]:
+    """详情只给未删的记录（契约 §14.4：已软删的走回收站摘要，要看报告得先恢复）。"""
     conn = connect()
     try:
-        row = conn.execute("SELECT * FROM attempts WHERE id = ?", (attempt_id,)).fetchone()
+        row = conn.execute(
+            f"SELECT * FROM attempts WHERE id = ? AND {ALIVE}", (attempt_id,)
+        ).fetchone()
         if not row:
             return None
         items = conn.execute(
@@ -549,24 +615,81 @@ def _load_json(text: Any, default: Any) -> Any:
         return default
 
 
-def delete_attempt(attempt_id: str) -> bool:
-    """删除单条 attempt（attempt_items 级联删除，并重算当天练习时长 → FR-P4「重算趋势」）。"""
+def _attempt_days(conn: sqlite3.Connection, attempt_id: str) -> set[str]:
+    """一条记录牵涉到的本地日历日（重算练习分钟要用）。"""
+    row = conn.execute("SELECT started_at, created_at FROM attempts WHERE id = ?", (attempt_id,)).fetchone()
+    if row is None:
+        return set()
+    return {d for d in (iso_to_local_date(row["created_at"] or ""), iso_to_local_date(row["started_at"] or "")) if d}
+
+
+def _recompute_days(days: Iterable[str]) -> None:
+    for day in days:
+        recompute_practice_minutes(day)
+
+
+def trash_attempt(attempt_id: str) -> bool:
+    """软删（§14.4）：只打标记，行与逐题明细、录音归属都留在原处，因此可逆。
+
+    幂等：已经删过的再点一次不报错也不重复计时。返回 False 只表示「这条不存在」。
+    """
     conn = connect()
     try:
-        row = conn.execute(
-            "SELECT started_at, created_at FROM attempts WHERE id = ?", (attempt_id,)
-        ).fetchone()
-        if not row:
+        days = _attempt_days(conn, attempt_id)
+        if not days:
             return False
-        dates = {iso_to_local_date(row["created_at"]), iso_to_local_date(row["started_at"] or "")}
+        now = utc_now_iso()
+        with conn:
+            conn.execute(
+                "UPDATE attempts SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL", (now, attempt_id)
+            )
+    finally:
+        conn.close()
+    _recompute_days(days)  # 当天缓存分钟必须与统计同口径
+    return True
+
+
+def restore_attempt(attempt_id: str) -> Optional[bool]:
+    """从回收站恢复。True=恢复了一条已删的，False=它本来就没删，None=记录不存在。"""
+    conn = connect()
+    try:
+        row = conn.execute("SELECT deleted_at FROM attempts WHERE id = ?", (attempt_id,)).fetchone()
+        if row is None:
+            return None
+        if row["deleted_at"] is None:
+            return False
+        days = _attempt_days(conn, attempt_id)
+        with conn:
+            conn.execute("UPDATE attempts SET deleted_at = NULL WHERE id = ?", (attempt_id,))
+    finally:
+        conn.close()
+    _recompute_days(days)
+    return True
+
+
+def purge_attempt(attempt_id: str) -> Optional[bool]:
+    """彻底清除（不可逆）。调用方必须已经确认本机有快照可以退回去（§14.4）。
+
+    与软删的差别就在「真的删」：`attempt_items` 靠外键级联清掉，
+    `speaking_turns.attempt_id` 必须置 NULL —— 否则留下指向不存在记录的孤儿引用，
+    而 `attempts` 是主键表，下一次快照恢复时它会让外键检查直接失败。
+    """
+    conn = connect()
+    try:
+        days = _attempt_days(conn, attempt_id)
+        if not days:
+            return None
+        was_trashed = (
+            conn.execute("SELECT deleted_at FROM attempts WHERE id = ?", (attempt_id,)).fetchone()["deleted_at"]
+            is not None
+        )
         with conn:
             conn.execute("UPDATE speaking_turns SET attempt_id = NULL WHERE attempt_id = ?", (attempt_id,))
             conn.execute("DELETE FROM attempts WHERE id = ?", (attempt_id,))
     finally:
         conn.close()
-    for day in filter(None, dates):
-        recompute_practice_minutes(day)
-    return True
+    _recompute_days(days)
+    return was_trashed
 
 
 # ---------------------------------------------------------------------------
@@ -723,7 +846,8 @@ def latest_band_per_module() -> dict[str, Optional[float]]:
     conn = connect()
     try:
         rows = conn.execute(
-            "SELECT module, band_overall, created_at FROM attempts ORDER BY created_at DESC, id DESC"
+            f"SELECT module, band_overall, created_at FROM attempts WHERE {ALIVE} "
+            "ORDER BY created_at DESC, id DESC"
         ).fetchall()
     finally:
         conn.close()
@@ -741,7 +865,7 @@ def previous_band_per_module() -> dict[str, Optional[float]]:
     conn = connect()
     try:
         rows = conn.execute(
-            "SELECT module, band_overall FROM attempts ORDER BY created_at DESC, id DESC"
+            f"SELECT module, band_overall FROM attempts WHERE {ALIVE} ORDER BY created_at DESC, id DESC"
         ).fetchall()
     finally:
         conn.close()
@@ -758,7 +882,7 @@ def previous_band_per_module() -> dict[str, Optional[float]]:
 def attempts_total() -> int:
     conn = connect()
     try:
-        return conn.execute("SELECT COUNT(*) FROM attempts").fetchone()[0]
+        return conn.execute(f"SELECT COUNT(*) FROM attempts WHERE {ALIVE}").fetchone()[0]
     finally:
         conn.close()
 
@@ -766,7 +890,7 @@ def attempts_total() -> int:
 def last_practice_at() -> Optional[str]:
     conn = connect()
     try:
-        row = conn.execute("SELECT MAX(created_at) FROM attempts").fetchone()
+        row = conn.execute(f"SELECT MAX(created_at) FROM attempts WHERE {ALIVE}").fetchone()
     finally:
         conn.close()
     return row[0] if row and row[0] else None
@@ -775,7 +899,9 @@ def last_practice_at() -> Optional[str]:
 def total_minutes() -> float:
     conn = connect()
     try:
-        row = conn.execute("SELECT COALESCE(SUM(duration_sec), 0) FROM attempts").fetchone()
+        row = conn.execute(
+            f"SELECT COALESCE(SUM(duration_sec), 0) FROM attempts WHERE {ALIVE}"
+        ).fetchone()
     finally:
         conn.close()
     return round((row[0] or 0) / 60.0, 1)
@@ -787,8 +913,8 @@ def trend(module: str, days: int = 90) -> list[dict[str, Any]]:
     conn = connect()
     try:
         rows = conn.execute(
-            "SELECT band_overall, created_at FROM attempts "
-            "WHERE module = ? AND band_overall IS NOT NULL AND created_at >= ? "
+            f"SELECT band_overall, created_at FROM attempts "
+            f"WHERE module = ? AND {ALIVE} AND band_overall IS NOT NULL AND created_at >= ? "
             "ORDER BY created_at ASC, id ASC",
             (module, cutoff.isoformat()),
         ).fetchall()
@@ -808,8 +934,8 @@ def composite_trend(days: int = 90) -> list[dict[str, Any]]:
     conn = connect()
     try:
         rows = conn.execute(
-            "SELECT band_overall, created_at FROM attempts "
-            "WHERE band_overall IS NOT NULL AND created_at >= ? ORDER BY created_at ASC, id ASC",
+            f"SELECT band_overall, created_at FROM attempts "
+            f"WHERE {ALIVE} AND band_overall IS NOT NULL AND created_at >= ? ORDER BY created_at ASC, id ASC",
             (cutoff.isoformat(),),
         ).fetchall()
     finally:
@@ -833,7 +959,7 @@ def question_type_accuracy(weeks: int = 8) -> list[dict[str, Any]]:
         rows = conn.execute(
             "SELECT i.question_type AS qt, i.correct AS correct, i.reason AS reason "
             "FROM attempt_items i JOIN attempts a ON a.id = i.attempt_id "
-            "WHERE a.created_at >= ? AND i.question_type IS NOT NULL",
+            f"WHERE a.created_at >= ? AND {alive('a')} AND i.question_type IS NOT NULL",
             (cutoff.isoformat(),),
         ).fetchall()
     finally:
@@ -872,7 +998,7 @@ def module_accuracy(weeks: int = 8) -> list[dict[str, Any]]:
         rows = conn.execute(
             "SELECT a.module AS module, i.correct AS correct "
             "FROM attempt_items i JOIN attempts a ON a.id = i.attempt_id "
-            "WHERE a.created_at >= ? AND i.question_type IS NOT NULL",
+            f"WHERE a.created_at >= ? AND {alive('a')} AND i.question_type IS NOT NULL",
             (cutoff.isoformat(),),
         ).fetchall()
     finally:
@@ -907,10 +1033,14 @@ def module_accuracy(weeks: int = 8) -> list[dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 def recompute_practice_minutes(day: str) -> float:
-    """从 attempts 重算某天的练习分钟（写缓存表，保证删除 attempt 后一致）。"""
+    """从 attempts 重算某天的练习分钟（写缓存表，保证删除 attempt 后一致）。
+
+    口径与统计一致：**已软删的不算**（§14.4）。缓存表和「总分钟」必须同源，
+    否则今日时长和总时长会在同一天给出互相矛盾的数字。
+    """
     conn = connect()
     try:
-        rows = conn.execute("SELECT duration_sec, created_at, started_at FROM attempts").fetchall()
+        rows = conn.execute(f"SELECT duration_sec, created_at, started_at FROM attempts WHERE {ALIVE}").fetchall()
     finally:
         conn.close()
     minutes = 0.0

@@ -19,6 +19,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.db import migrations
+
 CODE_BAD_REQUEST = "bad_request"
 CODE_NOT_FOUND = "not_found"
 CODE_CONFLICT = "conflict"
@@ -26,6 +28,9 @@ CODE_TOO_LARGE = "payload_too_large"
 CODE_VALIDATION = "validation_failed"
 CODE_AI_UPSTREAM = "ai_upstream_failed"
 CODE_DEPENDENCY = "dependency_unavailable"
+# 契约 §14.2：结构升级没完成时，读写一律是这个码 —— 不许伪装成 internal_error，
+# 那会让用户以为「重试一下就好」，而实际需要的是一次版本正确的启动。
+CODE_SCHEMA_UPGRADE = "schema_upgrade_failed"
 
 
 class ApiError(Exception):
@@ -76,6 +81,11 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(ApiError)
     async def _api_error(_: Request, exc: ApiError) -> JSONResponse:
         return JSONResponse(status_code=exc.status_code, content=error_body(exc.detail, exc.code))
+
+    # §14.2：结构未就绪时所有读写都明确拒绝，而不是被下面的兜底 handler 伪装成内部错误。
+    @app.exception_handler(migrations.SchemaUpgradeError)
+    async def _schema_upgrade_error(_: Request, exc: migrations.SchemaUpgradeError) -> JSONResponse:
+        return JSONResponse(status_code=500, content=error_body(exc.detail, CODE_SCHEMA_UPGRADE))
 
     @app.exception_handler(HTTPException)
     async def _http_error(_: Request, exc: HTTPException) -> JSONResponse:

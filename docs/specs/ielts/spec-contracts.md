@@ -66,6 +66,12 @@
 | 39 | `GET /tts?text=&voice=&speed=` | – | `audio/mpeg`（保留，voice 增加口音参数） | 保留 |
 | 40 | `POST /content/generate` | `{module, count, target_band}` | `{job_id}` | 新，可后置 |
 | 41 | `GET /content/jobs/{job_id}` | – | `{state, created, errors[]}` | 新，可后置 |
+| 42 | `GET /backup` | – | `{items, keep, max_age_days, days_since_last, directory}`（§14.3） | Wave 7 |
+| 43 | `POST /backup` | – | 那一行的 `manual` 快照 | Wave 7 |
+| 44 | `POST /backup/{name}/restore` | – | `{restored, pre_restore}`；名字非法 400，找不到 404 | Wave 7 |
+| 45 | `GET /attempts/trash` | `module=&limit=&offset=` | `{items: AttemptSummary[]（多 `deleted_at`）, total}` | Wave 7 |
+| 46 | `POST /attempts/{id}/restore` | – | `{restored: true}`；未知 id 404，未删过的幂等 200 | Wave 7 |
+| 47 | `DELETE /attempts/{id}/purge` | – | `{purged: true}`；本机零快照时 409 先备份 | Wave 7 |
 
 **删除**：`/payment/order`、`/payment/verify`、`/scenes*`、`/sentence-parse/{scene_id}/{seq}`、`/stt`（并入口语 turn，但仍保留 `POST /stt` 供内部复用——决策：保留 `POST /stt`，前端不再直接调）、`/score`（被 `/speaking/.../assess` 取代；`score_service` 内部函数保留供发音近似分计算）、`/learning-stats`、`/achievements`、`/wrong-records*`（由 `/review/errors` 取代）、`/wordbook*`（由 `/vocab*` 取代）。
 
@@ -221,7 +227,8 @@ READING_13   = {13:9.0,12:8.5,11:8.0,10:7.0, 9:6.5, 8:6.0, 7:5.5, 6:5.0, 5:4.5,4
 ## 5. 数据库（`backend/app/db/schema.sql`，唯一建表源）
 
 现有 6 表（`scenes/practice_records/wrong_records/learning_records/wordbook/settings`）中前 4 张废弃，
-迁移策略：**不写迁移脚本**（个人本地数据，旧数据是剧本跟读记录，无保留价值）；启动时若检测到旧库文件，
+迁移策略：~~**不写迁移脚本**~~（**Wave 7 已由 §14 推翻**：那句只在「一次性从剧本库切到雅思库」时成立，
+而 app 已发布、库里已有真实学习记录，此后任何结构变更都必须走 §14.2）；启动时若检测到旧库文件，
 把旧表数据一次性归档为 `db/app.pre-ielts.bak`（同目录复制），再建新 schema；`db/app.db` 路径改为
 `%LOCALAPPDATA%/IELTSInsight/app.db`（避免 PyInstaller 相对 CWD 的坑），仍可用 `IELTS_DB_PATH` 覆盖（测试用）。
 
@@ -671,3 +678,172 @@ key 由调用方 shell 环境变量提供（`key_source: "env"`）。**结论都
 - **本次补的测试**（dead agent 遗留范围由主控吸收）：`settings/SettingsPage.test.tsx` 15 例、
   `shared/VocabBook.test.tsx`（含「改备注必须整行回传，否则后端 upsert 清空 context/来源/标签」）、
   `shared/ReviewBook.test.tsx`（首屏零写请求、「已掌握」只手动、删除需确认）、`report/format.test.ts`。
+
+## 14. 数据完整性与迁移契约（Wave 7，A 档可靠性）
+
+Wave 6 收尾审计发现一个会真丢掉备考进度的缺陷：`migrate.py:_replace_corrupt` 在归档名
+`app.pre-ielts.bak` 已被占用时 `_archive()` 返回 `None`，紧接着的 `db_path.unlink()` 仍无条件执行
+—— 第二次遇到损坏就把用户的库删了且零副本，而它上面的注释写的是「没有备份就不动用户文件」。
+同时确认：本 app 从来没有「库结构会变」这件事的应对方案（全库只有两处 `PRAGMA foreign_keys`，
+无 `user_version`、无 `ALTER`，`schema.sql` 全是 `CREATE TABLE IF NOT EXISTS`）。本节据此立约。
+
+### 14.1 唯一不变式（凌驾于本节其它条款）
+
+**任何代码路径都不得出现「副本没写成 + 原文件已消失」。**
+判定一个改动是否合格，只看这条能不能被测试证伪；其余条款都是它的派生物。
+
+### 14.2 schema 版本
+
+- `store.SCHEMA_VERSION: int` 是新库结构版本（Python 常量，唯一真源）；库内版本存在 `PRAGMA user_version`。
+- `schema.sql` 只负责**新库**建表（保持全 `IF NOT EXISTS`、首启幂等）；**老库的增量**一律走
+  `app/db/migrations.py` 的有序迁移表。禁止往 `schema.sql` 里塞 `ALTER`：新库会因重复列报错，
+  老库又拿不到建表语句里的新列，两边同时坏。
+- 迁移表的 `version` 是「这一步跑完后库所处的版本」，必须**从 1 开始连续**且顶到 `SCHEMA_VERSION`；
+  `validate_chain()` 在动库之前先校验，跳号/重复/常量与表不一致一律拒绝。抬高了常量却忘了写步骤
+  == 假装升级完成，比崩溃更糟。版本 1 是「基线空步骤」：版本化之前问世的库 `user_version` 是 0
+  而结构就是 v1，给它一个真步骤，新老库才走同一条代码路径。
+- 启动顺序固定：读 `user_version` → 若 `< SCHEMA_VERSION` 则**先做 §14.3 的升级前快照** →
+  按序 apply（每步一个事务）→ 版本号与 DDL 在同一事务里提交。
+  步骤内的 DDL 必须能被回滚，因此执行连接走 `isolation_level = None` + 显式 `BEGIN IMMEDIATE`
+  （Python 默认模式不为 `ALTER` 开事务，会当场提交 —— 那正是半迁移状态）；
+  步骤内**禁止** `executescript()`，它隐式 COMMIT，会把事务撕开。
+- 任一步抛错：该步事务回滚、`user_version` **保持原值**、app 进入「结构未就绪」，
+  所有读写返回 500 + `code: "schema_upgrade_failed"`（detail 中文，不含路径与 SQL）。
+  **禁止半迁移状态继续跑** —— 那只会把一次失败放大成整库不可读。
+- `user_version > SCHEMA_VERSION`（用户拿老版本 EXE 打开新结构库）：同样返回
+  `schema_upgrade_failed` 并**原样保留库**。按旧结构写下去会把新列当不存在，那是比报错严重得多的事故。
+- 「结构未就绪」是**服务照常起来后的拒绝状态**，不是进程崩溃：lifespan 捕获升级异常后继续 yield。
+  崩掉的话前端只显示「连不上本地服务」，用户看不到真相（升级失败 + 快照已经在 backups 里）。
+- 与 §14.6 的交界：结构升级失败会**闩住**（每个请求重跑升级会在 backups 里堆快照，且同一条 `ALTER`
+  第二次必然报错）；锁库、磁盘忙这类瞬态失败**不闩**，下一次调用自然重试。
+  重试的正当姿势是修好之后重跑，而不是让半迁移结构继续接客。
+- 步骤一旦上线就永远不能再改：跑过它的库里版本号已经写上，重放不会发生，改了也没用。要修结构就再加一步。
+
+### 14.3 归档与快照
+
+- 归档/快照文件名一律带 UTC 时间戳且**永不覆盖**；同名已存在时追加 `-02`、`-03`…
+  拿到可写目标路径之前，不得对原库做任何破坏性动作。
+- 移开损坏库用 `os.replace()`（同目录原子改名），不用 copy + unlink。
+  改名失败（被占用 / 权限 / 跨卷）→ 放弃重建、报错、原库留在原地。
+- 快照走 SQLite 在线备份 API（`conn.backup()`）写到 `<数据目录>/backups/app.<UTC>.sqlite`；
+  **禁止**复制正在写的 `app.db` 活文件（只会得到半截库）。文件名带标记（`pre-upgrade` /
+  `pre-restore` / `manual`），设置屏要据此区分自动与手动。
+- 快照中途失败要把那份**半截副本删掉**再上抛：留着它，备份列表会显示一份看着能用、
+  实则读不出表的文件 —— 而用户以为自己有备份。删的是我们造的副本，不是原库。
+- 轮转保留最近 10 份，且只作用于 `backups/` 目录：`app.db` 旁边的归档与损坏改名副本**永不删除**。
+- 触发点：schema 升级前必做一次；日常启动时若距上次成功快照 > 7 天补做一次。
+  版本没变**不该**快照（每次启动都拍一遍会把「升级前快照」这个标记冲淡成噪声）。
+- 端点：
+  - `GET /api/backup` → `{items, keep, directory}`。每行 `{name, size_bytes, created_at, tag, pre_upgrade}`；
+    `keep` 是轮转上限（10），`directory` 给设置屏显示「把副本拷出机器该去哪儿」—— 本机路径不是秘密，
+    但只出现在这一处，错误 detail 里一律不许有路径（CONSTITUTION §3）。
+    排序按 mtime 新→旧：同一秒内的两份靠文件名比不出先后。
+  - `POST /api/backup` → 建一份 `manual` 快照，返回那一行。
+  - `POST /api/backup/{name}/restore` → **必须**先把当前库快照成 `pre-restore` 才允许覆盖；
+    恢复用 `snapshot.backup(current_conn)` 把快照内容写回当前库，**不是替换文件**
+    （Windows 上正在被连接的文件换不掉，换到一半比不恢复更糟）。
+    成功后清掉建表缓存，让下一次连接按 `user_version` 重新判定结构 —— 恢复老快照意味着结构也回到老版本。
+  - `{name}` 来自 URL，是用户可控字符串：只接受 `app.<tag>.<UTC时间戳>[-NN].sqlite` 且解析后仍在
+    `backups/` 内；带分隔符、绝对路径、不匹配白名单的一律 400/404，且**不许因此动到当前库**。
+    这个校验漏一次，就等于把「覆盖本机任意文件」开放给一个字符串。
+- 首启刚建出来的空库（`fresh`）**不补拍**快照：库里还没有值得保护的东西，
+  拍一份只是给 `backups/` 添噪声，也会把「升级前快照」这个标记冲淡。
+
+### 14.4 删除必须可逆
+
+- `attempts.deleted_at TEXT`（迁移 v2 加列 + `idx_attempts_deleted` 索引）。`DELETE /attempts/{id}` 改为打标记，幂等。
+- 新增 `GET /attempts/trash`、`POST /attempts/{id}/restore`、`DELETE /attempts/{id}/purge`；
+  `purge` 在该库尚无任何成功快照时返回 409（提示先备份）。
+- **所有**由 attempts 派生的统计口径（progress / analytics / plan / practice_minutes）必须排除
+  `deleted_at IS NOT NULL`。这条最容易漏也最致命：趋势会因一条已删记录长期偏低，
+  而用户在存档列表里根本看不见它，等于数据对了但结论错了。
+  （`review_items` 不在其中，理由见本节末尾的订正。）
+
+实现口径（Wave 7d 定，写在这里是为了让「漏了一处」变成可测的事实）：
+
+- **读取全部集中在 `store.py`**，所以过滤有唯一一个落点。任何绕过 `store` 直接 `SELECT attempts`
+  的新代码都算违约 —— 加了这一列就得把下面这张清单对着核一遍：
+  `list_attempts` / `attempts_total` / `last_practice_at` / `total_minutes` / `trend` /
+  `composite_trend` / `latest_band_per_module` / `previous_band_per_module` /
+  `question_type_accuracy` / `module_accuracy`（两者 JOIN attempts）/ `recompute_practice_minutes`。
+  `plan` 与 `progress` 都是从这几个函数派生的，不需要各自再 filter。
+- **软删与恢复都要重算当天 `practice_minutes`**：缓存表的口径与统计口径必须一致，
+  否则「今日分钟」和「总分钟」会互相打脸。
+- **`GET /attempts/{id}` 对已软删的记录仍返回 404**（§1 行 24 的既有断言不动）。回收站列表
+  自带摘要（module / task_ref / band_overall / created_at / deleted_at），够用来决定恢复还是清除；
+  要看完整报告就先恢复。这样前端只有一套详情读路径，不会出现「刚删的记录还能从存档 URL 打开」。
+- **`purge` 才做老 `delete` 的事**：清 `attempt_items`（外键级联）并把 `speaking_turns.attempt_id`
+  置 NULL。软删**不碰**这两处 —— 恢复后录音归属必须还在，否则「可逆」是假的。
+- **错题本（`review_items`）不随 attempt 软删而隐藏。** 上面那条把「review 聚合」列进口径是
+  立约时写高了：`list_review_items` 与 `error_type_stats` **都只读 `review_items`，与 attempts 无 JOIN**，
+  没有可排除的东西；现状硬删同样不动它们。更实质的理由是 `review_id` 是跨 attempt 的稳定身份、
+  `source_attempt_id` 只指向最近一次出现，按它过滤会连带隐藏来自其它练习的同一条错题。
+  订正以实现为准：**排除范围就是上面那张 attempts 读取清单，不含 `review_items`**。
+- **迁移 v2 的 `ALTER` 必须先查列在不在**：`schema.sql` 里 `attempts` 直接带 `deleted_at`（新库），
+  所以新建库首次升级会撞 `duplicate column name`。用 `PRAGMA table_info(attempts)` 判定，
+  存在即跳过 —— 这不是防御性代码，是新库/老库共用同一张迁移表的必然结果（§14.2）。
+- `409` 的判据是「本机 `backups/` 里一份快照都没有」，不是「用户点了确认」：清除是不可逆动作，
+  而 app 已经有自动快照，绝大多数情况这道门是通的；它拦的是「刚清完库就硬盘故障」这种真没退路的情形。
+
+### 14.5 草稿不许只有一份
+
+- 新表 `drafts(key TEXT PRIMARY KEY, module TEXT, ref TEXT, payload_json TEXT, updated_at TEXT)`。
+- `useDraftAutosave` 双写：localStorage 仍是冷启动首屏与离线快路径，同时 `PUT /drafts/{key}`；
+  恢复时取「`updated_at` 较新的一份」。提交成功后两边一起清。
+- 后端不可用时前端**必须可见地**说明「草稿目前只存在本机浏览器里」，不许静默只写 localStorage。
+  （现状：作文提交成功前，草稿是唯一副本，而 WebView2 profile 被清理即永久丢。）
+
+### 14.6 存储层失败必须可见
+
+- `sqlite3.OperationalError` / `DatabaseError`（`disk I/O error`、`database is locked`、
+  `no such table/column`）在 `api/common.py` 统一映射为 500 + `code: "storage_unavailable"`，
+  detail 说清「本机学习库暂时写不了，这次操作没保存」，**不含**文件路径、SQL 片段或异常 repr
+  （与 CONSTITUTION §3 同源）。
+- 启动时跑一次 `PRAGMA quick_check`：不通过 → **不删库、不重建**，进入只读降级
+  （写请求返回 503 + `code: "storage_readonly"`），并把原因显示在概览。
+  损坏的库比没有库有价值得多。
+- `store.ensure_schema()` 的「只跑一次」缓存：失败必须可重试；表级 malformed 不得只靠
+  `SELECT sqlite_master` 判定（它检不出 `attempts` 内部的损坏）。
+
+### 14.7 Wave 7 实跑记录（7a–7c，已实现并验证的部分）
+
+- **7a 的地雷**：`_replace_corrupt` 那段「没有备份就不动用户文件」的注释与代码相反，已在 §14.1
+  的口径下修掉（先拿到确定可写的新路径，才允许动原文件）。修完暴露出第二个缺陷：归档时
+  连接没先关掉，Windows 上 `os.replace()` 直接 `PermissionError` —— 同一个库里两条都是
+  「副本没写成」，但只有第一条会被不变式测试抓到，所以测试必须**真跑 replace**，不能只断路径拼接。
+- **7b 的关键实测**：Python sqlite3 默认（legacy）`isolation_level` **不把 DDL 包进事务**，
+  `ALTER TABLE` 自动提交。插桩跑「迁移中途抛错」得到的确定结论是 `version after rollback: 0`，
+  即列已经加上、`user_version` 还是旧值 —— 半个迁移状态。因此每个步骤必须
+  `conn.isolation_level = None` + 显式 `BEGIN IMMEDIATE` / `ROLLBACK` / `COMMIT`，
+  且 `PRAGMA user_version` 写在同一事务里（详见 §14.2）。
+- **7b 在真实数据上验过，不是只在 tmp 库里绿**：把用户当前 `app.db` 在线备份到临时目录后跑
+  `migrate.run()`，`user_version` 0→1、`jobs` 表按新结构补齐、行数与升级前一致、原文件未被改动，
+  升级前快照能读回全部记录。
+- **7c 的两个决定**：① 快照排序不能用文件名 —— `-`（45）排在 `.`（46）前，同一秒内的
+  `app.manual.20261028T010203-02.sqlite` 会插到 `app.manual.20261028T010203.sqlite` 前面，
+  改按 `(mtime, name)`；② 恢复走 `src.backup(dst)` 写进活库，**不换文件**（Windows 上
+  正在使用的 `app.db` 换不掉），换完必须 `store.reset_schema_state()` 重读版本。
+- **7c 的破坏性实测**：真实进程里删掉 5 条 attempt → 列表还原 → 从快照恢复 → 4 张表
+  （38/231/99/12 行）全部回来。这类断言只在 mock 上过等于没验。
+- **`ListeningPanel.test.tsx` 的旧诊断又一次是错的**：「网络失败显示可读原因」那个用例的红灯
+  不是跨文件并发把 CPU 饿死 —— 三个套件合跑 **122ms** 就稳定复现。真因是 `status==='ready'`
+  由 `api.data` 直接推出，而 `<audio>` 的 blob src 要等 `useListeningAudio` 的 effect 落地
+  （多一次渲染），同步断言 `src` 读到的就是 `undefined`。修法用 `waitFor`，不放宽超时。
+  与 §13「设置屏偶发红灯」同一课：**先量复现耗时，再决定是竞态还是负载**。
+- **7d 被自己的测试抓出来的一条硬约束**：`schema.sql` 跑在增量迁移**之前**，所以它里面
+  **不许出现引用尚未由迁移补上的列的 DDL**。第一版把 `CREATE INDEX ... ON attempts(deleted_at)`
+  写进了 `schema.sql`，老库（表已存在 → `CREATE TABLE IF NOT EXISTS` 跳过、列还没加）
+  当场 `no such column: deleted_at`，升级路径直接断。索引因此只写在迁移步骤 2 里；
+  新库也会跑到步骤 2（新库 `user_version` 从 0 起，整条链都要跑），所以两边都有索引。
+- **7d 的真库验证**（`D:\tmp\ielts-demo\verify-7d.py`，全部在副本上，两个原文件只读一次做 backup）：
+  ① 用户真实库副本 `user_version` 0→2、`deleted_at` 与 `idx_attempts_deleted` 到位、
+  `quick_check ok`、升级前快照可读出 v0 的库、原文件仍是 v0；
+  ② 演示库副本（38 条 attempt）走真端点：删除后 `attempts_total` 38→37、`minutes_total`
+  617.2→617.0、趋势点 32→31，回收站能看到该行且带 UTC 的 `deleted_at`，再删一次仍 200，
+  恢复后概览与题型正确率**逐字段等于删除前**；③ `purge` 在有快照时放行、行真少一条，
+  把 `backups/` 清空后 `purge` 返回 409 + 中文文案（不含路径）且库没动。
+  真实库只有 0 条记录，行为验证必须另找有数据的库 —— 别把「跑通了」当成「验过了」。
+- **前端门禁在满载冷启动时会随机红**：同一句 `npm test`，第一趟 49s / 17 个 `Test timed out in 5000ms`，
+  第二趟 26s 全绿 —— 撞到的是 vitest 默认 `testTimeout`，不是等待逻辑（逻辑仍由
+  `asyncUtilTimeout: 4000` 兜）。已在 `frontend/vitest.config.ts` 显式抬到 20s 并写明理由：
+  门不能随机红，但抬高的是「机器慢」的容忍度，不是「等不到东西」的容忍度。

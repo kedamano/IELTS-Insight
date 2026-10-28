@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -18,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import api_router
 from app.api.common import register_exception_handlers
 from app.config import settings
-from app.db import migrate, store
+from app.db import backup, migrate, migrations, store
 from app.services import sets_loader
 
 REAP_REASON = "应用在批改完成前退出，请重新提交批改"
@@ -26,15 +27,40 @@ REAP_REASON = "应用在批改完成前退出，请重新提交批改"
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    report = migrate.run()
+    try:
+        report = migrate.run()
+    except migrations.SchemaUpgradeError as exc:
+        # §14.2：结构未就绪时**照常把服务起起来**，让每个读写都拿到明确的
+        # schema_upgrade_failed。直接崩掉的话前端只会显示「连不上本地服务」，
+        # 而真相是「库结构升级失败、升级前的快照已经留在 backups 目录」。
+        store.mark_schema_failed(exc.detail)
+        print(f"[Startup] 学习库结构未就绪：{exc.detail}（原因 {exc.reason}）", flush=True)
+        yield
+        return
     print(
         f"[Startup] DB={report['db_path']} "
         f"{'(首启新建)' if report['fresh'] else ''}"
-        f"{' 旧剧本库已归档' if report['archived_to'] else ''}",
+        f"{' 已留下副本/归档' if report['archived_to'] else ''}"
+        f" 库结构 v{report['schema_version']}",
         flush=True,
     )
     if report["archived_to"]:
-        print(f"[Startup] 归档位置: {', '.join(report['archived_to'])}", flush=True)
+        print(f"[Startup] 副本位置: {', '.join(report['archived_to'])}", flush=True)
+    if report["schema_version"] > report["schema_version_before"]:
+        print(
+            f"[Startup] 学习库结构已从 v{report['schema_version_before']} 升级到 "
+            f"v{report['schema_version']}（升级前快照见上面的副本位置）",
+            flush=True,
+        )
+
+    # 日常补拍（§14.3：距上次成功快照 > 7 天）。补拍失败不该挡住启动 ——
+    # 一个没拍成的备份是坏事，一个起不来的 app 会让用户连库都看不到。
+    try:
+        opportun = backup.startup_snapshot_if_stale(fresh=report["fresh"])
+        if opportun is not None:
+            print(f"[Startup] 已补拍学习库快照：{opportun.name}", flush=True)
+    except (sqlite3.Error, OSError) as exc:
+        print(f"[Startup] 警告：快照补拍失败（{type(exc).__name__}），本次启动没有新增备份", flush=True)
 
     sets_report = sets_loader.load_sets()
     if sets_report["loaded"] == 0:

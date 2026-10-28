@@ -218,7 +218,13 @@ describe('AC-L1b 音频不可用的可见降级', () => {
     ctx.setAudioMode('ok');
     fireEvent.click(screen.getByRole('button', { name: '重试音频' }));
     expect(await within(screen.getByRole('region', { name: '听力播放器' })).findByText('音频就绪')).toBeInTheDocument();
-    expect(audioElement()?.src).toMatch(/^blob:/);
+    // 「音频就绪」由 `api.data` 直接推出，而 `<audio>` 的 blob src 要等 useListeningAudio 的
+    // effect 落地（多一次渲染）。不等它就读 src，跨文件并发时约 1/10 概率读到 undefined。
+    await waitFor(() => {
+      const src = audioElement()?.src;
+      if (!src) throw new Error('<audio> 还没挂上 blob src');
+      expect(src).toMatch(/^blob:/);
+    });
     expect(ctx.audioCalls).toHaveLength(2);
   });
 });

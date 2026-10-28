@@ -1,16 +1,24 @@
-"""数据库迁移（spec-contracts.md §5）。
+"""数据库建表与结构升级（spec-contracts.md §5 + §14）。
 
-策略（契约：旧数据是剧本跟读记录，无保留价值 → 不做业务迁移，只归档）：
+**§14.1 不变式：任何路径都不得出现「副本没写成 + 原文件已消失」。** 本模块所有破坏性动作
+都要先拿到一个「确定不存在」的目标路径（`backup.unique_target`，带 UTC 时间戳、永不覆盖）才继续。
+
+策略：
 
 1. `DB_PATH` 处若已存在**旧 schema** 的 app.db（有 `scenes`、无 `attempts`），
-   先**复制**为同目录的 `app.pre-ielts.bak`（用户原文件绝不删除）；
+   先**复制**为同目录的 `app.db.pre-ielts.<UTC时间戳>.bak`（用户原文件绝不删除）；
 2. 复制成功后，才把旧库里**用户可见的两样东西**带进新 schema：
    - 旧 `settings` 行的 `online_enabled` / `tts_voice`（其余字段是剧本跟读语义，已废弃）
    - 旧 `wordbook` 收藏 → 新 `vocab` 表（生词本能力延续，FR-V1）
    然后 `DROP` 掉 6 张旧表（否则旧 `settings` 表结构会与新契约的 `settings(json)` 冲突）；
-3. `DB_PATH` 处的文件若不是合法 SQLite（损坏）→ 备份后重建；
+3. `DB_PATH` 处的文件若不是合法 SQLite（损坏）→ **原子改名**移开（`corrupt` 标签），
+   再让新 schema 建起来。改名失败就抛错放弃重建，原库留在原地（§14.3）；
 4. 执行 `schema.sql`（全部 `IF NOT EXISTS`，因此幂等、首启安全）；
-5. 播种 `settings` 单行（`INSERT OR IGNORE`，绝不覆盖用户已有设置）。
+5. 播种 `settings` 单行（`INSERT OR IGNORE`，绝不覆盖用户已有设置）；
+6. **结构升级**（§14.2）：读 `PRAGMA user_version` → 落后于 `store.SCHEMA_VERSION` 时
+   先做升级前在线快照（§14.3），再按 `app/db/migrations.py` 的有序表逐步 apply（每步一个事务）→
+   版本号与 DDL 同事务提交。任一步失败 → 整步回滚、版本号保持原值、抛
+   `SchemaUpgradeError`，app 进入「结构未就绪」。**半迁移状态禁止继续跑。**
 
 兼容旧打包：当**没有** `IELTS_DB_PATH` 覆盖时，顺带把历史上写在 CWD/exe 相对位置的旧库
 （`backend/db/app.db`、仓库根 `db/app.db`）复制归档，避免路径改到 `%LOCALAPPDATA%` 后
@@ -31,9 +39,13 @@ from pathlib import Path
 from typing import Any, Optional
 
 from app.config import settings as _cfg
-from app.db import store
+from app.db import backup, migrations, store
 
-ARCHIVE_SUFFIX = "app.pre-ielts.bak"
+# 归档标签（文件名的一部分）。§14.3：归档名带 UTC 时间戳且永不覆盖，
+# 所以这里只是「这一段是干什么的」，不再是完整文件名。
+TAG_LEGACY = "pre-ielts"
+TAG_CORRUPT = "corrupt"
+
 
 LEGACY_TABLES = ("scenes", "practice_records", "wrong_records", "learning_records", "wordbook", "settings")
 
@@ -49,9 +61,18 @@ def _legacy_candidates() -> list[Path]:
 
 
 def _raw_connect(db_path: Path) -> sqlite3.Connection:
+    """裸连接（不回调 store.connect，否则会触发建表懒加载造成递归）。
+
+    建连后任何一步失败都要把连接关掉：Windows 上泄漏的连接会把 app.db 锁住，
+    后面的改名/删除直接 PermissionError —— 实测 test_migrate_safety 就是这么撞出来的。
+    """
     conn = sqlite3.connect(str(db_path), timeout=10)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
+    try:
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
+    except BaseException:
+        conn.close()
+        raise
     return conn
 
 
@@ -74,40 +95,64 @@ def _is_legacy_db(db_path: Path) -> bool:
     return store.NEW_MARKER_TABLE not in tables and store.LEGACY_MARKER_TABLE in tables
 
 
-def _archive(db_path: Path) -> Optional[Path]:
-    """复制归档（幂等：归档已存在则不覆盖，返回 None）。"""
+def _archive(db_path: Path, tag: str = TAG_LEGACY) -> Optional[Path]:
+    """复制归档（§14.3：唯一名、永不覆盖）。文件不存在或为空时返回 None。
+
+    注意这里**只复制、不删除**：旧剧本库复制完还要就地转成新 schema（`_drop_legacy_tables`），
+    损坏库才需要真正移开，那条路走 `_replace_corrupt` 的原子改名。
+    """
     if not db_path.exists() or db_path.stat().st_size == 0:
         return None
-    target = db_path.parent / ARCHIVE_SUFFIX
-    if target.exists():
-        return None
+    target = backup.unique_target(db_path.parent, f"{db_path.name}.{tag}")
     shutil.copy2(db_path, target)
     return target
 
 
-def _archive_if_legacy(db_path: Path) -> Optional[Path]:
+def _record(archives: Optional[list[Path]], target: Optional[Path]) -> None:
+    if target is not None and archives is not None:
+        archives.append(target)
+
+
+def _archive_if_legacy(db_path: Path, archives: Optional[list[Path]] = None) -> Optional[Path]:
     if not _is_legacy_db(db_path):
         return None
-    target = _archive(db_path)
+    target = _archive(db_path, TAG_LEGACY)
     if target:
-        print(f"[Migrate] 旧剧本库已归档：{target}", flush=True)
+        _record(archives, target)
+        print(f"[Migrate] 旧剧本库已归档：{target.name}", flush=True)
     return target
 
 
-def _replace_corrupt(db_path: Path) -> Optional[Path]:
-    """损坏的库文件：先备份再移开，让新 schema 能建起来（没有备份就不动用户文件）。"""
+def _is_corrupt(db_path: Path) -> bool:
+    """能打开但读不出 sqlite_master == 损坏。0 字节是「还没写」，不算损坏。"""
     if not db_path.exists() or db_path.stat().st_size == 0:
-        return None
+        return False
     try:
         conn = _raw_connect(db_path)
-        conn.execute("SELECT name FROM sqlite_master").fetchall()
-        conn.close()
-        return None
     except sqlite3.Error:
-        pass
-    target = _archive(db_path)
-    db_path.unlink()
-    print(f"[Migrate] 库文件损坏，已备份为 {target} 并重建", flush=True)
+        return True
+    try:
+        conn.execute("SELECT name FROM sqlite_master").fetchall()
+    except sqlite3.Error:
+        return True
+    finally:
+        conn.close()
+    return False
+
+
+def _replace_corrupt(db_path: Path, archives: Optional[list[Path]] = None) -> Optional[Path]:
+    """损坏的库：**原子改名**移开后让新 schema 建起来（§14.3）。
+
+    改名而不是「复制 + 删除」，是因为后者中间那步删除正是 §14.1 禁止的形态：
+    副本没写成（归档名被占用）时原文件照样没了。改名要么成功（原路径立刻是副本名，
+    全程存在），要么抛错（原库留在原地，调用方放弃重建）。
+    """
+    if not _is_corrupt(db_path):
+        return None
+    target = backup.unique_target(db_path.parent, f"{db_path.name}.{TAG_CORRUPT}")
+    os.replace(db_path, target)  # 失败即抛：不捕获、不兜底删除，原库必须还在
+    _record(archives, target)
+    print(f"[Migrate] 库文件损坏，已改名为 {target.name} 并重建", flush=True)
     return target
 
 
@@ -218,13 +263,65 @@ def _seed_settings(carry_over: Optional[dict[str, Any]] = None) -> None:
         conn.close()
 
 
-def ensure_schema() -> list[str]:
-    """建表 + 迁移旧库 + 播种（lifespan 与 store.connect 懒路径共用；幂等）。"""
+def _read_user_version(db_path: Path) -> int:
+    """库内结构版本（§14.2 的唯一真相）。读不出来（没有库/损坏）按 0 处理。"""
+    if not db_path.exists() or db_path.stat().st_size == 0:
+        return 0
+    try:
+        conn = _raw_connect(db_path)
+    except sqlite3.Error:
+        return 0
+    try:
+        return int(conn.execute("PRAGMA user_version").fetchone()[0])
+    except sqlite3.Error:
+        return 0
+    finally:
+        conn.close()
+
+
+def _upgrade_version(db_path: Path, *, pre_existing: bool, archives: Optional[list[Path]] = None) -> list[int]:
+    """§14.2：读 `user_version` → 落后则**先做升级前快照**，再按序 apply（每步一个事务）。
+
+    `pre_existing` 决定要不要快照：本次刚建出来的空库没有值得保护的东西，给它拍一份只会
+    让 backups 目录多一个没人需要的文件。返回实际跑掉的步骤版本号列表。
+
+    失败形态全部往上抛 `SchemaUpgradeError`：半迁移状态禁止继续跑（§14.2 最后一条）。
+    """
+    target = store.SCHEMA_VERSION
+    conn = _raw_connect(db_path)
+    # 手工事务：默认（legacy）模式下 Python 不为 DDL 开事务，ALTER 会当场提交，
+    # 步骤失败后库里就多出半截结构而版本号仍是旧值 —— 正是契约禁止的形态。
+    conn.isolation_level = None
+    try:
+        current = migrations.read_version(conn)
+        if current > target:
+            raise migrations.SchemaUpgradeError(
+                migrations.DETAIL_NEWER, reason=f"库内版本 {current} 高于程序版本 {target}"
+            )
+        steps = migrations.pending_steps(current=current, target=target)
+        if not steps:
+            return []
+        if pre_existing:
+            _record(archives, backup.snapshot(conn, tag=backup.TAG_PRE_UPGRADE))
+        return migrations.apply_steps(conn, steps)
+    finally:
+        conn.close()
+
+
+def ensure_schema(archives: Optional[list[Path]] = None) -> list[str]:
+    """建表 + 迁移旧库 + 播种 + 结构升级（lifespan 与 store.connect 懒路径共用；幂等）。
+
+    `archives`：调用方给一个空列表，本次产生的归档/改名副本/升级前快照会 append 进去
+    （§14.3 要求报告里能列出这些文件；不给就是不在意，行为不变）。
+    """
     db_path = Path(_cfg.DB_PATH).expanduser()
     db_path.parent.mkdir(parents=True, exist_ok=True)
+    # 「升级前快照」只在库里可能已有东西时做：判定时机必须在任何破坏性动作之前。
+    pre_existing = db_path.exists() and db_path.stat().st_size > 0
 
-    _replace_corrupt(db_path)
-    _archive_if_legacy(db_path)
+    if _replace_corrupt(db_path, archives) is not None:
+        pre_existing = False
+    _archive_if_legacy(db_path, archives)
     snap = _legacy_snapshot(db_path)
 
     if snap is not None:
@@ -253,6 +350,7 @@ def ensure_schema() -> list[str]:
         print(f"[Migrate] 旧剧本表已清理 {legacy_dropped} 张；生词本迁移 {moved} 条", flush=True)
 
     _seed_settings(carry or None)
+    _upgrade_version(db_path, pre_existing=pre_existing, archives=archives)
 
     conn = _raw_connect(db_path)
     try:
@@ -264,7 +362,7 @@ def ensure_schema() -> list[str]:
 def run() -> dict[str, Any]:
     """启动时调用：返回迁移报告（main.py 打印，便于用户第一次跑时看清发生了什么）。"""
     db_path = Path(_cfg.DB_PATH).expanduser()
-    archived: list[str] = []
+    produced: list[Path] = []
     override = bool((os.environ.get("IELTS_DB_PATH") or "").strip())
 
     if not override:
@@ -274,23 +372,23 @@ def run() -> dict[str, Any]:
                     continue
             except OSError:
                 continue
-            done = _archive_if_legacy(legacy)
-            if done:
-                archived.append(str(done))
+            _archive_if_legacy(legacy, produced)
 
     existed_before = db_path.exists() and db_path.stat().st_size > 0
     was_legacy = _is_legacy_db(db_path) if existed_before else False
-    tables = ensure_schema()
-    if was_legacy:
-        bak = db_path.parent / ARCHIVE_SUFFIX
-        if bak.exists():
-            archived.append(str(bak))
+    version_before = _read_user_version(db_path) if existed_before else 0
+    tables = ensure_schema(produced)
     return {
         "db_path": str(db_path),
         "fresh": not existed_before,
         "was_legacy": was_legacy,
-        "archived_to": archived,
+        # 本次运行留下/移开的每一个副本（§14.3）：损坏改名、旧库归档与升级前快照都算。
+        "archived_to": [str(p) for p in produced],
         "tables": tables,
+        # §14.2：库内版本才是真相，报告里把它和程序目标版本一起给出。
+        "schema_version": _read_user_version(db_path),
+        "schema_version_before": version_before,
+        "target_schema_version": store.SCHEMA_VERSION,
         "legacy_discovery": "skipped (IELTS_DB_PATH 覆盖，测试隔离)" if override else "enabled",
     }
 

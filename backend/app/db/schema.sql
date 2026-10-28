@@ -36,7 +36,9 @@ CREATE TABLE IF NOT EXISTS attempts(
   ai_used INTEGER,
   degraded_reason TEXT,
   approximate INTEGER DEFAULT 0,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  -- 契约 §14.4：删除只打标记（软删），回收站与统计口径都读这一列
+  deleted_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS attempt_items(
@@ -151,6 +153,9 @@ CREATE TABLE IF NOT EXISTS settings(
 
 -- 索引（非契约内容，纯查询性能；命名以 idx_ 前缀区分）
 CREATE INDEX IF NOT EXISTS idx_attempts_module_created ON attempts(module, created_at);
+-- 注意：`attempts(deleted_at)` 的索引**不在这里**，写在 app/db/migrations.py 的步骤 2。
+-- 原因不是风格：schema.sql 跑在增量迁移**之前**，老库此时表已存在（IF NOT EXISTS 跳过）
+-- 而 `deleted_at` 还没加上，这条 CREATE INDEX 会直接 `no such column` —— 升级路径当场断掉。
 CREATE INDEX IF NOT EXISTS idx_attempt_items_attempt ON attempt_items(attempt_id);
 CREATE INDEX IF NOT EXISTS idx_sets_module ON sets(module);
 CREATE INDEX IF NOT EXISTS idx_review_module_status ON review_items(module, status);
