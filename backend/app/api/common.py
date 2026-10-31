@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException, Request
@@ -19,7 +20,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.db import migrations
+from app.db import migrations, store
+from app.services import faultlog
 
 CODE_BAD_REQUEST = "bad_request"
 CODE_NOT_FOUND = "not_found"
@@ -31,6 +33,15 @@ CODE_DEPENDENCY = "dependency_unavailable"
 # 契约 §14.2：结构升级没完成时，读写一律是这个码 —— 不许伪装成 internal_error，
 # 那会让用户以为「重试一下就好」，而实际需要的是一次版本正确的启动。
 CODE_SCHEMA_UPGRADE = "schema_upgrade_failed"
+# 契约 §14.6：写没落库要说清是存储的事，不能混进 internal_error。
+CODE_STORAGE = "storage_unavailable"
+CODE_STORAGE_READONLY = "storage_readonly"
+STORAGE_READONLY_DETAIL = "本机学习库当前只能读，这次改动没有保存。请重启应用；若仍失败，请查看日志。"
+
+
+def storage_error_detail(exc: BaseException) -> str:
+    """sqlite 异常 → 中文文案（措辞表在 `store`，那里才是懂 sqlite 消息的地方）。"""
+    return store.storage_error_detail(exc)
 
 
 class ApiError(Exception):
@@ -75,6 +86,21 @@ def _http_detail_text(exc: HTTPException) -> tuple[str, str]:
     return "请求处理失败", CODE_BAD_REQUEST if exc.status_code < 500 else "server_error"
 
 
+def _storage_response(exc: BaseException) -> JSONResponse:
+    """sqlite 抛上来的异常 → 契约 §14.6 的响应。
+
+    结构性故障（缺表、文件损坏）会顺手闩成只读：这种情况下继续写只会把库越写越坏，
+    而磁盘满与锁库会自己好起来，闩住反而逼用户重启 —— 判定在
+    `store.is_structural_storage_error`。
+    """
+    detail = store.storage_error_detail(exc)
+    if store.is_structural_storage_error(exc):
+        store.set_storage_readonly(detail)
+    # 原始英文消息只进日志，不进界面（CONSTITUTION §3）
+    faultlog.error("API", f"存储异常: {type(exc).__name__}: {exc}")
+    return JSONResponse(status_code=500, content=error_body(detail, CODE_STORAGE))
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     """把所有错误响应统一成 `{detail, code}`。"""
 
@@ -86,6 +112,17 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(migrations.SchemaUpgradeError)
     async def _schema_upgrade_error(_: Request, exc: migrations.SchemaUpgradeError) -> JSONResponse:
         return JSONResponse(status_code=500, content=error_body(exc.detail, CODE_SCHEMA_UPGRADE))
+
+    # §14.6：`sqlite3.Error` 是 OperationalError（锁库、缺表）与 DatabaseError（文件损坏、
+    # I/O）的共同父类 —— 挂在这里等于一次覆盖两类，且都抢在兜底的 internal_error 之前。
+    @app.exception_handler(sqlite3.Error)
+    async def _sqlite_error(_: Request, exc: sqlite3.Error) -> JSONResponse:
+        return _storage_response(exc)
+
+    # 读不出来的库连「读」都做不了：给 500 + 中文原因，而不是让 migrate 顺手建一个空库回 200。
+    @app.exception_handler(store.StorageUnavailableError)
+    async def _storage_unavailable(_: Request, exc: store.StorageUnavailableError) -> JSONResponse:
+        return JSONResponse(status_code=500, content=error_body(exc.detail, CODE_STORAGE))
 
     @app.exception_handler(HTTPException)
     async def _http_error(_: Request, exc: HTTPException) -> JSONResponse:
@@ -119,7 +156,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(Exception)
     async def _unhandled(_: Request, exc: Exception) -> JSONResponse:
         # 兜底：不泄漏内部细节（尤其不泄漏 key），但也不静默伪装成成功结果。
-        print(f"[API] 未处理异常: {type(exc).__name__}: {exc}", flush=True)
+        faultlog.error("API", f"未处理异常: {type(exc).__name__}: {exc}")
         return JSONResponse(
             status_code=500, content=error_body("本地引擎内部错误，请重试或查看日志", "internal_error")
         )

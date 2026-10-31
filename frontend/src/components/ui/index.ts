@@ -13,6 +13,9 @@ export { ScoreBand, type ScoreBandProps } from './ScoreBand';
 export { Modal, type ModalProps } from './Modal';
 export { Field, useFieldAria, type FieldProps, type FieldAria } from './Field';
 export { Toast, type ToastProps, type ToastTone } from './Toast';
+export { StorageNotice, type StorageNoticeProps } from './StorageNotice';
+export { EngineNotice, usesStaleEngine, type EngineNoticeProps } from './EngineNotice';
+export { ErrorBoundary, type ErrorBoundaryProps } from './ErrorBoundary';
 export { Icon, type IconProps, type IconName } from './Icon';
 export {
   bandTone,

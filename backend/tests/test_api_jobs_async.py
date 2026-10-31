@@ -11,8 +11,9 @@
 """
 from __future__ import annotations
 
+import datetime as _dt
 import time
-from typing import Any
+from typing import Any, Optional
 
 import pytest
 
@@ -116,6 +117,54 @@ def test_AC_W3_重复提交同一篇只排一个任务(client, envelope):
     done = _wait_job(client, envelope, first["job_id"])
     assert done["status"] == "succeeded"
     assert envelope(client.get("/api/attempts", params={"module": "writing"}))["total"] == 1
+
+
+def _把终态改到过去(conn, job_id: str, *, 距今秒: float, 状态: Optional[str] = None) -> None:
+    """把已完成任务的 `finished_at` 挪走，用来演「宽限期已过」和「失败」这两条分支。"""
+    时点 = _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0) - _dt.timedelta(seconds=距今秒)
+    conn.execute(
+        "UPDATE jobs SET finished_at = ?, status = COALESCE(?, status) WHERE id = ?",
+        (时点.isoformat(), 状态, job_id),
+    )
+    conn.commit()
+
+
+def test_契约4_刚批完的重复提交仍复用同一个任务(client, envelope):
+    """本地近似引擎几十毫秒就批完，第二次点击落在完成之后是常态。
+
+    只认 `queued/running` 的话，这条承诺在快机器上必然漏：库里会长出两份一模一样的
+    批改记录，报告屏与统计都会把同一篇算成两次练习（全量套件里随机亮红、单跑全绿即为此）。
+    """
+    payload = _writing_payload(client, envelope)
+    first = _submit_writing(client, envelope, **payload)
+    done = _wait_job(client, envelope, first["job_id"])
+    assert done["status"] == "succeeded"
+    again = _submit_writing(client, envelope, **payload)
+    assert again["job_id"] == first["job_id"], "刚批完的同一篇不该另起一个任务"
+    assert again["status"] == "succeeded" and again["attempt_id"] == done["attempt_id"]
+    assert envelope(client.get("/api/attempts", params={"module": "writing"}))["total"] == 1
+
+
+def test_契约4_过了宽限期允许对同一篇重新批改(client, envelope, conn):
+    """反向边界：窗口不能变成永久去重，否则用户换了 AI 开关再批同一篇就拿不到新结果。"""
+    payload = _writing_payload(client, envelope)
+    first = _submit_writing(client, envelope, **payload)
+    assert _wait_job(client, envelope, first["job_id"])["status"] == "succeeded"
+    _把终态改到过去(conn, first["job_id"], 距今秒=3600)
+    again = _submit_writing(client, envelope, **payload)
+    assert again["job_id"] != first["job_id"], "一小时前的同一篇应该能重新批改"
+    assert _wait_job(client, envelope, again["job_id"])["status"] == "succeeded"
+
+
+def test_契约4_失败的任务绝不复用(client, envelope, conn):
+    """没批成功的一次不算「刚刚做过的事」：重试必须走新任务，否则 UI 永远显示那条 failed。"""
+    payload = _writing_payload(client, envelope)
+    first = _submit_writing(client, envelope, **payload)
+    assert _wait_job(client, envelope, first["job_id"])["status"] == "succeeded"
+    _把终态改到过去(conn, first["job_id"], 距今秒=0, 状态="failed")
+    again = _submit_writing(client, envelope, **payload)
+    assert again["job_id"] != first["job_id"], "失败任务被复用等于让用户无法重试"
+    assert _wait_job(client, envelope, again["job_id"])["status"] in TERMINAL
 
 
 # ---------------------------------------------------------------------------

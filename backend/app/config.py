@@ -38,6 +38,22 @@ def default_tts_cache_dir() -> str:
     return str(default_data_dir() / "cache" / "tts")
 
 
+def _db_dir() -> Path:
+    """日志要跟 `backups/` 并列在同一个数据目录下：用户找自己的东西只找一个地方（契约 §15.3 第 2 条）。
+
+    这里读 env 而不是读 `settings.DB_PATH`（本模块的文件里后者还没构造出来），
+    优先级与 CONSTITUTION §6 一致：`IELTS_DB_PATH` > `DB_PATH` > 默认用户数据目录。
+    """
+    explicit = os.environ.get("IELTS_DB_PATH") or os.environ.get("DB_PATH")
+    if explicit:
+        return Path(explicit).expanduser().resolve().parent
+    return default_data_dir()
+
+
+def default_log_dir() -> str:
+    return str(_db_dir() / "logs")
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -67,6 +83,12 @@ class Settings(BaseSettings):
     ONLINE: bool = Field(
         default=True,
         validation_alias=AliasChoices("IELTS_ONLINE", "ONLINE"),
+    )
+    # 故障日志目录（契约 §15.3）：sidecar 没有控制台，stdout 会被父进程读走又丢弃，
+    # 所以「只 print」的故障等于没发生过。默认落在 DB 同目录的 logs/。
+    LOG_DIR: str = Field(
+        default_factory=default_log_dir,
+        validation_alias=AliasChoices("IELTS_LOG_DIR", "LOG_DIR"),
     )
 
     # --- AI（OpenAI 兼容端点）---

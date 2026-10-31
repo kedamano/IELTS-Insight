@@ -143,7 +143,8 @@ def assess_async(session_id: str):
     """排队评分：立即返回 `job_id`（契约 §1 行 11b）。
 
     先把 `assess` 的两条前置条件就地跑一遍（会话存在/未关闭、至少有一次作答），
-    这样明显不该批改的请求不用等排到队才报错；同一会话重复提交复用未完成任务。
+    这样明显不该批改的请求不用等排到队才报错；同一会话重复提交复用同一个任务，
+    刚评完的分也在复用窗口内（契约 §1 行 20b 条款 4）。
     """
     view = _unwrap(speaking_session.session_view, session_id)
     if view["state"] == "closed":
@@ -152,7 +153,7 @@ def assess_async(session_id: str):
         raise bad_request("还没有任何作答，无法评分", code="empty_answer")
 
     dedupe_key = f"speaking:{session_id}"
-    existing = store.find_active_job(dedupe_key)
+    existing = store.find_reusable_job(dedupe_key)
     if existing:
         return ok(job_view(existing))
 

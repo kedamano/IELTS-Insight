@@ -3,6 +3,7 @@ import hashlib
 from pathlib import Path
 import edge_tts
 from app.config import settings
+from app.services import faultlog
 
 Path(settings.TTS_CACHE_DIR).mkdir(parents=True, exist_ok=True)
 
@@ -39,7 +40,7 @@ async def generate_tts(text: str, voice_key: str = "en-US") -> str:
         cache_path.write_bytes(data)
         return str(cache_path)
     except Exception as e:
-        print(f"[TTS] Failed to generate TTS for '{text[:30]}...': {e}")
+        faultlog.error("TTS", f"合成失败: {e}")
         return ""
 
 

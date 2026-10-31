@@ -24,9 +24,11 @@ def _run_probe(target: str) -> tuple[int, list[str], str]:
         [sys.executable, str(PROBE), target],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=180,
         cwd=str(PROBE.parent.parent),  # backend/ —— 让 app 包可导入
-        env={**os.environ, "PYTHONPATH": str(PROBE.parent.parent)},
+        env={**os.environ, "PYTHONPATH": str(PROBE.parent.parent), "PYTHONIOENCODING": "utf-8"},
     )
     events: list[str] = []
     for line in proc.stdout.splitlines():
@@ -60,9 +62,11 @@ def test_懒加载入口存在且首次使用时真的加载模型():
         [sys.executable, str(PROBE), "app.services.stt_service", "call_model"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=180,
         cwd=str(PROBE.parent.parent),
-        env={**os.environ, "PYTHONPATH": str(PROBE.parent.parent)},
+        env={**os.environ, "PYTHONPATH": str(PROBE.parent.parent), "PYTHONIOENCODING": "utf-8"},
     )
     output = proc.stdout + proc.stderr
     assert proc.returncode == 0, f"RED：探针失败 → {output[-500:]}"

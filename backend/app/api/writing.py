@@ -151,14 +151,15 @@ async def post_attempt(request: Request):
 async def post_attempt_async(request: Request):
     """排队批改：立即返回 `job_id`，结果用 `GET /jobs/{job_id}` 轮询（契约 §1 行 20b）。
 
-    同一篇作文重复提交（连点两次）复用仍在排队的任务，不会产出两份批改记录。
+    同一篇作文重复提交（连点两次）复用同一个任务，不会产出两份批改记录 —— 包括第一次
+    已经批完的那次点击（契约 §1 行 20b 条款 4）。
     """
     body = await _json_body(request)
     _doc, response, _duration = _validate(body)
     task_id = str(body.get("task_id") or "").strip()
     dedupe_key = f"writing:{task_id}:{hashlib.sha1(response.encode()).hexdigest()[:16]}"
 
-    existing = store.find_active_job(dedupe_key)
+    existing = store.find_reusable_job(dedupe_key)
     if existing:
         return ok(job_view(existing))
 

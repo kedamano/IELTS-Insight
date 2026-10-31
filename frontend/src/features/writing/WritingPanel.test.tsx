@@ -1,7 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
+import { http, HttpResponse } from 'msw';
+import { API_BASE } from '../../services/api';
 import { readDraft } from '../../hooks/useDraftAutosave';
 import { resetGradingJobs } from '../../hooks/useGradingJobs';
+import { remoteDraft } from '../../test/mocks/handlers';
 import { server } from '../../test/mocks/server';
 import WritingPanelDefault, { WritingPanel } from './WritingPanel';
 import { draftKeyOf } from './writingSets';
@@ -263,6 +266,8 @@ describe('WritingPanel', () => {
     const first = render(<WritingPanel ready initialKind="task2" />);
     writeText(await startTask(new RegExp(`开始 ${task2Agree.title_zh}`)), text);
     expect(await screen.findByText('已保存', {}, { timeout: 3000 })).toBeInTheDocument();
+    // §14.5：学习库里那份是同时写出去的 —— 只有 localStorage 有正文 == 仍然是一份副本
+    await waitFor(() => expect(remoteDraft(draftKeyOf(task2Agree.id))?.value).toBe(text));
 
     first.unmount();
     render(<WritingPanel ready initialKind="task2" />);
@@ -275,14 +280,36 @@ describe('WritingPanel', () => {
     expect(ctx.attemptCalls[0].body.response).toBe(text);
     expect(await screen.findByText('写作批改结果')).toBeInTheDocument();
     expect(readDraft(draftKeyOf(task2Agree.id))).toBeNull();
+    // 两边一起清：远端留着下一篇已经交掉的作文，下次进来会以草稿形态恢复回来
+    await waitFor(() => expect(remoteDraft(draftKeyOf(task2Agree.id))).toBeUndefined());
 
     fireEvent.click(screen.getByRole('button', { name: '换一题' }));
     const again = await startTask(new RegExp(`开始 ${task2Agree.title_zh}`));
     expect(again).toHaveValue('');
   });
 
-  // ---------- 顶部磁贴条（契约 §8.3）：只加在正文作答阶段 ----------
+  it('副本写不进学习库时当场说明「只存在本机浏览器里」（§14.5 不许静默单副本）', async () => {
+    // 后端在跑但 drafts 端点不可用（老 sidecar / 结构升级失败）：用户必须知道自己只剩一份
+    server.use(
+      http.get(`${API_BASE}/drafts/:key`, () => HttpResponse.error()),
+      http.put(`${API_BASE}/drafts/:key`, () => HttpResponse.error()),
+    );
+    const ctx = createWritingHandlers();
+    server.use(...ctx.handlers);
+    render(<WritingPanel ready initialKind="task2" />);
 
+    writeText(
+      await startTask(new RegExp(`开始 ${task2Agree.title_zh}`)),
+      'Remote working gives families back the hours that commuting used to take.',
+    );
+
+    expect(await screen.findByText('草稿目前只存在本机浏览器里', {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(await metric('writing.draft')).toHaveTextContent('仅本机一份');
+    // 本地那份照写（防抖到点才落盘）：可见的是「少了第二份」，不是「草稿没了」
+    await waitFor(() => expect(readDraft(draftKeyOf(task2Agree.id))).not.toBeNull(), { timeout: 3000 });
+  });
+
+  // ---------- 顶部磁贴条（契约 §8.3）：只加在正文作答阶段 ----------
   it('作答磁贴条给出词数/已用时/草稿，未达线时带唯一暖面「还差词数」（§8.3）', async () => {
     const ctx = createWritingHandlers();
     server.use(...ctx.handlers);

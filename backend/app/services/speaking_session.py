@@ -15,7 +15,6 @@ import uuid
 from typing import Any, Optional
 from urllib.parse import quote
 
-from app.config import settings as _cfg
 from app.db import store
 from app.prompts import FOLLOWUP_MAX_TOKENS, TEMPERATURE
 from app.prompts import speaking as speaking_prompts
@@ -63,7 +62,7 @@ def speaking_set(set_id: str) -> dict[str, Any]:
 
 def _audio_url(text: str, voice: str) -> Optional[str]:
     """考官提问音频：在线才给 URL（§10.2：离线 `audio_url = null`）。"""
-    if not _cfg.ONLINE or not text:
+    if not ai_client.network_allowed() or not text:
         return None
     return f"/api/tts?text={quote(text)}&voice={quote(voice)}&speed=1.0"
 

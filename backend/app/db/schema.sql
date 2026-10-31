@@ -151,6 +151,16 @@ CREATE TABLE IF NOT EXISTS settings(
   updated_at TEXT
 );
 
+-- 草稿（契约 §14.5）：正文的第二份副本。payload_json 与 localStorage 记录同形 {"v","t"}，
+-- 前端原样透传；module/ref 由 key 前缀拆出，只用于排查与将来按任务清理。
+CREATE TABLE IF NOT EXISTS drafts(
+  key TEXT PRIMARY KEY,
+  module TEXT NOT NULL,
+  ref TEXT,
+  payload_json TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 -- 索引（非契约内容，纯查询性能；命名以 idx_ 前缀区分）
 CREATE INDEX IF NOT EXISTS idx_attempts_module_created ON attempts(module, created_at);
 -- 注意：`attempts(deleted_at)` 的索引**不在这里**，写在 app/db/migrations.py 的步骤 2。

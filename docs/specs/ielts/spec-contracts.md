@@ -21,7 +21,7 @@
 
 | # | Method & Path | 请求 | `data` 响应 | 状态 |
 |---|---|---|---|---|
-| 1 | `GET /health` | – | `{version, ai_configured, ai_base_url_host, ai_model, whisper: {loaded, model}, tts_ok, content_counts: {speaking,listening,reading,writing}}` | 新 |
+| 1 | `GET /health` | – | `{version, pid, port, port_source, started_at, ai_configured, ai_base_url_host, ai_model, whisper: {loaded, model}, tts_ok, content_counts: {speaking,listening,reading,writing}, storage: {state, reason}}`（`storage` 见 §14.6；`pid`/`port`/`started_at` 见 §15.4；库读不出来时本端点**仍 200**） | 新 |
 | 2 | `GET /settings` | – | `Settings`（§4） | 改 |
 | 3 | `PATCH /settings` | JSON 部分字段 | `Settings`（未提供字段保持原值） | 改 |
 | 4 | `PUT /settings/ai-key` | `{key: string}` | `{ai_key_present: true}` | 新 |
@@ -72,6 +72,9 @@
 | 45 | `GET /attempts/trash` | `module=&limit=&offset=` | `{items: AttemptSummary[]（多 `deleted_at`）, total}` | Wave 7 |
 | 46 | `POST /attempts/{id}/restore` | – | `{restored: true}`；未知 id 404，未删过的幂等 200 | Wave 7 |
 | 47 | `DELETE /attempts/{id}/purge` | – | `{purged: true}`；本机零快照时 409 先备份 | Wave 7 |
+| 48 | `PUT /drafts/{key}` | `{value, saved_at?}` | `{key, updated_at, size}`（§14.5） | Wave 7 |
+| 49 | `GET /drafts/{key}` | – | `{key, value, updated_at}`；无草稿 404 | Wave 7 |
+| 50 | `DELETE /drafts/{key}` | – | `{cleared: true}`（幂等） | Wave 7 |
 
 **删除**：`/payment/order`、`/payment/verify`、`/scenes*`、`/sentence-parse/{scene_id}/{seq}`、`/stt`（并入口语 turn，但仍保留 `POST /stt` 供内部复用——决策：保留 `POST /stt`，前端不再直接调）、`/score`（被 `/speaking/.../assess` 取代；`score_service` 内部函数保留供发音近似分计算）、`/learning-stats`、`/achievements`、`/wrong-records*`（由 `/review/errors` 取代）、`/wordbook*`（由 `/vocab*` 取代）。
 
@@ -566,6 +569,11 @@ Wave 1 交付时 agent 提出的契约含糊点，逐条定稿。**Wave 2 所有
    失败的批改**不写 `attempts`**，不冒充一次练习。
 4. **重复提交复用任务**：同一目标（写作按 `task_id` + 正文指纹，口语按 `session_id`）仍在
    `queued/running` 时，第二次提交返回同一个 `job_id`，不会产出两份批改记录。
+   **`succeeded` 之后 5 秒内的同一提交也复用它**：本地近似引擎几十毫秒就批完，「连点两次」的
+   第二次点击落在任务完成之后是常态而不是边角 —— 只认未完成状态的话，这条承诺在快机器上必然漏，
+   同一篇作文会在库里长出两份一模一样的记录（实测：全量套件里两个用例随机红，单跑全绿）。
+   **`failed` 永不复用**：一次没成功的批改不是「最近做过的事」，重试必须能拿到新任务。
+   代价写清楚：5 秒内改完 AI 开关再点「提交」会拿到旧结果，而改开关要走设置屏，实际不止 5 秒。
 5. **执行器**：进程内单条常驻**守护** worker 线程（`services/job_queue.py`），串行执行。
    守护线程意味着退出时不强留批改中的请求 —— 残留的 `queued/running` 任务由下次启动
    `store.reap_interrupted_jobs()` 判为 `failed`（原因「应用在批改完成前退出，请重新提交批改」），
@@ -787,11 +795,73 @@ Wave 6 收尾审计发现一个会真丢掉备考进度的缺陷：`migrate.py:_
 
 ### 14.5 草稿不许只有一份
 
-- 新表 `drafts(key TEXT PRIMARY KEY, module TEXT, ref TEXT, payload_json TEXT, updated_at TEXT)`。
-- `useDraftAutosave` 双写：localStorage 仍是冷启动首屏与离线快路径，同时 `PUT /drafts/{key}`；
-  恢复时取「`updated_at` 较新的一份」。提交成功后两边一起清。
-- 后端不可用时前端**必须可见地**说明「草稿目前只存在本机浏览器里」，不许静默只写 localStorage。
-  （现状：作文提交成功前，草稿是唯一副本，而 WebView2 profile 被清理即永久丢。）
+先说清现状为什么算缺陷，才能判断做到了没有：作文正文在提交成功之前**只存在于 WebView2 的
+localStorage 里**，而那份 profile 一旦被系统清理、被用户重装、或换一台机器，草稿就永久消失，
+学习库和快照里都没有它的痕迹。CONSTITUTION §1 的「没有服务器」指的是**不依赖远端服务**，
+把草稿写进同机的 sidecar 学习库不违背它 —— 学习库本来就有 §14.3 的快照保护，
+草稿进去之后才第一次拥有「副本没写成 + 原文件已消失」这条不变式的保护。
+
+新表（迁移 v3）：
+
+```sql
+CREATE TABLE IF NOT EXISTS drafts (
+  key          TEXT PRIMARY KEY,
+  module       TEXT NOT NULL,
+  ref          TEXT,
+  payload_json TEXT NOT NULL,
+  updated_at   TEXT NOT NULL
+);
+```
+
+- `payload_json` 存 `{"v": <草稿正文字符串>, "t": <客户端毫秒时间戳>}` —— **和 localStorage
+  里的记录同形**，前端可以原样透传，不需要两套序列化。正文一律是字符串（听力/阅读存
+  `JSON.stringify` 后的答案，写作存散文），所以 `v` 的类型是死的。
+- `module` / `ref` 从 `key` 的前缀推出（ref 是第一个下划线之后的整段，本身可以再带下划线），
+  只用于将来按任务清理和排查，读取路径不依赖它们。key 由 `draftKeyOf()` 生成，实际形状是**题号级**
+  而不是题型级：`writing_wr_t2_carcity_02` → module=`writing`、ref=`wr_t2_carcity_02`；
+  听力/阅读是 `listening_<套题 id>` / `reading_<套题 id>`；还没选题时的占位是 `writing_none`
+  / `listening_none`（白名单允许，因为尾段只要非空就行）。
+- **`CREATE TABLE IF NOT EXISTS` 是硬要求，不是抄风格**：`schema.sql` 对新库已经建好这张表，
+  而新库的 `user_version` 从 0 起、整条迁移链都要跑一遍，步骤 3 若写裸 `CREATE TABLE`
+  就正好撞在自己建的新库上（§14.7 里 7d 那条索引教训的同一件事）。
+- 建表不建索引之外不要往 `schema.sql` 里塞任何引用迁移期列的 DDL（§14.2 第 4 条）。
+
+端点语义（§1 行 48–50）：
+
+- `PUT /api/drafts/{key}` body `{"value": string, "saved_at": int?}` →
+  `{key, updated_at, size}`。落库时 `updated_at` 由后端写 UTC（§0），`payload_json` 的 `t`
+  取 body 的 `saved_at`，缺省时用当前毫秒。写是 **upsert**，没有「草稿不存在所以不能写」这种分支。
+- `GET /api/drafts/{key}` → `{key, value, updated_at}`；该 key 没有草稿返回 **404 `not_found`**
+  （前端把 404 当「远端没有副本」，不是错误，不许弹红）。
+- `DELETE /api/drafts/{key}` → `{cleared: true}`，**幂等**：删不存在的 key 也返回 200。
+  提交成功之后才敢清本地，靠的就是这条不会因为「远端已经没有」而失败。
+- `{key}` 来自 URL，是用户可控字符串。白名单 `^(listening|reading|writing)_[A-Za-z0-9_.-]{1,120}$`
+  之外一律 400 + 中文 detail，detail 里不含路径。它只当主键用、不参与任何文件路径拼接，
+  但仍然要限长限字符集：否则一个写错的客户端能把学习库塞满无用的 blob，
+  而每一坨都会被 §14.3 的快照复制一遍。
+- 正文长度上限 **200 000 字符**，超了返回 413 + `code: "payload_too_large"`。
+  放得下一篇写满的作文（约 6 000 字符）三十倍，拦的是「把整份 PDF 粘进输入框」这类 runaway。
+
+双写与恢复（`useDraftAutosave`）：
+
+- localStorage 仍然是**首屏与离线的快路径**：防抖节奏、`flush()`、`clear()` 的现有语义一律不动。
+  每次真正落盘 localStorage 的同时（同一个 `write()` 里）发出 `PUT`，不额外起定时器。
+- 恢复取「较新的一份」，比较的是**可比的毫秒**：本地记录的 `t` 与远端返回的 `updated_at`
+  解析成毫秒后比大小，谁新用谁；相等时用本地。这里能这么比的前提是 sidecar 与页面在
+  **同一台机器、同一个系统时钟**上 —— 跨机器的时钟偏移会让这条规则变成抽签，所以不许把
+  这个比较搬到任何远端服务上。
+- 远端不可用（PUT 失败）时**必须可见**：面板显示「草稿目前只存在本机浏览器里」，
+  不许静默退回单副本。不额外做退避重试 —— 下一次防抖本来就会再试一次。
+- 提交成功的清理：本地**立刻**清（用户要马上看到空输入框），同时把 key 记进 localStorage 的
+  `ielts.draft.pendingClear` 并发起 `DELETE`；删成功就从名单里摘掉，删不掉（离线）就留着，
+  下次进入同一面板时**先补发名单里的 DELETE、再走恢复逻辑**。于是「已经交掉的作文」不可能
+  从远端被当成草稿恢复回来。
+  这里**故意不用**「先删远端、成功后才清本地」那条顺序：远端删不掉时本地会留下一整篇
+  已经提交的草稿，用户看到的输入框还塞着自己刚交的文章 —— 比多补发一次请求糟得多。
+  两种写法守的是同一条不变式（**提交过的正文不能再以草稿形态出现**），选可立刻观察到的那种。
+- 本期**只做**听力 / 阅读 / 写作三个面板已有的草稿键；口语没有 `useDraftAutosave`
+  （录音走 turn 直接落库），不在本节范围内，别顺手加。
+
 
 ### 14.6 存储层失败必须可见
 
@@ -802,10 +872,32 @@ Wave 6 收尾审计发现一个会真丢掉备考进度的缺陷：`migrate.py:_
 - 启动时跑一次 `PRAGMA quick_check`：不通过 → **不删库、不重建**，进入只读降级
   （写请求返回 503 + `code: "storage_readonly"`），并把原因显示在概览。
   损坏的库比没有库有价值得多。
+- 降级的三道硬门，缺一不可：
+  1. **不做**：`quick_check` 不通过时跳过 `migrate.run()` 与快照补拍 —— 半损坏的库上跑
+     `ALTER` 只会更坏，拍快照等于把坏结构复制进 `backups/` 好几份；
+  2. **挡写**：只读闩住后，`POST/PUT/PATCH/DELETE` 在**进路由之前**被裸 ASGI 中间件
+     （`main.StorageReadonlyGuard`）挡成 503 + `STORAGE_READONLY_DETAIL`，被拒绝的写不可能
+     落库；`GET/HEAD/OPTIONS` 一律放行 —— 用户至少要看得到自己以前的记录。
+     守卫注册在 CORS **之内**（后注册的中间件更靠外），否则 503 带不到 CORS 头。
+  3. **说清**：`/api/health` 在库读不出来时**仍返回 200**，`ai` 块按环境变量算（`store.ai_block({})`，
+     `raw is None` 才读库），并带上 `storage: {"state": "ok"|"readonly", "reason": 中文|null}`。
+     一个 500 的体检端点会在故障时正好把「到底怎么了」藏起来。
+- 只读闩**只由结构性故障触发**（缺表 / 缺列 / malformed / not a database，见
+  `store.STRUCTURAL_MARKERS`）：这类情况下继续写会把库越写越坏。锁库与磁盘满会自己好起来，
+  闩住等于逼用户重启，反而更糟 —— 它们只让当次请求返回 500 `storage_unavailable`。
+- 降级期间**请求路径也不许跑建表/迁移链**（`store.ensure_schema()` 在「已闩只读且结构尚未就绪」
+  时直接抛 `store.StorageUnavailableError`）。实拍里踩到的是：启动体检已经把库闩成只读，
+  但第一个读请求仍然调了 `ensure_schema()`，而 migrate 的坏库分支会把残损文件改名成
+  `app.db.corrupt.<时间戳>.bak` 再建空库 —— 用户界面上一切正常、只是没有数据，
+  真相是他的唯一一份残损文件被动过。读不出来的库**读也读不了**，这类读请求拿
+  500 `storage_unavailable`，不是「空库 200」。
 - `store.ensure_schema()` 的「只跑一次」缓存：失败必须可重试；表级 malformed 不得只靠
   `SELECT sqlite_master` 判定（它检不出 `attempts` 内部的损坏）。
+- 界面侧（契约 §8.3 的例外：这块不是磁贴，是告警条）：外壳主区顶部按 `health.storage.state`
+  渲染 `StorageNotice`，降级期间每一屏都在（用户会在任何一屏点保存），文案 = 后端给的中文原因 +
+  「重启应用」这一条可执行的下一步。原因文本**只来自后端**，前端不自己拼 sqlite 术语。
 
-### 14.7 Wave 7 实跑记录（7a–7c，已实现并验证的部分）
+### 14.7 Wave 7 实跑记录（7a–7g，已实现并验证的部分）
 
 - **7a 的地雷**：`_replace_corrupt` 那段「没有备份就不动用户文件」的注释与代码相反，已在 §14.1
   的口径下修掉（先拿到确定可写的新路径，才允许动原文件）。修完暴露出第二个缺陷：归档时
@@ -847,3 +939,491 @@ Wave 6 收尾审计发现一个会真丢掉备考进度的缺陷：`migrate.py:_
   第二趟 26s 全绿 —— 撞到的是 vitest 默认 `testTimeout`，不是等待逻辑（逻辑仍由
   `asyncUtilTimeout: 4000` 兜）。已在 `frontend/vitest.config.ts` 显式抬到 20s 并写明理由：
   门不能随机红，但抬高的是「机器慢」的容忍度，不是「等不到东西」的容忍度。
+- **7e 的实拍挖出一条一直存在的死配置**：`api.ts` 原先 `const meta = import.meta` 再取 `meta.env`，
+  Vite 的**静态替换**认不出这种写法，dev 里 `import.meta.env` 是 undefined，于是 `VITE_API_BASE`
+  设什么都不生效，页面永远打 8765。已改成直接写 `import.meta.env`（`src/services/api.ts`）。
+  坑中坑：这条**单测抓不到** —— vitest 原生提供 `import.meta.env` 对象，坏写法在 jsdom 里照样绿；
+  所以补了一条源码形状守卫（正则钉住「不许先别名 `import.meta`」），并把坏写法塞回去确认它真的会红。
+  凡是依赖打包器静态替换的行为，jsdom 绿灯等于没验，要么源码守卫、要么真实浏览器验。
+- **7e 契约里的例子是凭想象写的，被真实数据纠正**：草稿键不是题型级而是**题号级** ——
+  真跑出来的行是 `writing_wr_t2_carcity_02`（`draftKeyOf(taskId)`），不是我第一次断言的
+  `writing_task2`。第一次实拍「失败」就是这个原因，不是双写坏了。§14.5 的例子已按真实数据改。
+- **7e 的故障实拍要挑「只有这一份副本坏」**：一开始想当然地杀掉 sidecar，结果整个应用连
+  「引擎已就绪」这道门都过不去，界面根本到不了写作屏，什么也拍不到。改成**在线把 `drafts` 表改名**
+  （不重启进程，`store` 每次请求新开连接会重读 schema）→ `GET /drafts/{key}` 返回 500
+  `internal_error` + 中文无路径文案、`/api/health` 仍 200 → 界面出现「草稿目前只存在本机浏览器里」、
+  草稿磁贴读数变成「已保存 / 仅本机一份」，本地 206 字正文一个字没丢。改回表名后远端立刻可读回。
+- **7e 的隔离换法**：用户的 5173/8765 一直在跑，而 sidecar 的 CORS 白名单只有 5173。为了截图把
+  生产 CORS 默认值开成通配是本末倒置，所以改用一份**拍完即删**的临时 vite 配置走同源代理
+  （`/api` → 127.0.0.1:8766）+ `VITE_API_BASE=/api`。注意 `.env.local` 会被 vitest 读进去，
+  留着它整条前端门会假红 58 条 —— 本次踩过，已确认删除。
+- **7f 的实拍抓出一条「降级期间顺手重建」的真缺陷**（这次不是测试没绿，是测试全绿但行为错）：
+  启动 `quick_check` 不过 → 正确地闩了只读、正确地跳过迁移与快照，但**请求路径**上的
+  `store.ensure_schema()` 没有同样的闸门，第一个读请求仍然跑进 `migrate` 链，而那条链的坏库分支
+  把 `app.db` 改名成 `app.db.corrupt.<ts>.bak` 又建了一个空 v3 库 —— 于是 `GET /api/attempts`
+  返回 **200 + 零数据**，看起来像「库空了」而不像「库坏了」，正好是 §14.6 明令禁止的那个动作。
+  修法是给 `store` 加 `StorageUnavailableError`，在 `ensure_schema()` 里「结构从未就绪 + 已闩只读」
+  时抛出，`common.py` 的 handler 让它回 500 `storage_unavailable`（中文文案、无路径），
+  `/api/health` 的 catch 兜到 `store.ai_block({})` 按环境变量报告。**口径**：坏库时读也读不出来，
+  读请求拿 500 `storage_unavailable`，绝不是「空库 200」—— 200 的零数据会把故障伪装成用户没练过。
+- **7f 的验证必须看文件字节，不能只看响应**：重跑同一套损坏库实拍，断言的是 `app.db` 的 md5
+  与浏览器跑之前**逐字节相同**、`backups/` 没有新增 `.bak`、没有新快照，加上读 500 / 写 503。
+  第一次重做时我把 `app.db.corrupt-me`（损坏**前**的健康副本）当成了坏库装回去，跑出来一切正常，
+  差点当成修好了 —— 真正的坏字节在 `pre-fix/app.db.corrupt.*.bak` 里（md5 `47bcedde…`）。
+  制造故障的脚本要**自己留下故障文件的哈希**，否则「验证通过」验的是想象中的故障。
+- **7f 的界面文案不能超出后端能兑现的承诺**：横幅第一版写「之前的练习记录仍可查看」，
+  但库真损坏时所有读请求都是 500，这句话当场是假的。改成「学习库文件不会被自动重建或搬走，
+  手工恢复的机会还在」—— 这句在两种降级路径（结构不完整 / 文件损坏）下都成立。
+  测试同步钉了 `not.toContain('仍可查看')`。
+- **7f 实拍的两个操作坑**：① 只读闩是**写**触发的，进「写作」任务列表不发任何 drafts 请求
+  （草稿恢复只读 localStorage，远端副本是单写冗余），所以必须真打字 + 让自动保存 PUT 出去才会闩；
+  而自动保存在正文没变化时会跳过 PUT，所以注入文本要带时间戳后缀。② Git Bash 会把
+  `VITE_API_BASE=/api` 里的 `/api` 当路径转换成 `D:/program/Git/api`（在 vite 改写后的
+  `import.meta.env` 里能直接看到），必须 `MSYS_NO_PATHCONV=1` 起 vite。
+
+- **7g 的实拍走的是真后端，不是 mock**：点一次「立即备份一份」，`backups/` 里真的多一个文件、
+  界面从 2 行变 3 行、磁贴跟着变 `3 份`；tag 翻成人话（`manual`→手动备份、`pre-upgrade`→升级前），
+  时间按本地时区显示，大小是 `0.6 MB`。恢复弹窗点「取消」后 `pre-restore` 行数没多 —— 确认框真的挡在前面。
+  回收站同一条链：`恢复` 让后端从 2 条变 1 条、界面少一行；`确认清除` 后归零并落到
+  「回收站是空的…」空态，`最近一次删除` 磁贴老实地显示 `—` 而不是编一个时间。
+
+- **7g 的只读闸门逐个按钮点过名**（§14.8 最后一条，之前只有单测）：把库闩成只读后重载进设置屏，
+  `立即备份一份`、四行 `恢复到这一份`、`恢复`、`彻底删除` **全部 disabled**，而
+  `复制路径` 与 `重新读取` 仍可点 —— 只读期间禁的是写，不是读。两张卡各自还有一句解释：
+  「学习库当前只能读，备份与恢复要等它恢复可写；下面的副本仍然可以查看。」
+  整屏那条 §14.6 的横幅同时也在，用户不会只看到按钮变灰而不知道为什么。
+
+- **7g 实拍抓出驱动脚本自己的假场景**：`click("恢复")` 是子串匹配 + 文档顺序取第一个，
+  命中的却是备份卡的「恢复到这一份」，于是恢复弹窗叠在回收站上面；程序化 `.click()` 又能穿过遮罩
+  点到下面那行的「彻底删除」，跑出来「恢复没生效、清除却生效」的怪结果。
+  **口径**：驱动里点卡片内按钮必须按 `section[aria-label="…"]` 限定作用域 + 文字精确相等，
+  并断言 `[role="dialog"]` 只有一个 —— 弹窗数 > 1 时后面所有断言验的都是假场景。
+
+- **缺表故障必须在进程活着时注入**（这条纠正了 §14.7 里 7f 记录的可读误解）：开机前就把
+  `drafts` 改名，`store.ensure_schema()` 会在原地重建一张同名空表（PUT 直接 200，`drafts_gone`
+  还在旁边不动），只读闩根本落不下来，界面一切正常 —— 自愈是对用户好的行为，但拿它当故障场景会白跑一趟。
+  7f 那次能撞出来，是因为改名发生在**已启动的进程**活着的时候。
+
+- **裁单张卡的两个硬约束**：`Card` 渲染成 `<section aria-label="标题">`，按标题选节点即可
+  （先前用 `main div` + 第一个 `h3` 文字匹配，量到的是外层容器，坐标对不上，截出来是白图）；
+  CDP `Page.captureScreenshot` 的 `clip` 用**视口 CSS 坐标**，而本站滚动只发生在 `main` 里，
+  所以要先改 `main.scrollTop`、等约 450ms 让 `lift` 过渡走完，再重新量一次矩形。
+
+### 14.8 Wave 7 的数据入口界面（7g）
+
+§14.3 与 §14.4 的端点在 7c/7d 就齐了，但**用户在界面上一个都够不着**：不知道自己有备份、
+不知道备份在哪儿、删错的练习记录找不回来。一份用户看不见的保护等于没有保护 ——
+所以这一节的判定标准不是「有没有调通端点」，而是「一个不懂代码的用户能不能在出事那天自己救回来」。
+7g 的实跑记录仍追加到 §14.7。
+
+**放置**：设置屏末尾两张卡 —— `数据与备份` 与 `回收站`，不新增导航项。理由是这两件事都是
+低频、高后果的动作，用户的心智位置就是「设置里找数据」；把它们做成一级页面反而天天占着导航。
+`purge` 的 409 文案里那句「请先在「数据与备份」里备份一份」（§14.4）现在就有了对应的真实界面，
+不是空头指引。
+
+**`数据与备份` 卡**：
+
+- 读数（契约 §8.3 的例外：这块读的是文件与时间，不是练习指标）：快照份数、`days_since_last`
+  （距上次成功快照几天，`> max_age_days` 才给暖块）、`keep`（轮转上限，让用户知道旧的会被冲掉）、
+  最近一份的时间。
+- `tag` 要翻成人话，不许把 `pre-upgrade` 这种字符串直接甩给用户：
+  `manual`→手动、`startup`→自动、`pre-upgrade`→升级前、`pre-restore`→恢复前。
+  §14.3「设置屏要据此区分自动与手动」就是这条。
+- 每行按 `本地时间 + 语义 + 大小(MB)` 展示。`created_at` 是 UTC，展示必须走本地时区，
+  与 §14.7 里 `generated_at` 时区不一致那条是同一个坑。
+- 动作只有两个：`立即备份一份`（`POST /api/backup`，成功后重读列表）、
+  `恢复到这一份`（`POST /api/backup/{name}/restore`）。
+- **恢复是本站唯一的破坏性写入**，因此：① 必须走确认弹窗（`Modal`），弹窗正文要点名「当前进度会被覆盖」
+  和「系统会先把当前状态存成一份『恢复前』副本」（§14.3 的 `pre-restore` 门，用户看得见才算数）；
+  ② 危险动作不许是默认焦点 —— `Modal` 把焦点交给面板里第一个可聚焦元素，而它渲染的是头部那个
+  「关闭」按钮，所以 Enter 下去关的是窗、不是恢复；确认按钮放在 footer 末尾且 `variant="danger"`，
+  视觉重量要与后果匹配；
+  ③ 弹窗正文不许出现文件路径（CONSTITUTION §3）。
+- 恢复成功后**不许假装全站已刷新**：结构可能随快照回到旧 `user_version`，其它屏的缓存数据都是旧的。
+  界面给一句「已恢复到 …，其它页面的数据请重新读取或重启应用」，并只重读本卡与回收站。
+- `directory`（本机路径）只在这一处出现，用作「把副本拷出机器」的指引，旁边给复制按钮。
+  **不做**「打开文件夹」：那要给 Tauri 加 shell/opener 权限，属于扩大能力面，
+  而 CONSTITUTION §1 要的是不扩大。路径可以显示，但绝不进任何错误 detail（§14.3、CONSTITUTION §3）。
+
+**`回收站` 卡**：
+
+- 数据来自 `GET /api/attempts/trash`，`total` 进读数（「共 N 条」），列表行给
+  科目 / `task_ref` / band / 删除时间（UTC→本地）。摘要够决定「恢复还是清除」就够，
+  不提供看完整报告的入口 —— §14.4 定了已软删的 `GET /attempts/{id}` 仍 404，要看报告先恢复。
+- 每条两个动作：`恢复`（`POST /api/attempts/{id}/restore`）与 `彻底删除`。
+  `彻底删除` 同样必须确认（不可逆），且后端在没有快照时返回 409 + 中文文案，
+  前端把那句原样显示，不改写成「删除失败」。
+- 空态要写清楚它空着是正常的：「回收站是空的。删除练习记录后可以在这里找回。」
+
+**与 §14.6 的联动**：`health.storage.state === 'readonly'` 时这两张卡的**所有写动作禁用**，
+并各带一句原因（「学习库当前只能读，备份与恢复要等它恢复可写」）。
+禁用的理由是：降级期点「立即备份」只会撞 503，而用户此刻最需要的是看清退路还在不在 ——
+读快照列表这种只读动作不受影响，仍然可用。
+
+**版式**：两张卡沿用 §8.3 的卡片语言，但**快照列表与回收站行用行式（表格式）而不是磁贴**：
+磁贴是给「一眼读一个数」的，这里是一列同类条目各自带两个动作，铺成磁贴会让按钮淹没在方块里。
+
+## 15. 崩溃与故障可见性（Wave 7 B 档）
+
+§14.6 管的是**存储层**失败要看得见；这一节管的是**渲染层**：一屏抛错时用户看到什么。
+B 档其余三条（出站闸门、日志落盘、sidecar 监督）在实现时各自补小节。
+
+### 15.1 渲染异常不许白屏（B1）
+
+现状：`main.tsx` 只有 `<StrictMode><App/></StrictMode>`，没有任何错误边界。React 19 在根渲染抛错时
+会把整棵树卸载 —— 用户看到**全白**，连左轨导航都没了，只能自己想到去重启应用。
+一个只读屏的渲染 bug 就能把「数据都还在」变成「看起来像全没了」，这正是 §14 一以贯之要防的错觉。
+
+**边界放两层，各管各的后果**：
+
+- **内层**：包住 `<main>` 里的当前视图，`key` 就是 `view`。这样一屏崩了不影响左轨与右辅助栏，
+  用户**点别的导航项就能继续用** —— 而 `key` 变化天然让 boundary 复位，不需要额外的「切屏清错误」逻辑。
+- **外层**：包住整个 `<App/>`。导航、外壳、右栏自己抛错时（比如 `useTheme` 读到脏设置）总得还有个落点，
+  这一层兜住的就是「只剩一个可点的动作：重新载入应用」。
+
+**兜底面板的硬约束**：
+
+1. 中文、可行动。内层文案要点名「只有这一屏没显示出来」，并给 `重试这一屏`；外层给 `重新载入应用`。
+   按钮走 §8.3 的 `Button`，不许裸 `<button>`。
+2. **不显示技术细节**：堆栈、组件名、`error.message` 一律不进 DOM。理由有两条 ——
+   CONSTITUTION §3 禁止用户可见文本里出现路径与异常 repr，而 React 的 message 经常带
+   `http://127.0.0.1:5174/src/...` 这种模块 URL；同时这个应用的用户不需要靠堆栈定位问题，
+   原始错误由 `componentDidCatch` 交给 `console.error`，排查时开 DevTools 就够。
+   测试要**反向钉住**这条：断言兜底文本不含 `Error`、`.tsx`、`C:\`、`/api/`。
+3. **不许承诺数据安全**（§14.7 里 7f 那条「文案不能超出后端能兑现的承诺」的同一课）：
+   崩溃可能发生在草稿防抖的 1.2s 窗口内，所以兜底里**不写**「你的练习记录都还在」这种话。
+   允许写的只有与它无关的事实：这一屏没显示出来、可以重试、可以切走。
+4. 重试失败要安静地继续显示兜底，而不是二次抛错把内层边界也打穿 —— 由 `key` 复位后
+   children 重新渲染、再次抛错时 `getDerivedStateFromError` 会重新置位来保证。
+5. 兜底面板必须仍可键盘操作（焦点落在面板里第一个按钮上），且 `role="alert"` 让读屏器播报。
+
+实跑记录见 §15.9（与 §14.7 同一个规矩：结论只写在实跑记录里，条款本身只写要求）。
+
+### 15.2 用户可见的在线开关必须真的闸住出站（B2）
+
+现状（读代码可得，不是猜测）：设置页「允许在线服务」写进 `settings.online_enabled`，但**全仓库没有任何
+判定读它** —— 只有 `api/settings.py` 校验它、`db/store.py` 给它默认值、`db/migrate.py` 搬运它。
+所有出站判断读的是**进程级** `config.ONLINE`（`IELTS_ONLINE`）。结果：用户取消勾选之后，
+AI 评分照样把作文正文发出去，edge-tts 照样按文本内容去请求远端语音。
+
+为什么这条排在 B 档第一条：它不是「功能没做完」，是**界面给了用户一个关不掉的开关**。
+CONSTITUTION §1 承诺不出门，而这里的代价是用户**以为自己已经授权关闭**之后那段练习内容 ——
+一次误判就不可撤回，比丢一次评分严重。条款：
+
+1. **出站许可只有一个判定点**：`services/ai_client.network_allowed()`，取值是
+   进程级 `_cfg.ONLINE` **与** 用户设置 `settings.online_enabled`（AND，任一为假即不出门）。
+   要出门的地方（`api/media.py`、`api/listening.py`、`api/speaking.py`、`api/writing.py`、
+   `services/speaking_session.py`）以及 `api/health.py` 的 `_tts_ok()` 一律调它，
+   **不许再各自读 `_cfg.ONLINE`**。判据是 `grep -rn "_cfg.ONLINE" backend/app/`：
+   出站方向只应命中这个判定点；`db/migrate.py` 那一处是**首次迁移时给设置播种**
+   （把当时的进程开关写进用户偏好），不是判定，属允许项 —— 出现别处就是有了第二份「谁说了算」。
+2. **两个方向分别钉住**：① 进程在线 + 用户关 ⇒ 零出站；② 用户勾选 + 进程关 ⇒ 零出站。
+   ②已经过、留着防回归；①是这一节要补的。断言形态要能证明「请求真的没出门」，
+   不接受只断言设置读到了：至少覆盖 `/api/tts` 返回 503 `tts_offline`、
+   写作批改返回 `ai_used=false` + `degraded_reason=offline_template`，并核对测试围栏
+   （`_isolation.blocked_hosts()`）为空。
+3. **改设置即刻生效**：判定点每次现读设置，**不许**在模块导入时求值成常量、也不许加进程内缓存。
+   「要重启才生效」的开关不是开关。代价说清楚：每次批改/合成多一次单行 SQLite 读，
+   本地单机应用可以忽略。
+4. **读不到设置 ⇒ 关门**（fail-closed）。`get_settings()` 抛错（库损坏、§14.6 的只读降级期）时
+   判为不允许出站。理由是不对称的：误判成离线，用户看到「已关闭联网，改用本地近似」，可恢复；
+   误判成在线，是在用户以为关掉的情况下把内容发出去了，不可恢复。
+5. **状态不许说谎**：`_tts_ok()` 走同一判定，所以取消勾选后右栏「音频合成」应转为不可用 ——
+   但前提是前端得**重探**一次：`useBackendReady` 就绪后不再轮询，`health` 是启动时的快照。
+   因此保存设置里含 `online_enabled` 时调用新增的 `refreshHealth()`：只更新 `health` 读数，
+   **不许**动 `state`（退回 `pending` 会把整站变成启动面板，改个设置看起来像应用崩了）；
+   重探失败保持上一次读数，不弹错。
+6. `GET /settings` 回传的 `online_enabled` 仍是**用户写的那个值**：它是偏好，不是能力。
+   能力状态只有 `health.tts_ok` / `ai_configured` 回答。两者不许混成一个字段，
+   否则「我明明勾了为什么说不可用」会无处可查。
+
+### 15.3 故障要落盘，启动横幅不许宣称没核实的事实（B3）
+
+现状（读代码 + 读依赖源码 + 跑探针，不是推测）：
+
+- `backend/app/` 里 **36 处 `print(...)`** 分布在 12 个模块，全仓库**没有一处** `logging`，也没有日志文件。
+- 打包后的 sidecar 看不见它们：`tauri-plugin-shell-2.3.5/src/process/mod.rs:173` 给子进程加了
+  `CREATE_NO_WINDOW`（连一个能翻滚动缓冲的黑窗口都没有），`read_line`（同文件 479 行）用
+  `let _ = tx.send(...)` 读走一行、投递失败也照样继续读 —— 而 `src-tauri/src/main.rs` 的
+  `Ok((_rx, child))` 把唯一的接收端当场丢掉。结论：**每一行 sidecar 输出都被读走后丢弃**。
+  于是「AI 批改降级」「快照补拍失败」「题库为空」「未处理异常」这些事实只在没人看过的管道里存在过；
+  用户说「批改一直失败」，我们连一条当时的记录都拿不出来。
+- 更难看的是界面已经在承诺这个不存在的日志：`api/common.py:38` 的只读降级文案写着
+  「请重启应用；若仍失败，请查看日志」，兜底内部错误文案（同文件 160 行）写着「请重试或查看日志」——
+  用户手上既没有控制台也没有日志文件，这两句话指的是空气。
+- 探针实测（`D:/tmp/b3probe/`，本机 CPython）：把管道**读端关掉**之后，子进程第一次
+  `print(..., flush=True)` 就抛 `OSError: [Errno 22] Invalid argument`，进程退出码 120。
+  这不是当前打包路径的实际行为（上面那条线程还在 draining），但它说明：把 stdout 当唯一载体
+  等于把诊断写进一条没人负责排空的管道 —— 落盘之后 stdout 只是 best-effort 副本。
+- `main.py` 的 `[Startup] Server ready at http://127.0.0.1:8765` 复述的是 `settings.API_PORT`，
+  而真正决定监听端口的是启动命令。实测：`uvicorn --port 8766` 启动时同一段日志里
+  既有 `Uvicorn running on http://127.0.0.1:8766` 又有 `Server ready at http://127.0.0.1:8765`。
+  端口不一致时前端只会说「连不上本地服务」，而日志指着另一个端口说「我起好了」——
+  这不是无害笔误，是把排查方向指反。
+
+条款：
+
+1. **后端不许用裸 `print` 报告事实**：一律经 `services/faultlog.py`，同一条记录**既进文件也进 stdout**
+   （开发期还得能在终端看见）。判据：`grep -rn "print(" backend/app/ --include=*.py`
+   只允许命中 `services/faultlog.py` 自身与 `db/migrate.py` 的 `if __name__ == "__main__"` CLI
+   （命令行往 stdout 打 JSON 是人机对话，不是日志）。多模块同时写要线程安全。
+2. **位置与轮转**：`settings.LOG_DIR`（env `IELTS_LOG_DIR`，默认 **DB 同目录下的 `logs/`**，
+   跟 §14.3 的 `backups/` 并列 —— 用户找自己的数据只找一个地方），文件 `app.log`，
+   单文件 1 MiB、滚动保留 3 份、UTF-8。每行 `时间 | 级别 | PID | [标签] | 消息`。
+   PID 必带：B4 要处理的孤儿进程场景就是两个 sidecar 写同一目录，缺了归因字段，
+   日志会变成第二种故障。
+3. **写日志不许反噬业务**：目录建不出来、磁盘满、文件被占用 —— 一律吞掉并退回 stderr，
+   `faultlog` 的任何入口**绝不向上抛**。用「把请求打挂」换一条记录，是把「看不见故障」
+   升级成「制造故障」。
+4. **落盘也要脱敏**：写盘前按密钥形态替换（`sk-…` / `ak_…` / `Bearer …` / `api_key=…` → `[已脱敏]`）。
+   理由不是猜想：`api/media.py` 与 `services/tts_service.py` 落的是异常 repr，
+   上游 SDK 的报错文本里带过请求头。CONSTITUTION §3 的「密钥不进日志」要落到文件才算数。
+   测试只用自造字符串，**绝不拿真实 key 当样本**。
+5. **日志文件不是可展示文本**：允许它含路径、异常类型名（诊断必需品），但**不许**新增任何
+   把它读回前端的端点或字段（含 `GET /api/logs`）。UI 文案继续守 CONSTITUTION §3。
+   这一条是给后来者立的墙：「让用户看到故障」不等于「把原始日志贴到界面上」。
+6. **端口要用真实请求核实，不复述配置**：启动日志只写「按配置端口 N 启动，实际端口待首个请求核实」；
+   真实端口由 ASGI 中间件从首个 HTTP 请求的 `scope["server"]` 读出（uvicorn `protocols/utils.py`
+   的 `get_local_addr` 用 `transport.getsockname()` 填，是真实绑定值），落一条 `[PortProbe]`，
+   **每进程只确认一次**；与 `settings.API_PORT` 不一致 ⇒ WARNING 并写明「以实际端口为准」。
+   `scope["server"]` 缺失或端口为 `None`（httpx `ASGITransport` 给的是 `("testserver", None)`）
+   ⇒ 记一次 INFO「未能从请求核实」，**不许**拿配置值冒充实测值。
+7. **降级必须留下原因**：`ai_client.complete_json()` 的每个失败出口都要落一条记录，
+   含 `reason` + 异常类名 + 尝试次数。只把枚举值写进 `jobs.degraded_reason` 不等于记录 ——
+   用户问「为什么总是近似分」时，枚举只能回答「network_error」，回答不了「哪一次、哪端、什么异常」。
+   级别分工：用户主动关在线导致的 `offline_template` 记 INFO（那是预期行为，不是故障），
+   真实失败记 WARNING。**模型的输入与输出都不进日志**（只允许出现类名与已脱敏的诊断文本）。
+   这一条是 B3 实跑时补的：本机真起一个 sidecar、把 AI 端点指到 `127.0.0.1:9` 之后，
+   批改确实降级成了 `network_error`，而落盘文件里一条相关记录都没有。
+
+实跑记录见 §15.9。
+
+### 15.4 引擎要能自证身份，孤儿进程要能被指认（B4）
+
+现状（读 `main.rs` / `pyinstaller_entry.py` / `api/health.py` + B3 真进程跑的落盘文件，不是推测）：
+
+- **外壳的三条启动结论全是黑洞**：`src-tauri/src/main.rs` 的「已启动 / 端口被占 / sidecar 创建失败」
+  三个分支只写 `println!` 与 `eprintln!`，而同文件第 2 行
+  `#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]` 让 release 主程序根本没有控制台。
+  最要紧的那条（端口 8765 被上一个实例占着，本次没启动引擎）用户一条也看不到。
+- **占用者是不可见的**：sidecar 由 `tauri-plugin-shell` 以 `CREATE_NO_WINDOW` 拉起，无窗口、无托盘、
+  无任务栏按钮；`main.rs` 的 `Ok((_rx, child))` 丢掉接收端，进程一旦被强制结束父进程（崩溃、
+  任务管理器结束、关机没走完），它就变孤儿继续占着 8765 与 `backend-*.exe`。下次启动走
+  「端口被占」分支 ⇒ 跳过启动、复述旧引擎；这在开发期表现为「重新打包失败：文件被占用」，
+  在使用期表现为「升级后行为还是旧的」。
+- **界面那句指引指不到东西**：`useBackendReady.ts:63` 失败文案写着「已安装版本请完全退出
+  IELTS Insight（含托盘进程）后重新打开」—— 引擎不是托盘进程，任务管理器里它的名字是
+  `backend-*.exe`，用户按那句话找不到该关的东西。
+- **后端不记录自己是谁**：`GET /api/health` 有 version / whisper / storage，**没有 pid、没有
+  started_at、没有实际端口**；§15.3 第 6 条把实测端口只写进了日志。于是两个 sidecar 写同一目录时，
+  日志里有两组不同 PID 的行，却没有一处能回答「现在应答的是哪一个、它是什么时候起来的」。
+- **端口被占导致的引擎启动失败连一行记录都没有**：`pyinstaller_entry.py` 直接
+  `uvicorn.run(..., port=settings.API_PORT)`，端口冲突时 uvicorn 用自己的 logging 打到 stderr，
+  而 stderr 按 §15.3 是「被读走又丢弃」—— B3 真进程跑的 `app.log` 里确实只有 faultlog 的行，
+  没有一行来自 uvicorn。用户侧观感：一直「正在启动本地引擎…」，然后「未就绪」。
+
+条款：
+
+1. **引擎必须能自证身份**：`GET /api/health` 除既有字段外必须返回 `pid`、`port`、`started_at`
+   （ISO8601 带时区）。三者只能来自进程内存与 `os`，**不得**读库或读磁盘 —— §14.6 要求库出事时
+   体检端点还必须答 200，身份字段如果依赖库，正好在最需要归因的时候一起坏掉。
+   `port` 取 §15.3 端口探针核实到的**实际值**，没核实过时取配置值并如实说明来源
+   （同响应里的 `port_source` 取 `probe` / `config`）。
+2. **单实例凭据文件**：`services/runtime.py` 在启动时写 `<DB 同目录>/run.json`
+   （`pid` / `port` / `started_at` / `version`），正常退出必须删除；删除失败只记 WARNING，
+   **绝不允许**把退出流程打断或向上抛。删除前必须确认文件里的 pid 是自己 —— 后起实例的凭据
+   不能被先起那个的退出动作抹掉。这个文件是「本机谁在用这个数据目录」的唯一凭据，
+   日志归因与 §15.4 第 3 条的陈旧判定都以它为准。
+3. **陈旧凭据要覆盖，不许拒绝启动**：启动时发现 `run.json` 存在且其中的 pid 不是自己，
+   就用 127.0.0.1 上它记录的端口做一次连接探测：
+   - 探不通 ⇒ 记 WARNING「上一个实例（pid=…，port=…）未正常退出」并覆盖写新文件。
+     **绝不**因为残留文件拒绝启动、清数据或改路径 —— 崩溃残留的凭据是线索，不是锁。
+   - 探得通 ⇒ 那是**还活着的另一个实例**，记 WARNING 写明「本次启动与它共用同一个数据目录」，
+     同样覆盖凭据（谁最后起来谁负责），但绝不碰它的进程（见第 5 条）。
+     这一支才是 §14.6 只读降级之外真正的并发写风险，日志必须留得下证据。
+4. **判定进程存活不许用 `os.kill(pid, 0)`**：Windows 上 `os.kill` 传非
+   `CTRL_C_EVENT`/`CTRL_BREAK_EVENT` 的信号会走 `TerminateProcess`，
+   「探一下对方死没死」等于把用户正在用的另一个实例杀掉。只允许本机套接字连接探测。
+5. **绝不允许结束不是自己 spawn 的进程**：后端与外壳都不许引入 `taskkill`、`TerminateProcess`、
+   `SIGKILL` 之类的结束能力（Tauri capability 白名单里也不许出现这类命令参数）。
+   判据：`grep -rn "taskkill\|TerminateProcess\|os\.kill(" backend/app/ frontend/src-tauri/src/`
+   无命中。清理只能靠**精确告知**（PID + 版本 + 启动时间）。理由：误杀用户另一个窗口的引擎，
+   代价高于「端口被占」本身；`main.rs` 现有那句「不杀未知进程」的决定要保留，本条只是让它说得出细节。
+6. **外壳的启动结论必须落盘**：三个分支各写一条到与 §15.3 同一个 `logs/app.log`
+   （目录取 `IELTS_LOG_DIR`，未设置时按 `IELTS_DB_PATH` 所在目录下的 `logs/`，再回退默认用户数据目录），
+   标签 `[Shell]`、行格式与轮转参数与 §15.3 第 2 条一致，PID 写外壳自己的进程号；
+   `eprintln!` 降级为副本。日志里必须能回答「这一次启动，引擎是被我拉起来的，还是我让位给了别人」。
+7. **界面要分清「就绪」与「就绪但用的是上一个实例」**：健康检查的 `version` 与前端自身版本
+   不一致时，必须在屏上说明「正在使用上一次未退出的引擎（PID …，… 启动），它的接口可能与当前
+   界面不匹配，请退出全部 IELTS Insight 窗口后重开」，不得静默当成正常就绪；文案不得含文件路径
+   （CONSTITUTION §3），版本一致或字段缺失时不出现该提示。
+   **PID 一律取 `/api/health` 自报的那个，不许取外壳 `child.pid()`**：实跑证明「启动命令的进程」经常
+   不是「真正在监听的那个」——本机 venv 的 `python.exe` 是转发器，真服务是它的子进程（`句柄=22300`
+   vs `health=16128`），PyInstaller 的 onefile 也是 bootloader 父 + 服务子。指向父进程，用户在
+   任务管理器里找不到那个占着端口和库的进程，这条提示就白写。
+   **同一个判断不许只长在告警条上**：界面上凡是表示「就绪」的地方（左轨那颗状态胶囊在内）都必须
+   带同一个限定 —— 屏上同时亮着「引擎已就绪」和「正在使用上一个未退出的引擎」等于界面跟自己吵架，
+   用户会信那颗绿色的。判据：判断提成一处共用谓词，`App.engineBadge.test.tsx` 钉两种版本各自的文案。
+8. **测试隔离**：`run.json` 与日志目录一样必须由 `IELTS_DB_PATH` / `IELTS_LOG_DIR` 派生进临时目录，
+   测试进程**绝不写**真实用户数据目录（CONSTITUTION §6）。
+
+实跑记录见 §15.9。
+
+### 15.9 Wave 7 B 档实跑记录
+
+- **B1 实拍（真浏览器，注入的是浏览器拿到的字节，不是仓库文件）**：用 CDP `Fetch` 把 vite dev
+  对 `/src/features/shared/ReviewBook.tsx` 的响应换成「一渲染就抛」的 ESM 源码，进「错题本」即触发。
+  结果与 §15.1 的承诺逐条对上：兜底面板出现（295 字仍在屏上，不是白屏）、左轨九个导航项全在、
+  右辅助栏照常读数、焦点自动落在 `重试这一屏`、面板文字里没有 `ReviewBook`/`.tsx`/`http:`；
+  切到「设置」正常渲染且兜底消失（视图 `key` 复位生效），切回来仍然只是这一屏兜底；
+  故障持续时点「重试」不会把外壳打穿。
+- **脏接口这条路打不穿渲染，是应用的功劳不是驱动的偷懒**：先试 `GET /api/review/errors` 返回
+  `{"data": {…}}`（对象冒充数组），`fetchItems` 把它归一成空数组，界面老实显示「0 条记录」；
+  再试把 Task 1 图表的 `chart.table` 换成缺 `columns/rows` 的对象，`writingSets.ts` 的
+  `toStringList`/`normalizeSeries` 一路防御读取，渲染层根本拿不到脏值。
+  所以 §15.1 的验证只能靠「组件自身抛错」这一形态 —— 这也说明：**接口脏数据防线在 `api.ts` 与
+  `*Sets.ts`，不在各个屏里**，新屏不要再各自补一遍 `?? []`。
+- **给驱动补了一个能力**：`cdp.mjs` 原来只有 `stub()`（固定 `application/json`），
+  换模块源码需要 `text/javascript` 的 MIME，否则浏览器拒绝执行 —— 加了 `stubModule()`。
+  以后要验「渲染期异常」，不必改仓库文件。
+
+- **B2 真进程实跑（scratch :8766，进程级 `IELTS_ONLINE` 不设 = 开）**：开着时
+  `GET /api/tts` 返回 200 + 11088 字节 mp3（确实出过一次门）；`PATCH /settings
+  {"online_enabled": false}` 之后同一请求 503 `tts_offline`、`/api/health` 的 `tts_ok`
+  由 true 转 false。写作批改给的是对照组：关 ⇒ `degraded_reason=offline_template`，
+  开 ⇒ `network_error`（scratch 没配 key，说明开着时它**真的试过**远端）。
+  两条只差那个开关，证明闸门在出站之前，不是事后遮文案。
+- **B2 浏览器侧（:5174）**：设置里取消勾选 → 右栏「音频合成」由 `可用` 转 `不可用`
+  （外壳那份 `/health` 真的重探了）→ 听力屏拿到的是「已关闭联网，无法合成音频；可进入原文精读模式」
+  而不是「语音合成失败（网络不可用？）」，前者告诉用户是自己关的、后者会让人以为是服务坏了去反复点重试；
+  重新勾选后读数回到 `可用`（闸门不是单向的）。图：`D:\tmp\ielts-demo\b2-live\01..05*.png`。
+- **改文案才暴露出来的版式缺陷（与 §8.3 同族的通用坑）**：`Field` 的 `inline` 模式把
+  label、控件、hint、error 四条都塞进同一条 flex 行，label 是 `flex-1`、hint 没有基准宽度，
+  于是较长的 hint 会把中文标签挤成**一字一行**（「允许在线服务」竖着排）。
+  修法：`inline` 时只有 label + 控件同行，hint/error 一律换到下面（听力配对题那两项同样受益）。
+  教训：**改任何用户可见文案都要回真实渲染看一遍** —— jsdom 里没有布局，这类缺陷单测永远抓不到。
+- **`/api/health` 曾因 `find_spec` 抛 `ValueError` 而 500**：`_tts_ok()` 用
+  `importlib.util.find_spec("edge_tts")` 判断依赖装没装，但对「已在 `sys.modules` 里却没有
+  `__spec__`」的模块（测试桩、打包产物都是这个形态）`find_spec` 直接抛。
+  这一行只在**进程在线**时才走到，而测试集整会话 `IELTS_ONLINE=0`，所以它一直照不到 ——
+  §14.6 要求库出事时体检端点还必须答 200，一个探测函数不该把体检打成 500。
+  现在捕获 `ValueError/ImportError` 并退回 `"edge_tts" in sys.modules`。
+- **围栏计数不能断言全局为零**：`_isolation.blocked_hosts()` 是**进程级累加**的
+  （`test_isolation.py` 故意打一发 8.8.8.8 来证明围栏真的挡住了），
+  第一版用 `== set()` 写「不许偷偷出门」，单文件跑全绿、全量跑 4 红。
+  正确形态是取用例前后的**差集**。这是「单跑绿 ≠ 全量绿」的又一次实锤。
+
+- **B3 落盘的必要性要先测准，别拿想象当现状**：第一版条款想写「sidecar 没有控制台，
+  `print` 会抛 `OSError`」。探针（`D:\tmp\b3probe\`，把子进程管道读端关掉再让它 `print(flush=True)`）
+  确实每次都抛 `[Errno 22] Invalid argument`、退出码 120，**但那不是打包路径的实际行为**：
+  `tauri-plugin-shell` 的 `read_line`（`process/mod.rs:466-490`）对 `tx.send()` 用 `let _ =` 忽略失败、
+  继续读下一行，所以读取线程一直活着、把 stdout **读走又丢弃**。真正写进条款的是这个：
+  故障不是「打不出来」，是「打出来没人接」—— 结论弱一点，但站得住。
+- **B3 真进程实跑（scratch :8766，`IELTS_LOG_DIR` 故意不设，验默认位置）**：数据目录里长出
+  `logs/app.log`，与 `backups/` 并列。文件内容（截断到关键几行）：
+  `[Startup] DB=… 库结构 v3` / `[Startup] 按配置端口启动 http://127.0.0.1:8765，实际端口待首个请求核实` /
+  `WARNING … [PortProbe] 实际服务端口 127.0.0.1:8766 与配置端口 8765 不一致：以实际端口为准…`。
+  同一次会话里再提交一篇作文（`OPENAI_BASE_URL=http://127.0.0.1:9/v1`，纯本机拒绝连接，零真实出站），
+  作业结果 `ai_used=false` + `degraded_reason=network_error`，文件里对应
+  `WARNING … [AI] network_error：APIConnectionError（model=fake-model，尝试 1 次）` ——
+  有 reason、有异常类名、有尝试次数，没有 key、没有作文正文。404 响应体仍然只有 `{detail, code}`，
+  日志没有变成接口（§15.3 第 5 条）。
+- **第 7 条是这一跑逼出来的**：`logs/app.log` 刚接通时，上面那次降级在文件里**一条记录都没有**。
+  原因是 `complete_json()` 的失败走的是「返回 `AiResult(ok=False)`」而不是抛异常，
+  而带 `print` 的那两个 `except` 分支根本没被执行 —— 换句话说，最常见的生产故障
+  （AI 端点连不上 ⇒ 近似分）此前只在 `jobs.degraded_reason` 里留了一个枚举值。
+  教训：**先按契约跑一遍真链路，再决定条款**；只看代码会以为「有 print 就等于有记录」。
+- **落盘以后 stdout 只能算副本**：`faultlog.emit()` 先写文件再 `print`，且 `print` 自己也在 try 里。
+  顺手把 stdout/stderr `reconfigure(errors="replace")`：GBK 控制台下打印中文会 `UnicodeEncodeError`
+  （`stt_service.py` 里「日志只用 ASCII」那条注释就是这个约束的产物，现已删）。
+  连带修了一个测试基建：`test_stt_lazy_import.py` 用 `text=True` 解码子进程输出走的是 locale(GBK)，
+  子进程改吐 UTF-8 之后直接 `UnicodeDecodeError`，现已显式 `encoding="utf-8"` + `PYTHONIOENCODING`。
+- **`grep "print("` 判据留下的两个例外**：`services/faultlog.py` 自身（它就是把记录往两处发的地方）、
+  `db/migrate.py` 的 `if __name__ == "__main__"`（`python -m app.db.migrate` 往 stdout 打 JSON 是人机对话）。
+  这条判据本身也是一个测试（`test_后端不再有裸print报告事实`），36 处调用点少了任何一处它都会亮红。
+- **本轮的一次偶发红已在 B4 里定性并修掉**：全量跑中
+  `test_api_jobs_async.py::test_AC_W3_重复提交同一篇只排一个任务` 与
+  `test_AC_S4_同一会话重复排队复用任务` 随机失败、单跑全绿。原因不是测试写得差，是**契约 4 的承诺本来就不成立**：
+  去重只认 `queued/running`，而本地近似引擎几十毫秒就批完，「连点两次」的第二次点击通常落在完成之后，
+  于是库里长出两份一模一样的批改（详见 §1 行 20b 条款 4 的补充与下面的 B4 记录）。
+
+（后续 B 档条目的实跑记录继续追加在下面）
+
+- **B4 真进程实跑（scratch `:8767`/`:8769`，驱动 `D:/tmp/ielts-demo/b4-drive.py`，全文报告
+  `D:/tmp/ielts-demo/b4-live/report.md`）**：四个场景一次跑完，逐条对上 §15.4。
+  A 起来后 `/api/health` 自报 `{"pid":16128,"port":8767,"port_source":"probe","started_at":"…"}`，
+  同一份身份写进数据目录的 `run.json`；A 被硬停 ⇒ 凭据残留（`run.json 仍在 = True`）；
+  B 同目录再起，落
+  `WARNING | 27700 | [RunFile] 上一个实例（pid=16128，port=8767）未正常退出：端口没有应答，本次覆盖它的凭据`
+  —— **照常启动，没有把残留文件当错误挡住用户**（第 3 条）；
+  C 在 `:8769` 起来，落
+  `WARNING | 45620 | [RunFile] 端口 8767 上还有一个实例正在应答（pid=27700），本次启动与它共用同一个数据目录…`
+  （第 3 条的活实例分支 + 第 4 条：探活只打 `127.0.0.1`，没用 `os.kill`）；
+  D 用 CTRL_BREAK 正常退出 ⇒ `run.json` 被收走（lifespan 的 `finally` 真的接上了）。
+  收尾核对：scratch 两个端口都空，用户自己那台 `:8765` 起终点身份一致、全程未触碰。
+- **B4 抓到的第一条真事实：句柄 pid ≠ 服务 pid**。本机 `backend/venv/Scripts/python.exe` 是个转发器，
+  真跑 uvicorn 的是它的子进程（实跑四例都是 `句柄=22300 / health 自报=16128` 这种对不上）。
+  所以 §15.4 第 7 条要求界面报的必须是**服务自报的那个 pid**：拿父进程 pid 去任务管理器找，
+  用户找不到占着端口和库的那个。Tauri 侧 `child.pid()` 同理，打包版（PyInstaller onefile 也是
+  bootloader 父 + 服务子）**必须在 C 档用真安装包复验一次** `child.kill()` 带不带得走真服务。
+- **B4 抓到的第二条：驱动自己造了一次孤儿**。第一版驱动用 `taskkill /F`（没带 `/T`）只结束转发器，
+  真的服务进程活着占住 `:8767`，于是 B 绑不上端口、`:8767` 无人应答，驱动误判成「残留凭据把启动挡住了」。
+  这就是第 5 条禁止自动清理的现实版：**连我们自己造的孤儿，都只能靠 health 自报的 pid 才能精确收掉**。
+  改成「terminate 自己 spawn 的句柄 + 仅当 scratch 端口仍应答时按自报 pid 补刀」后四例全通过，
+  且补刀列表为空（`驱动补刀过的 pid=[]`）。
+- **凭据端口跟着探针刷新（本轮实现决定）**：`set_observed_port()` 现在一并改写磁盘上的 `run.json`。
+  不改写的话，文件里留的是配置端口，下一次启动的存活探测就会去敲一扇根本没开的门，
+  把一个活着在别的端口的实例误判成孤儿。实跑里 C 认出的正是 B 的实测 `8767`。
+- **§15.3 第 6 条的实测修正**：契约原话假设 httpx `ASGITransport` 给的是 `("testserver", None)`，
+  实际 starlette `TestClient` 给的是 **`("testserver", 80)`** —— 端口是整数，原判据会把它当实测值采纳，
+  于是测试进程里既落一条假 WARNING（「实际服务端口 testserver:80 与配置不一致」），又会把 80 写进身份与凭据。
+  改为加一道 `_is_bind_address()`：只有 `ipaddress` 能解析的 IP 字面量才算「从请求核实」
+  （uvicorn 用 `transport.getsockname()` 填，永远是 IP），否则只记一次 INFO「未能从请求核实」。
+- **CTRL_BREAK 下 uvicorn 的退出码不是 0，但 `finally` 跑了**：D 场景记的是
+  `退出码归零=False，run.json 仍在 = False`。结论：**别拿退出码当「干净退出」的判据**，
+  凭据在不在才是（外壳若要做「上次是否正常退出」的判断，只能读凭据，不能读 exit code）。
+- **顺带修掉的真缺陷（§1 行 20b 条款 4）**：去重窗口扩到「`succeeded` 之后 5 秒内同样复用、
+  `failed` 永不复用」，`store.find_active_job()` → `find_reusable_job()`，两个提交端点接入；
+  新增三条用例（宽限内复用 / 过窗后允许重批 / 失败可重试）。质量门：442 前端 + 468 后端 = 910 全绿。
+- **B4 浏览器实拍（隔离后端 `:8773` + 隔离 vite `:5174`，图 `D:\tmp\ielts-demo\b4-ui\engine-notice-{probe,config}.png`，
+  断言 `b4-ui\out-*.txt`）**：CDP `Fetch` 只改 `GET /api/health` 响应里的 `version`→`1.9.0` 与 `pid`→41428
+  （真后端那一刻自报 22008），其余字段照真的。结果：告警条出现且 `role=status`，
+  左轨那颗胶囊同时读到「引擎已就绪（上一个实例）」且 class 是 `text-band-mid`（不是就绪绿）；
+  12 个导航项照常在、
+  主区 961 字（config 变体 966 字），没有白屏也没有被兜底页顶替；断言里 `含盘符 / 含文件名 / 含反斜杠`
+  三个全 false，而 `含PID / 含旧版本 / 含启动时间` 三个全 true（CONSTITUTION §3 在新文案上同样成立）；
+  `port_source` 两种取值各拍一张 —— `probe` 写「已从请求核实」、`config` 写「配置值，未能从请求核实」，
+  第 7 条「说不准就承认说不准」在界面上落了地。**屏幕上显示的是注入的那个 pid，不是真进程的 pid**：
+  这一条就是第 7 条「界面只认 `/api/health` 自报的那个号」在浏览器里的证明（改仓库文件是拍不出这个的）。
+- **实拍逼出来的第二个缺陷：胶囊和告警条自相矛盾**。第一版只加了告警条，左轨那颗仍然是绿色的
+  「引擎已就绪」—— 同一屏同时亮着「就绪」和「连的是上一个实例」，等于界面在跟自己吵架。
+  改法：把判断从组件里提成 `usesStaleEngine()` 给两处共用（就绪但连的是旧实例 ⇒ 降为 `mid` 灰、
+  文案加「（上一个实例）」），`App.engineBadge.test.tsx` 钉住两种版本各自的文案，谁单独改就红。
+- **这一轮被质量门抓了两次，两次都不是实现的错**：
+  ① 把判断提成纯函数之后，`if (!usesStaleEngine(health)) return null` 让 TS 丢了 `health` 的类型收窄，
+  `tsc -b` 报四处错，而 **vitest 442 条全绿**（jsdom 不做类型检查）——签名改成类型谓词
+  `health is HealthResponse` 才既收窄回来、又不用在组件里重复判空。
+  ② 测试桩 `healthFixture()` 的 `version` 一直是 `2.1.0`（比当前构建 `2.0.0` 还新），界面一旦开始比较版本，
+  **所有用桩的用例的默认世界**都变成「连的是另一个实例」，`App.test.tsx` 里「引擎已就绪」那条断言因此红。
+  改法：桩默认给 `APP_VERSION`（正常世界 = 引擎和界面同一版），要旧实例的场景显式覆盖；
+  `SettingsPage.test.tsx` 里那张念版本号的卡改成显式传 `2.1.0`，它的断言才继续证明念的是 `/health`
+  而不是前端自己那个常量。教训：**给界面加一条「状态推断」之前，先看测试桩的默认值** ——
+  新增的判断条件会在无人察觉的情况下，把每一个既有用例挪进新分支。
+- **顺带修掉一条假绿**：`EngineNotice.test.tsx` 两条静默用例原先断言 `container.textContent` 为空，
+  而桩组件哪怕恒返回一个 `<div />` 也能过。改成断言 `container.firstChild` 为 null ——
+  主区是 `flex gap-4`，多一个空 div 是**真会多出空隙**的缺陷，旧断言对它毫无反应。
+  如实限定：这是补 `null` 分支时发现断言形态太松，**没有**跑过「把组件临时换成恒返回 `<div />`」的探针，
+  所以它记的是「旧断言抓不住这一类缺陷」，不是「抓到过一次实例」。
+- **收尾时又踩到第 5 条的同一块石头（驱动侧，不改仓库）**：重拍后清场，判据用「命令行里含
+  `--port 8773` / `--port 5174` / `chrome-b4`」的字符串匹配 —— 结果它连自己套住了几个**只是命令行里
+  提到那个端口**的 shell 进程。更糟的是实跑确认：用户那台引擎是「父 13312 命令行带 `--port 8765`、
+  子 34068 命令行**不带任何端口号**」，光看命令行根本分不出谁是谁。所以收尾脚本改成
+  先现场取 `:8765/api/health` 自报 pid，连同其父、其子列进黑名单，再按 pid 精确收，收完核对
+  三个 scratch 端口全空、`:8765` 照常应答。**这条正是第 7 条「只认自报身份」在清理场景下的复用**：
+  命令行是线索，不是身份。
+- **B4 未覆盖的（如实）**：Tauri 外壳的 `[Shell]` 落盘目前只有 3 个 cargo 单测（行格式、目录优先级、轮转）
+  加编译通过，没有真窗口实拍；打包版（PyInstaller onefile 也是 bootloader 父 + 服务子）
+  `child.kill()` 到底带不带得走真正在监听的那个进程，也还没有在真安装包上验过。
+  这两件都要等 C 档的安装包冒烟一起补 —— 界面侧（`EngineNotice` 5 条组件用例 + 2 条外壳接线用例 + 两种
+  `port_source` 的浏览器实拍）本轮已闭合。
+

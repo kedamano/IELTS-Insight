@@ -12,7 +12,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.139-009485?style=flat-square&logo=fastapi&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=flat-square&logo=python&logoColor=white)
-![tests](https://img.shields.io/badge/tests-724%20passed-brightgreen?style=flat-square)
+![tests](https://img.shields.io/badge/tests-910%20passed-brightgreen?style=flat-square)
 ![offline](https://img.shields.io/badge/works_offline-yes-green?style=flat-square)
 ![telemetry](https://img.shields.io/badge/telemetry-none-blue?style=flat-square)
 ![license](https://img.shields.io/badge/license-MIT-green?style=flat-square)
@@ -68,7 +68,9 @@
 | **深色 · 报告摘要**：Bento 磁贴 —— hero 给综合 Band 与综合走势，墨面给累计时长与逐周柱状 | **深色 · 报告明细**：题型正确率、跨练习累积的错误类型与练习时长热力 |
 | ![报告深色磁贴](docs/assets/screenshots/report-bento-dark.png) | ![报告深色明细](docs/assets/screenshots/report-analytics-dark.png) |
 
-阅读屏右上角的 `已恢复上次草稿` 是断点续做：中途关掉窗口，答案还在本地草稿里。
+阅读屏右上角的 `已恢复上次草稿` 是断点续做：草稿**不再只躺在浏览器里** —— 每次自动保存都会同时
+写一份进本机学习库的 `drafts` 表，WebView2 的 profile 被系统清理或重装之后仍能恢复；
+写不进那份副本时界面会当场说明「草稿目前只存在本机浏览器里」，不会静默退回单副本（契约 §14.5）。
 
 报告摘要区**没有一块磁贴是占位假数**：某科近 8 周没有作答就不渲染那一块（而不是显示 0%），
 分差不足两次就不给「整体 ±0.0」的结论，生词本只有 `created_at` 所以提示老实写成「近 7 天新增」。
@@ -202,15 +204,17 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
 | 门 | 当前状态 |
 | --- | --- |
 | `npx tsc -b` | 无错误 |
-| 前端 `cd frontend ; npm test` | **32 个文件 / 367 个用例全通过**（vitest + jsdom + msw 契约测试） |
-| 后端 `cd backend ; .\venv\Scripts\python.exe -m pytest` | **357 个用例全通过**（约 20s） |
+| 前端 `cd frontend ; npm test` | **42 个文件 / 442 个用例全通过**（vitest + jsdom + msw 契约测试） |
+| 后端 `cd backend ; .\venv\Scripts\python.exe -m pytest` | **468 个用例全通过**（约 30s） |
 
-后端测试通过 `IELTS_DB_PATH` / `IELTS_TTS_CACHE_DIR` / `IELTS_ONLINE` 指向临时目录与离线模式，**绝不写**真实本地库（CONSTITUTION §6）。真实 LLM 质量测试标 `@pytest.mark.integration`，默认跳过，需 `RUN_INTEGRATION=1`。`pyinstaller_entry.py` 只是打包入口，测试进程不经过它。
+后端测试通过 `IELTS_DB_PATH` / `IELTS_TTS_CACHE_DIR` / `IELTS_ONLINE` 指向临时目录与离线模式，**绝不写**真实本地库（CONSTITUTION §6）；故障日志默认落在 DB 同目录的 `logs/`，所以它跟着临时库一起进 tmp，不需要单独配置。真实 LLM 质量测试标 `@pytest.mark.integration`，默认跳过，需 `RUN_INTEGRATION=1`。`pyinstaller_entry.py` 只是打包入口，测试进程不经过它。
 
 ## 数据位置与凭据纪律
 
 - 数据库：`%LOCALAPPDATA%\IELTSInsight\app.db`（`IELTS_DB_PATH` 覆盖）。
+- **单实例凭据：库同目录 `run.json`**（`pid` / `port` / `port_source` / `started_at` / `version`）。启动时写、正常退出时收走；崩了就留在那儿，下一次启动会把它读出来、在日志里写一条「上一个实例（pid=…）未正常退出」，**照常启动**，绝不因为残留文件拒绝服务。它的用途见设置屏与顶部告警条：旧引擎占着端口时，界面报的是这个文件里/健康检查自报的 PID，而不是启动命令的 PID（venv 的 `python.exe`、PyInstaller 的 exe 都是转发器父进程，占着端口的其实是它的子进程）。
 - TTS 缓存：`%LOCALAPPDATA%\IELTSInsight\cache\tts\`（`IELTS_TTS_CACHE_DIR` 覆盖）。
+- 备份：同目录 `backups\`；**故障日志：同目录 `logs\app.log`**（`IELTS_LOG_DIR` 覆盖）。sidecar 是被 `CREATE_NO_WINDOW` 拉起的、没有控制台，它的 stdout 会被父进程读走丢弃，所以排查「批改一直是近似分」「语音没声音」只能看这个文件：每行 `时间 | 级别 | PID | [标签] 消息`，单文件 1 MiB、滚动保留 3 份。写盘前会替换掉 `sk-` / `ak_` / `Bearer` / `api_key=` 形态的凭据（契约 §15.3）。Tauri 外壳的三条启动结论也写同一个文件（标签 `[Shell]`，契约 §15.4），这样「引擎是我拉起来的，还是我让位给了别人」在一个地方就能看出来。
 - 不放 exe 同目录也不放相对 CWD：装进 `Program Files` 后不可写，且 PyInstaller 的相对路径会随启动目录漂移 —— 这是旧版本的坑，已修。
 - 升级首启若检测到旧版 `app.db`（剧本跟读数据），先复制归档为同目录 `app.pre-ielts.bak` 再按新 schema 建表。想留旧数据请在归档前自行拷贝。
 

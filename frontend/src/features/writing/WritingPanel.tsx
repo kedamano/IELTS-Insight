@@ -432,6 +432,12 @@ export function WritingPanel({
             {overSuggested ? <Badge tone="mid" dot>已超过建议用时，仍可继续写并提交</Badge> : null}
             {draft.restored ? <Badge tone="accent">已恢复上次草稿</Badge> : null}
             {!draft.available ? <Badge tone="mid">本机草稿不可用（隐私模式）</Badge> : null}
+            {/* §14.5：学习库里那份副本没写成时必须说出来 —— 静默退回单副本等于假装功能还在。 */}
+            {draft.remoteState === 'unavailable' ? (
+              <Badge tone="mid" dot>
+                草稿目前只存在本机浏览器里
+              </Badge>
+            ) : null}
             <Badge tone={minWords && !reached ? 'mid' : 'good'} dot>
               {reached ? `已达 ${minWords} 词` : `还差 ${shortBy} 词达 ${minWords} 词`}
             </Badge>
@@ -459,7 +465,13 @@ export function WritingPanel({
           metric="writing.draft"
           label="草稿"
           value={draft.dirty ? '待保存' : draft.savedAt ? '已保存' : '未保存'}
-          hint={draft.savedAt ? new Date(draft.savedAt).toLocaleTimeString() : '尚未保存过'}
+          hint={
+            draft.remoteState === 'unavailable'
+              ? '仅本机一份'
+              : draft.savedAt
+                ? new Date(draft.savedAt).toLocaleTimeString()
+                : '尚未保存过'
+          }
         />
         {/* 未达最低词数才出现，且是本屏唯一暖块；已达线整块不渲染（不显示 0）。 */}
         {minWords && !reached ? (
@@ -471,7 +483,7 @@ export function WritingPanel({
 
       {draft.error ? <Toast tone="warn">{draft.error}</Toast> : null}
 
-      <Card title="你的作文" subtitle="本地草稿自动保存，刷新后可恢复（AC-W2）">
+      <Card title="你的作文" subtitle="草稿同时存进本机学习库，刷新或重装后可恢复（AC-W2 / §14.5）">
         <div className="flex flex-col gap-3">
           <Field
             label="正文（英文）"

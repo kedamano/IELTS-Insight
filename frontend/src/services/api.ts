@@ -17,6 +17,8 @@ import type {
   AttemptListResult,
   AttemptSummary,
   AttemptsQuery,
+  BackupList,
+  BackupRestoreResult,
   Band,
   ChartData,
   FollowupsBody,
@@ -52,8 +54,11 @@ import type {
   SpeakingSetMeta,
   SpeakingTurnInput,
   SpeakingTurnResult,
+  SnapshotRow,
   StartSpeakingBody,
   TtsVoice,
+  TrashItem,
+  TrashListResult,
   VocabAddBody,
   VocabExportFormat,
   VocabNote,
@@ -82,10 +87,12 @@ const DEFAULT_API_BASE = 'http://127.0.0.1:8765/api';
  */
 type AppEnv = { VITE_API_BASE?: string | undefined };
 
-function readEnv(): AppEnv {
-  const meta = import.meta as ImportMeta & { env?: AppEnv };
-  return meta.env ?? {};
-}
+/**
+ * 必须把 `import.meta.env` 写成完整表达式：Vite 靠**静态替换**认这个表达式。
+ * 先 `const meta = import.meta` 再 `meta.env` 会让替换失效，dev 里拿到 undefined，
+ * `VITE_API_BASE` 设了也不生效（7e 实拍想让页面连隔离 sidecar 时踩到的）。
+ */
+const ENV = import.meta.env as unknown as AppEnv;
 
 /** 允许传 `http://host:port` 或 `http://host:port/api`，统一补齐 `/api` 后缀。 */
 function normalizeBase(raw: string): string {
@@ -95,7 +102,7 @@ function normalizeBase(raw: string): string {
 }
 
 /** 全应用唯一基址。 */
-export const API_BASE: string = normalizeBase(readEnv().VITE_API_BASE ?? '');
+export const API_BASE: string = normalizeBase(ENV.VITE_API_BASE ?? '');
 
 /** 拼绝对 URL（`apiUrl('/health')` → `${API_BASE}/health`）。 */
 export function apiUrl(path: string): string {
@@ -126,6 +133,19 @@ export class ApiError extends Error {
 
 export function isApiError(error: unknown): error is ApiError {
   return error instanceof ApiError;
+}
+
+/**
+ * 动作失败的文案选择（契约 §14.4 / CONSTITUTION §3）。
+ *
+ * 4xx 是后端**有意拦住**这个动作（无快照不许清除、名字不在白名单、本机找不到这份备份），
+ * 它的 detail 本身就是下一步指引，再套一层「请求失败 409：」会把护栏说成系统故障；
+ * 5xx 与网络失败则相反 —— 那真的是故障，状态码要留着。
+ */
+export function describeActionError(error: unknown, fallback: string): string {
+  if (isApiError(error) && error.status >= 400 && error.status < 500 && error.detail) return error.detail;
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
 }
 
 export function isAbortError(error: unknown): boolean {
@@ -534,9 +554,38 @@ export function attempt(id: string, opts?: ApiRequestOptions): Promise<AttemptDe
   return fetchJson<AttemptDetail>(apiUrl(`/attempts/${enc(id)}`), {}, opts);
 }
 
-/** #25 `DELETE /attempts/{id}`（后端会重算趋势，FR-P4）。 */
+/** #25 `DELETE /attempts/{id}`（软删进回收站，§14.4；后端会重算趋势，FR-P4）。 */
 export function deleteAttempt(id: string, opts?: ApiRequestOptions): Promise<{ deleted: boolean }> {
   return fetchJson<{ deleted: boolean }>(apiUrl(`/attempts/${enc(id)}`), { method: 'DELETE' }, opts);
+}
+
+/** #45 `GET /attempts/trash`（§14.4：摘要 + `deleted_at`，够决定恢复还是清除）。 */
+export async function trashAttempts(
+  query: AttemptsQuery = {},
+  opts?: ApiRequestOptions,
+): Promise<TrashListResult> {
+  const { data, total } = await fetchEnvelope<TrashItem[] | ListResult<TrashItem>>(
+    apiUrl(`/attempts/trash${qs({ module: query.module, limit: query.limit, offset: query.offset })}`),
+    {},
+    opts,
+  );
+  const items = Array.isArray(data) ? data : data.items ?? [];
+  const fromPayload = Array.isArray(data) ? undefined : data.total;
+  return { items, total: fromPayload ?? total ?? items.length };
+}
+
+/** #46 `POST /attempts/{id}/restore`（未删过的幂等 200）。 */
+export function restoreAttempt(id: string, opts?: ApiRequestOptions): Promise<{ restored: boolean }> {
+  return fetchJson<{ restored: boolean }>(apiUrl(`/attempts/${enc(id)}/restore`), { method: 'POST' }, opts);
+}
+
+/**
+ * #47 `DELETE /attempts/{id}/purge`。
+ * 本机零快照时后端给 409（§14.4：清除是不可逆动作，此刻必须先有退路），
+ * 那句中文要原样给用户，别改写成「删除失败」。
+ */
+export function purgeAttempt(id: string, opts?: ApiRequestOptions): Promise<{ purged: boolean }> {
+  return fetchJson<{ purged: boolean }>(apiUrl(`/attempts/${enc(id)}/purge`), { method: 'DELETE' }, opts);
 }
 
 /** #26 `GET /progress/summary`。 */
@@ -652,6 +701,72 @@ export function speakingAudioUrl(prompt: Pick<SpeakingPrompt, 'text'>, options: 
 }
 
 // ============================================================
+// 10. 草稿副本（#48–#50，契约 §14.5）
+// ============================================================
+
+/** 学习库里那一行草稿（第二份副本）。 */
+export interface DraftCopy {
+  key: string;
+  value: string;
+  updated_at: string;
+}
+
+export interface DraftWriteResult {
+  key: string;
+  updated_at: string;
+  size: number;
+}
+
+/** #48 `PUT /drafts/{key}`。`savedAt` 是客户端毫秒时间戳，只进 payload；比较用的是服务端 `updated_at`。 */
+export function putDraft(key: string, value: string, savedAt?: number): Promise<DraftWriteResult> {
+  return fetchJson<DraftWriteResult>(
+    apiUrl(`/drafts/${enc(key)}`),
+    putJson({ value, ...(savedAt === undefined ? {} : { saved_at: savedAt }) }),
+  );
+}
+
+/** #49 `GET /drafts/{key}`；没有副本时后端给 404（调用方用 `isNotFound` 判断，别当错误弹红）。 */
+export function getDraft(key: string): Promise<DraftCopy> {
+  return fetchJson<DraftCopy>(apiUrl(`/drafts/${enc(key)}`));
+}
+
+/** #50 `DELETE /drafts/{key}`（幂等）。 */
+export function deleteDraft(key: string): Promise<{ cleared: boolean }> {
+  return fetchJson<{ cleared: boolean }>(apiUrl(`/drafts/${enc(key)}`), { method: 'DELETE' });
+}
+
+/** 404 = 「远端没有这份草稿」，是正常答案而不是故障。 */
+export function isNotFound(error: unknown): boolean {
+  return isApiError(error) && error.status === 404;
+}
+
+// ============================================================
+// 11. Wave 7 的数据入口（契约 §14.3、§14.8）
+// ============================================================
+
+/**
+ * #42 `GET /backup`。`directory` 是本机路径 —— 全项目只有这一处允许把它显示给用户，
+ * 且只显示不拼接：错误 detail 里一律不许出现路径（CONSTITUTION §3）。
+ */
+export function backups(opts?: ApiRequestOptions): Promise<BackupList> {
+  return fetchJson<BackupList>(apiUrl('/backup'), {}, opts);
+}
+
+/** #43 `POST /backup`：返回新建的那一行 `manual` 快照。 */
+export function createBackup(opts?: ApiRequestOptions): Promise<SnapshotRow> {
+  return fetchJson<SnapshotRow>(apiUrl('/backup'), postJson({}), opts);
+}
+
+/**
+ * #44 `POST /backup/{name}/restore`：本站唯一的破坏性写入。
+ * 后端会先把当前库存成 `pre-restore` 副本再覆盖（§14.3），所以调用方成功后必须提示
+ * 「其它页面的数据请重新读取」—— 结构可能随快照回到旧版本号。
+ */
+export function restoreBackup(name: string, opts?: ApiRequestOptions): Promise<BackupRestoreResult> {
+  return fetchJson<BackupRestoreResult>(apiUrl(`/backup/${enc(name)}/restore`), { method: 'POST' }, opts);
+}
+
+// ============================================================
 // 汇总对象（方便 `api.xxx()` 调用与 mock 替换）
 // ============================================================
 
@@ -689,6 +804,12 @@ export const api = {
   attempts,
   attempt,
   deleteAttempt,
+  trashAttempts,
+  restoreAttempt,
+  purgeAttempt,
+  backups,
+  createBackup,
+  restoreBackup,
   progressSummary,
   progressTrend,
   progressAnalytics,
@@ -705,6 +826,9 @@ export const api = {
   ttsUrl,
   fetchTtsAudio,
   speakingAudioUrl,
+  putDraft,
+  getDraft,
+  deleteDraft,
 } as const;
 
 export default api;

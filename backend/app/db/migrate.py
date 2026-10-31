@@ -40,6 +40,7 @@ from typing import Any, Optional
 
 from app.config import settings as _cfg
 from app.db import backup, migrations, store
+from app.services import faultlog
 
 # 归档标签（文件名的一部分）。§14.3：归档名带 UTC 时间戳且永不覆盖，
 # 所以这里只是「这一段是干什么的」，不再是完整文件名。
@@ -119,7 +120,7 @@ def _archive_if_legacy(db_path: Path, archives: Optional[list[Path]] = None) -> 
     target = _archive(db_path, TAG_LEGACY)
     if target:
         _record(archives, target)
-        print(f"[Migrate] 旧剧本库已归档：{target.name}", flush=True)
+        faultlog.info("Migrate", f"旧剧本库已归档：{target.name}")
     return target
 
 
@@ -152,7 +153,7 @@ def _replace_corrupt(db_path: Path, archives: Optional[list[Path]] = None) -> Op
     target = backup.unique_target(db_path.parent, f"{db_path.name}.{TAG_CORRUPT}")
     os.replace(db_path, target)  # 失败即抛：不捕获、不兜底删除，原库必须还在
     _record(archives, target)
-    print(f"[Migrate] 库文件损坏，已改名为 {target.name} 并重建", flush=True)
+    faultlog.warn("Migrate", f"库文件损坏，已改名为 {target.name} 并重建")
     return target
 
 
@@ -180,7 +181,7 @@ def _legacy_snapshot(db_path: Path) -> Optional[dict[str, Any]]:
                 snap["wordbook"].append(dict(row))
         return snap
     except sqlite3.Error as exc:
-        print(f"[Migrate] 读取旧库失败，跳过携带：{exc}", flush=True)
+        faultlog.warn("Migrate", f"读取旧库失败，跳过携带：{exc}")
         return None
     finally:
         conn.close()
@@ -347,7 +348,7 @@ def ensure_schema(archives: Optional[list[Path]] = None) -> list[str]:
             conn.commit()
         finally:
             conn.close()
-        print(f"[Migrate] 旧剧本表已清理 {legacy_dropped} 张；生词本迁移 {moved} 条", flush=True)
+        faultlog.info("Migrate", f"旧剧本表已清理 {legacy_dropped} 张；生词本迁移 {moved} 条")
 
     _seed_settings(carry or None)
     _upgrade_version(db_path, pre_existing=pre_existing, archives=archives)

@@ -252,6 +252,12 @@ export function ListeningPanel({
           </Badge>
           {draft.restored ? <Badge tone="accent">已恢复上次草稿</Badge> : null}
           {!draft.available ? <Badge tone="mid">本机草稿不可用（隐私模式）</Badge> : null}
+          {/* §14.5：学习库那份副本没写上时必须可见，否则用户以为答案已经安全了。 */}
+          {draft.remoteState === 'unavailable' ? (
+            <Badge tone="mid" dot>
+              草稿目前只存在本机浏览器里
+            </Badge>
+          ) : null}
           <Button
             size="sm"
             variant={transcriptOpen ? 'primary' : 'outline'}

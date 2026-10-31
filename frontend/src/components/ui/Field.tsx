@@ -48,15 +48,19 @@ export function Field({ label, htmlFor, hint, error, required, inline, children,
 
   return (
     <FieldContext.Provider value={aria}>
-      <div className={cx('flex flex-col gap-1', inline && 'flex-row items-center justify-between gap-4', className)}>
-        <label
-          htmlFor={htmlFor}
-          className={cx('text-xs font-medium text-ink-secondary', inline && 'flex-1')}
-        >
-          {label}
-          {required ? <span aria-hidden="true" className="required-mark" /> : null}
-        </label>
-        <div className={cx('flex flex-col gap-1', inline && 'w-56 shrink-0')}>{content}</div>
+      <div className={cx('flex flex-col gap-1', className)}>
+        {/* inline 时只有「标签 + 控件」同行；hint/error 一律换行到下面 ——
+            它们要是也留在这条 flex 行里，`flex-1` 的标签会被长说明挤成一字一行。 */}
+        <div className={cx(!inline && 'flex flex-col gap-1', inline && 'flex flex-row items-center justify-between gap-4')}>
+          <label
+            htmlFor={htmlFor}
+            className={cx('text-xs font-medium text-ink-secondary', inline && 'flex-1')}
+          >
+            {label}
+            {required ? <span aria-hidden="true" className="required-mark" /> : null}
+          </label>
+          <div className={cx('flex flex-col gap-1', inline && 'w-56 shrink-0')}>{content}</div>
+        </div>
         {hint != null ? (
           <span id={hintId} className="text-xs text-ink-muted">
             {hint}

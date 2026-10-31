@@ -424,7 +424,9 @@ def test_新库建好就带deleted_at且版本到位(own_db):
     db = own_db / "app.db"
     assert "deleted_at" in _columns(db, "attempts")
     assert "idx_attempts_deleted" in _indexes(db), "索引由迁移步骤建，新库也要跑到"
-    assert _user_version(db) == store.SCHEMA_VERSION == 2
+    assert _user_version(db) == store.SCHEMA_VERSION, (
+        "新库跑完整条迁移链，版本号必须顶到常量（链的长度由 test_drafts_api 钉住）"
+    )
 
 
 def test_老库升级到v2加列且记录一条不少(own_db):
@@ -445,7 +447,7 @@ def test_老库升级到v2加列且记录一条不少(own_db):
 
     migrate.ensure_schema()
 
-    assert _user_version(db) == 2
+    assert _user_version(db) >= 2, "v1 库升级后至少要跑到补 deleted_at 的步骤 2"
     assert "deleted_at" in _columns(db, "attempts")
     assert "idx_attempts_deleted" in _indexes(db), (
         "索引写在 schema.sql 会让老库升级当场断掉（它跑在迁移之前），必须由步骤补建"

@@ -247,6 +247,12 @@ export function ReadingExam({ set, highlight, onSubmitted, onExit }: ReadingExam
           <Timer remainingSec={timer.remainingSec} expired={timer.expired} running={timer.running} />
           {draft.restored ? <Badge tone="mid">已恢复上次草稿</Badge> : null}
           {draft.available ? null : <Badge tone="poor">本地草稿不可用</Badge>}
+          {/* §14.5：学习库那份副本没写上时必须可见。 */}
+          {draft.remoteState === 'unavailable' ? (
+            <Badge tone="poor" dot>
+              草稿目前只存在本机浏览器里
+            </Badge>
+          ) : null}
           {draft.error ? <Badge tone="poor">{draft.error}</Badge> : null}
         </div>
         <div className="flex items-center gap-2">

@@ -162,8 +162,21 @@ export interface WhisperStatus {
 
 export interface ContentCounts extends Record<Module, number> {}
 
+/** 契约 §14.6：存储层健康。后端**永远**带这块，`reason` 已是可直接展示的中文。 */
+export interface StorageHealth {
+  state: 'ok' | 'readonly';
+  reason: string | null;
+}
+
 export interface HealthResponse {
   version: string;
+  /** §15.4 引擎自证身份：应答的进程号。孤儿引擎的唯一归因字段，不是机密（本机、非凭据）。 */
+  pid: number;
+  port: number;
+  /** `probe` = 首个真实请求核实到的绑定端口；`config` = 只是配置值，不许冒充实测（§15.3 第 6 条）。 */
+  port_source: 'probe' | 'config';
+  /** 本进程启动时刻（ISO8601 带时区）：用来认出「哪一次启动留下的引擎」。 */
+  started_at: string;
   ai_configured: boolean;
   /** 只暴露 host，不含 key（AC-C2）。 */
   ai_base_url_host: string | null;
@@ -172,7 +185,49 @@ export interface HealthResponse {
   whisper: WhisperStatus;
   tts_ok: boolean;
   content_counts: ContentCounts;
+  storage: StorageHealth;
 }
+
+// ============================================================
+// 1-W7. Wave 7 的数据入口（契约 §14.3 / §14.4 / §14.8）
+// ============================================================
+
+/**
+ * `GET /api/backup` 的一行快照。`tag` 是后端机器名（manual / startup / pre-upgrade /
+ * pre-restore），界面必须翻成中文再给用户（§14.8）。
+ */
+export interface SnapshotRow {
+  name: string;
+  size_bytes: number;
+  /** UTC ISO；展示必须转本地时区。 */
+  created_at: string;
+  tag: string;
+  pre_upgrade: boolean;
+}
+
+export interface BackupList {
+  items: SnapshotRow[];
+  /** 轮转上限：用户要知道「旧的会被冲掉」。 */
+  keep: number;
+  max_age_days: number;
+  /** 距上次成功快照几天；本机一份都没有时为 null。 */
+  days_since_last: number | null;
+  /** 本机目录，只在这一处显示（§14.3：错误 detail 里一律不许有路径）。 */
+  directory: string;
+}
+
+/** `POST /api/backup/{name}/restore`。 */
+export interface BackupRestoreResult {
+  restored: string;
+  pre_restore: string | null;
+}
+
+/** §14.4：回收站行 = 列表摘要 + 删除时刻（够决定「恢复还是清除」，看不到完整报告）。 */
+export interface TrashItem extends AttemptSummary {
+  deleted_at: string | null;
+}
+
+export interface TrashListResult extends ListResult<TrashItem> {}
 
 // ============================================================
 // 2-S. 口语（契约 §2-S、§3-S）

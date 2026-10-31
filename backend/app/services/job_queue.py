@@ -18,6 +18,7 @@ import threading
 from typing import Any, Callable, Optional
 
 from app.db import store
+from app.services import faultlog
 
 Runner = Callable[[], dict[str, Any]]
 
@@ -51,7 +52,7 @@ def _loop() -> None:
         try:
             _execute(job_id, runner)
         except Exception as exc:  # 执行器自身故障也不能让 worker 死掉
-            print(f"[Job] worker 内部错误: {type(exc).__name__}: {exc}", flush=True)
+            faultlog.error("Job", f"worker 内部错误: {type(exc).__name__}: {exc}")
 
 
 def _execute(job_id: str, runner: Runner) -> None:
@@ -61,7 +62,7 @@ def _execute(job_id: str, runner: Runner) -> None:
     except Exception as exc:
         reason = _readable_error(exc)
         store.mark_job_failed(job_id, reason)
-        print(f"[Job] {job_id} 批改失败: {type(exc).__name__}: {exc}", flush=True)
+        faultlog.error("Job", f"{job_id} 批改失败: {type(exc).__name__}: {exc}")
         return
     if not isinstance(report, dict) or not report.get("attempt_id"):
         store.mark_job_failed(job_id, "批改没有产出有效结果，请重新提交")

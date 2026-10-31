@@ -30,11 +30,17 @@ function ok<T>(data: T, init?: ResponseInit) {
 
 export const listeningHealth: HealthResponse = {
   version: '2.0.0',
+  // §15.4 引擎自证身份：mock 也要带齐，界面才分得清「就绪」与「连的是上一个实例」
+  pid: 4321,
+  port: 8765,
+  port_source: 'probe',
+  started_at: '2026-10-30T21:10:00+08:00',
   ai_configured: false,
   ai_base_url_host: null,
   whisper: { loaded: false, model: 'base' },
   tts_ok: true,
   content_counts: { speaking: 6, listening: 2, reading: 2, writing: 6 },
+  storage: { state: 'ok', reason: null },
 };
 
 export const listeningSettings: Settings = {

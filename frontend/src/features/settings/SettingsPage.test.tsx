@@ -13,7 +13,13 @@ import { http, HttpResponse } from 'msw';
 import { server } from '../../test/mocks/server';
 import { API_BASE } from '../../services/api';
 import SettingsPage from './SettingsPage';
-import { createSettingsHandlers, healthFixture, settingsFixture } from './testHandlers';
+import {
+  createSettingsHandlers,
+  healthFixture,
+  settingsFixture,
+  snapshotFixture,
+  trashFixture,
+} from './testHandlers';
 
 const LEAKY_KEY = 'sk-submit123456789';
 
@@ -280,7 +286,9 @@ describe('AC-C2 AI 密钥只写不回读', () => {
 
 describe('AC-C3 状态只说真话', () => {
   it('whisper 未加载时如实标注，没有假进度；/health 变化后重新读取才更新', async () => {
-    const ctx = await openSettings({ health: healthFixture() });
+    // 版本号故意与当前构建不同：这张卡必须证明它念的是 /health 里引擎自报的版本，
+    // 不是前端自己那个 `APP_VERSION`（同版的桩在 testHandlers 里，见 §15.4 第 7 条）。
+    const ctx = await openSettings({ health: { ...healthFixture(), version: '2.1.0' } });
 
     // /health 与 /settings 是两个独立请求，状态徽章要等 /health 回来才落地。
     expect(await screen.findByText('模型未加载（首次使用时才加载）')).toBeInTheDocument();
@@ -395,5 +403,73 @@ describe('磁贴条（契约 §8.3）', () => {
 
     const grid = await screen.findByLabelText('设置关键指标');
     expect(grid.querySelector('[data-metric="settings.ai"]')).not.toBeInTheDocument();
+  });
+});
+
+describe('Wave 7 数据入口（契约 §14.8）', () => {
+  it('两张新卡排在 AI 服务之后：低频高后果动作不插进设置项中间', async () => {
+    await openSettings({ data: { items: [snapshotFixture('startup')], trash: [trashFixture()], daysSinceLast: 1 } });
+
+    const ai = await screen.findByText('AI 评分服务');
+    const backup = await screen.findByText('数据与备份');
+    const trash = await screen.findByText('回收站');
+    expect(backup.compareDocumentPosition(ai) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(backup.compareDocumentPosition(trash) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // 卡片内容来自各自端点，不是设置响应里的字段
+    await screen.findByRole('list', { name: '本机快照' });
+    await screen.findByRole('list', { name: '回收站里的练习记录' });
+  });
+
+  it('只读降级时两张卡各说明一次并禁用写动作（§14.6 → §14.8）', async () => {
+    const ctx = createSettingsHandlers({
+      data: { items: [snapshotFixture('manual')], trash: [trashFixture()], daysSinceLast: 0 },
+    });
+    server.use(...ctx.handlers);
+    render(<SettingsPage storageReadonly />);
+
+    const notes = await screen.findAllByText(/学习库当前只能读/);
+    expect(notes).toHaveLength(2);
+    // 禁用不等于消失：降级期用户更要看清自己还有几份副本，所以先等内容落地再断言禁用
+    await screen.findByRole('list', { name: '本机快照' });
+    await screen.findByRole('list', { name: '回收站里的练习记录' });
+    expect(screen.getByRole('button', { name: /立即备份一份/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /恢复到这一份/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /彻底删除/ })).toBeDisabled();
+    expect(ctx.data.rows()).toHaveLength(1);
+  });
+});
+
+describe('在线开关与健康读数（契约 §15.2 第 5 条）', () => {
+  /** 右栏「音频合成」读的是外壳那份 `/health` 快照；不重探就会停在启动时的旧值。 */
+  async function openWithRefresh() {
+    const refreshHealth = vi.fn();
+    const ctx = createSettingsHandlers();
+    server.use(...ctx.handlers);
+    render(<SettingsPage refreshHealth={refreshHealth} />);
+    const toggle = await screen.findByLabelText('允许在线服务');
+    return { refreshHealth, ctx, toggle };
+  }
+
+  it('切换「允许在线服务」后重探一次健康', async () => {
+    const { refreshHealth, ctx, toggle } = await openWithRefresh();
+
+    fireEvent.click(toggle);
+    await waitFor(() => expect(ctx.patchBodies).toHaveLength(1));
+    expect(ctx.patchBodies[0]).toEqual({ online_enabled: false });
+    expect(refreshHealth).toHaveBeenCalledTimes(1);
+  });
+
+  it('改别的设置项不许顺手探活（探活是刷新后果，不是保存的仪式）', async () => {
+    const { refreshHealth, ctx } = await openWithRefresh();
+
+    fireEvent.click(screen.getByLabelText('显示标点'));
+    await waitFor(() => expect(ctx.patchBodies).toHaveLength(1));
+    expect(ctx.patchBodies[0]).toEqual({ show_punctuation: false });
+    expect(refreshHealth).not.toHaveBeenCalled();
+  });
+
+  it('说明文案点名「不再发出内容」，而不是含糊的「偏好开关」（§15.2）', async () => {
+    await openWithRefresh();
+    expect(screen.getByText(/不再向远程服务发出/)).toBeInTheDocument();
   });
 });

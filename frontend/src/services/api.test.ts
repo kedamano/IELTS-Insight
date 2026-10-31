@@ -17,10 +17,13 @@ import {
   addVocab,
   attempt,
   attempts,
+  backups,
   buildSpeakingTurnForm,
   clearAiKey,
+  createBackup,
   deleteAttempt,
   deleteReview,
+  describeActionError,
   fetchJson,
   fetchListeningAudio,
   fetchTtsAudio,
@@ -42,6 +45,7 @@ import {
   postSpeakingTurn,
   postStt,
   postWritingAttempt,
+  purgeAttempt,
   progressAnalytics,
   progressSummary,
   progressTrend,
@@ -50,6 +54,8 @@ import {
   removeVocab,
   resolveReview,
   resolveVoice,
+  restoreAttempt,
+  restoreBackup,
   reviewErrors,
   setAiKey,
   speakingAudioUrl,
@@ -57,6 +63,7 @@ import {
   speakingSets,
   startSpeaking,
   toReadableError,
+  trashAttempts,
   ttsUrl,
   vocabExportUrl,
   vocabList,
@@ -173,6 +180,7 @@ describe('health 与 settings', () => {
       whisper: { loaded: false, model: 'small' },
       tts_ok: true,
       content_counts: { speaking: 8, listening: 8, reading: 8, writing: 8 },
+      storage: { state: 'ok', reason: null },
     };
     mockOnce('get', '/health', payload);
     const result = await health();
@@ -189,6 +197,8 @@ describe('health 与 settings', () => {
       whisper: { loaded: expect.any(Boolean), model: expect.any(String) },
       tts_ok: expect.any(Boolean),
       content_counts: { speaking: expect.any(Number), listening: expect.any(Number), reading: expect.any(Number), writing: expect.any(Number) },
+      // 契约 §14.6：体检端点在故障时也要带着存储状态回答，界面靠它显示降级告警
+      storage: { state: 'ok', reason: null },
     });
   });
 
@@ -884,6 +894,76 @@ describe('错误模型与 abort', () => {
 });
 
 // ============================================================
+// 8-W7. Wave 7 的数据入口（契约 §1 行 42–47、§14.3、§14.4、§14.8）
+// ============================================================
+
+describe('备份与回收站端点（Wave 7）', () => {
+  it('backups() GET /backup，整块 unwrap（items/keep/days_since_last/directory 都在 data 里）', async () => {
+    mockOnce('get', '/backup', {
+      items: [{ name: 'app.manual.20261029T010203.sqlite', size_bytes: 10, created_at: 'x', tag: 'manual', pre_upgrade: false }],
+      keep: 10,
+      max_age_days: 7,
+      days_since_last: 2.5,
+      directory: 'C:/mock/backups',
+    });
+    const result = await backups();
+    expect(last().url).toBe(`${API_BASE}/backup`);
+    expect(result.keep).toBe(10);
+    expect(result.items).toHaveLength(1);
+    expect(result.days_since_last).toBe(2.5);
+  });
+
+  it('createBackup() POST /backup（无业务 body，但仍发 JSON 以匹配后端 Content-Type）', async () => {
+    mockOnce('post', '/backup', { name: 'app.manual.20261029T010204.sqlite', tag: 'manual' });
+    const row = await createBackup();
+    expect(last().method).toBe('POST');
+    expect(row.tag).toBe('manual');
+  });
+
+  it('restoreBackup() 把文件名编码进路径，不拼进 query', async () => {
+    mockOnce('post', '/backup/app.pre-upgrade.20261028T010203.sqlite/restore', {
+      restored: 'app.pre-upgrade.20261028T010203.sqlite',
+      pre_restore: 'app.pre-restore.20261029T010203.sqlite',
+    });
+    const result = await restoreBackup('app.pre-upgrade.20261028T010203.sqlite');
+    expect(last().url).toBe(`${API_BASE}/backup/app.pre-upgrade.20261028T010203.sqlite/restore`);
+    expect(last().method).toBe('POST');
+    expect(result.pre_restore).toContain('pre-restore');
+  });
+
+  it('trashAttempts() GET /attempts/trash，module/limit/offset 进 query，total 取 payload 里的数', async () => {
+    mockOnce('get', '/attempts/trash', { items: [{ id: 'att_1', deleted_at: '2026-10-27T22:41:00+00:00' }], total: 137 });
+    const result = await trashAttempts({ module: 'listening', limit: 50, offset: 0 });
+    const url = new URL(last().url);
+    expect(url.pathname).toBe(new URL(`${API_BASE}/attempts/trash`).pathname);
+    expect(url.searchParams.get('module')).toBe('listening');
+    expect(url.searchParams.get('limit')).toBe('50');
+    // total 必须是后端的 137，不是本页的 1 —— 回收站读数冒充「只有 1 条」是假的
+    expect(result.total).toBe(137);
+    expect(result.items).toHaveLength(1);
+  });
+
+  it('restoreAttempt() / purgeAttempt() 走各自子资源路径，method 不写反', async () => {
+    mockOnce('post', '/attempts/att_1/restore', { restored: true });
+    mockOnce('delete', '/attempts/att_1/purge', { purged: true });
+    await expect(restoreAttempt('att_1')).resolves.toEqual({ restored: true });
+    expect(last().method).toBe('POST');
+    await expect(purgeAttempt('att_1')).resolves.toEqual({ purged: true });
+    expect(last().url).toBe(`${API_BASE}/attempts/att_1/purge`);
+    expect(last().method).toBe('DELETE');
+  });
+
+  it('describeActionError：4xx 给后端原文，5xx 保留「请求失败 500：」这层故障信息', () => {
+    const conflict = new ApiError('请求失败 409：本机还没有任何学习库快照，请先备份。', 409, 'conflict', '本机还没有任何学习库快照，请先备份。');
+    expect(describeActionError(conflict, '兜底')).toBe('本机还没有任何学习库快照，请先备份。');
+    const fault = new ApiError('请求失败 500：本机学习库当前无法写入。', 500, 'storage_unavailable', '本机学习库当前无法写入。');
+    expect(describeActionError(fault, '兜底')).toBe('请求失败 500：本机学习库当前无法写入。');
+    expect(describeActionError(new Error('网络断了'), '兜底')).toBe('网络断了');
+    expect(describeActionError('字符串', '兜底')).toBe('兜底');
+  });
+});
+
+// ============================================================
 // 9. §7 导出面守卫（旧 api.ts 上没有这些函数 → 本用例即红）
 // ============================================================
 
@@ -896,6 +976,7 @@ describe('契约 §7 导出面', () => {
     'readingSets', 'readingSet', 'postReadingAttempt',
     'writingTasks', 'postWritingAttempt', 'writingAttempt',
     'attempts', 'attempt', 'deleteAttempt', 'progressSummary', 'progressTrend', 'progressAnalytics',
+    'trashAttempts', 'restoreAttempt', 'purgeAttempt', 'backups', 'createBackup', 'restoreBackup',
     'planToday', 'markPlanDone', 'reviewErrors', 'resolveReview', 'deleteReview',
     'wordInfo', 'addVocab', 'vocabList', 'removeVocab', 'vocabExportUrl',
   ] as const;

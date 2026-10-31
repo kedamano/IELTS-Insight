@@ -75,9 +75,30 @@ def _add_attempt_deleted_at(conn: sqlite3.Connection) -> None:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_attempts_deleted ON attempts(deleted_at)")
 
 
+def _add_drafts_table(conn: sqlite3.Connection) -> None:
+    """v3：草稿落库（§14.5）—— 作文正文从「只有一份 localStorage」变成学习库里有快照保护的一行。
+
+    `IF NOT EXISTS` 不是抄风格：`schema.sql` 对新库已经建好这张表，而新库的 `user_version`
+    从 0 起、整条链都要跑一遍，裸 `CREATE TABLE` 会正好撞在自己刚建出来的库上
+    （§14.7 里 7d 那条索引教训的同一件事）。
+    """
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS drafts(
+          key TEXT PRIMARY KEY,
+          module TEXT NOT NULL,
+          ref TEXT,
+          payload_json TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """
+    )
+
+
 MIGRATIONS: list[Step] = [
     Step(1, "基线：schema.sql 的当前结构", _baseline),
     Step(2, "练习记录软删：attempts.deleted_at + 索引", _add_attempt_deleted_at),
+    Step(3, "草稿副本：drafts 表", _add_drafts_table),
 ]
 
 

@@ -61,11 +61,13 @@ import uvicorn  # noqa: E402
 
 from app.config import settings  # noqa: E402
 from app.main import app  # noqa: E402
+from app.services import faultlog  # noqa: E402
 
 if __name__ == "__main__":
     # 只打印非敏感的启动信息，绝不打印 OPENAI_API_KEY 等凭据。
-    print(f"[IELTS Backend] listening on http://{settings.API_HOST}:{settings.API_PORT}")
-    print(f"[IELTS Backend] data root : {_data_root()}")
-    print(f"[IELTS Backend] app data  : {_APPDATA}")
+    # 走 faultlog 而不是 print：这条 exe 由 Tauri 用 CREATE_NO_WINDOW 拉起，
+    # stdout 会被父进程读走丢弃（契约 §15.3）。
+    faultlog.info("Entry", f"准备监听 http://{settings.API_HOST}:{settings.API_PORT}（实际端口待首个请求核实）")
+    faultlog.info("Entry", f"数据根目录={_data_root()} 用户数据={_APPDATA}")
     # 传入 app 对象（不是 import 字符串），PyInstaller 冻结模式下 reload/import-string 不可用。
     uvicorn.run(app, host=settings.API_HOST, port=settings.API_PORT, log_level="info")

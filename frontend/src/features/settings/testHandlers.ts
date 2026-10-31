@@ -7,11 +7,23 @@
  * - `ai` 子块只接受 `base_url` / `model`，回读时只暴露 `base_url_host`（AC-C2 的最小暴露）；
  * - `PUT /settings/ai-key` 无最短长度，规则只有非空 / ≤300 / 不含控制字符，机器码恒为
  *   `validation_failed`；响应只有 `ai_key_present`，绝不回传明文。
+ *
+ * 7g 追加 `createDataHandlers`（§14.3 / §14.4 / §14.8）：镜像 `api/backup.py` 与
+ * `api/attempts.py` 的行为，包括「恢复前先落一份 pre-restore」「无快照时 purge 给 409」
+ * 这两条安全门 —— mock 里不复刻它们，界面测试就是在测一个不存在的后端。
  */
 import { HttpResponse, http } from 'msw';
 import type { RequestHandler } from 'msw';
 import { API_BASE } from '../../services/api';
-import type { HealthResponse, Settings } from '../../types/ielts';
+import { APP_VERSION } from '../../version';
+import type {
+  AttemptSummary,
+  BackupList,
+  HealthResponse,
+  Settings,
+  SnapshotRow,
+  TrashItem,
+} from '../../types/ielts';
 
 function ok<T>(data: T) {
   return HttpResponse.json({ data });
@@ -63,12 +75,20 @@ export function settingsFixture(): Settings {
 
 export function healthFixture(): HealthResponse {
   return {
-    version: '2.1.0',
+    // 默认桩代表「引擎和界面同一版」的正常世界：版本不一致会让外壳亮出 §15.4 第 7 条的
+    // 「上一个实例」告警，那个状态必须是显式覆盖出来的，不能是所有用例的默认背景。
+    version: APP_VERSION,
+    // §15.4 引擎自证身份：mock 也要带齐，界面才分得清「就绪」与「连的是上一个实例」
+    pid: 4321,
+    port: 8765,
+    port_source: 'probe',
+    started_at: '2026-10-30T21:10:00+08:00',
     ai_configured: false,
     ai_base_url_host: null,
     whisper: { loaded: false, model: 'base' },
     tts_ok: true,
     content_counts: { speaking: 6, listening: 4, reading: 3, writing: 6 },
+    storage: { state: 'ok', reason: null },
   };
 }
 
@@ -137,6 +157,8 @@ export interface SettingsHandlerOptions {
   aiKeyError?: { status: number; code: string; detail: string };
   /** PATCH 成功后是否把返回体里的其余字段抹掉（模拟后端「未提供即重置」的旧 bug）。 */
   resetOmittedFields?: boolean;
+  /** 7g 两张卡的初始数据；默认带上一份空态，否则设置屏的用例会去打真实 8765。 */
+  data?: DataHandlerOptions;
 }
 
 export interface SettingsTestContext {
@@ -150,6 +172,8 @@ export interface SettingsTestContext {
   setPatchError: (error: { status: number; code: string; detail: string } | null) => void;
   setAiKeyError: (error: { status: number; code: string; detail: string } | null) => void;
   setHealth: (next: HealthResponse) => void;
+  /** 数据与备份 / 回收站两张卡的状态（§14.8）。 */
+  data: DataTestContext;
 }
 
 export function createSettingsHandlers(options: SettingsHandlerOptions = {}): SettingsTestContext {
@@ -160,6 +184,9 @@ export function createSettingsHandlers(options: SettingsHandlerOptions = {}): Se
   const patchBodies: Record<string, unknown>[] = [];
   const putKeyBodies: Record<string, unknown>[] = [];
   const counters = { deleteCalls: 0, getCalls: 0 };
+  // 设置屏挂载时会同时渲染两张新卡，所以它们的端点也要有镜像：
+  // 漏了的话，全部既有设置屏用例会去打真实 sidecar（慢且不稳）。
+  const data = createDataHandlers(options.data ?? { items: [], trash: [], daysSinceLast: null });
 
   const handlers: RequestHandler[] = [
     http.get(`${API_BASE}/health`, () => ok(healthValue)),
@@ -200,7 +227,7 @@ export function createSettingsHandlers(options: SettingsHandlerOptions = {}): Se
   ];
 
   return {
-    handlers,
+    handlers: [...handlers, ...data.handlers],
     patchBodies,
     putKeyBodies,
     get deleteCalls() {
@@ -218,6 +245,170 @@ export function createSettingsHandlers(options: SettingsHandlerOptions = {}): Se
     },
     setHealth: (next) => {
       healthValue = next;
+    },
+    data,
+  };
+}
+
+// ============================================================
+// 7g：/backup 与 /attempts/trash（契约 §14.3、§14.4、§14.8）
+// ============================================================
+
+/** 与后端 `_NAME_RE` 同形状的名字，否则 restore 会被白名单挡掉（§14.3）。 */
+export function snapshotFixture(tag = 'manual', stamp = '20261029T010203'): SnapshotRow {
+  return {
+    name: `app.${tag}.${stamp}.sqlite`,
+    size_bytes: 1_572_864,
+    created_at: '2026-10-29T01:02:03+00:00',
+    tag,
+    pre_upgrade: tag === 'pre-upgrade',
+  };
+}
+
+export function trashFixture(overrides: Partial<TrashItem> = {}): TrashItem {
+  const base: AttemptSummary = {
+    id: 'att_li_trash_1',
+    module: 'listening',
+    task_ref: 'li_s2_travel_03',
+    part: null,
+    title_zh: '博物馆参观',
+    topic: 'travel',
+    band_overall: 6.5,
+    band_sub: null,
+    raw_correct: 15,
+    raw_total: 20,
+    duration_sec: 900,
+    started_at: '2026-10-18T01:00:00Z',
+    created_at: '2026-10-18T01:15:00Z',
+    ai_used: false,
+    approximate: false,
+  };
+  return { ...base, deleted_at: '2026-10-27T22:41:00+00:00', ...overrides };
+}
+
+/** 只用于断言「路径不许出现在弹窗与错误里」，本身长得像真路径。 */
+export const MOCK_BACKUP_DIR = 'C:\Users\mock\AppData\Local\IELTSInsight\backups';
+
+const SNAPSHOT_NAME = /^app\.([a-z][a-z-]{0,20})\.(\d{8}T\d{6}(?:-\d{2})?)\.sqlite$/;
+
+export interface DataHandlerOptions {
+  items?: SnapshotRow[];
+  trash?: TrashItem[];
+  /** 回收站总数；缺省 = trash.length（两者不等时界面必须用 total）。 */
+  total?: number;
+  daysSinceLast?: number | null;
+  directory?: string;
+}
+
+export interface DataTestContext {
+  handlers: readonly RequestHandler[];
+  /** 当前快照行（新→旧），用于断言「恢复前先落了 pre-restore」。 */
+  rows: () => SnapshotRow[];
+  trash: () => TrashItem[];
+  totals: () => { trash: number };
+  restoreCalls: string[];
+  restoreAttemptCalls: string[];
+  purgeCalls: string[];
+  backupCalls: number;
+  setBackupCreateError: (error: { status: number; code: string; detail: string } | null) => void;
+  setRestoreError: (error: { status: number; code: string; detail: string } | null) => void;
+  setPurgeError: (error: { status: number; code: string; detail: string } | null) => void;
+}
+
+export function createDataHandlers(options: DataHandlerOptions = {}): DataTestContext {
+  let rows = options.items ?? [snapshotFixture('startup', '20261029T010203')];
+  let trash = options.trash ?? [];
+  let total = options.total ?? trash.length;
+  let daysSinceLast = options.daysSinceLast ?? 1;
+  const directory = options.directory ?? MOCK_BACKUP_DIR;
+  type Injected = { status: number; code: string; detail: string } | null;
+  let backupCreateError: Injected = null;
+  let restoreError: Injected = null;
+  let purgeError: Injected = null;
+  const restoreCalls: string[] = [];
+  const restoreAttemptCalls: string[] = [];
+  const purgeCalls: string[] = [];
+  const counters = { backupCalls: 0, seq: 0 };
+
+  /** 同一秒内的多份靠 `-02` 区分（§14.3「永不覆盖」）。 */
+  const nextStamp = () => {
+    counters.seq += 1;
+    return `20261029T01020${counters.seq % 10}`;
+  };
+
+  const handlers: RequestHandler[] = [
+    http.get(`${API_BASE}/backup`, () =>
+      ok<BackupList>({
+        items: rows,
+        keep: 10,
+        max_age_days: 7,
+        days_since_last: daysSinceLast,
+        directory,
+      }),
+    ),
+
+    http.post(`${API_BASE}/backup`, () => {
+      counters.backupCalls += 1;
+      if (backupCreateError) return fail(backupCreateError.status, backupCreateError.detail, backupCreateError.code);
+      const row = snapshotFixture('manual', nextStamp());
+      rows = [row, ...rows];
+      daysSinceLast = 0;
+      return ok(row);
+    }),
+
+    http.post(`${API_BASE}/backup/:name/restore`, ({ params }) => {
+      const name = String(params.name);
+      restoreCalls.push(name);
+      if (restoreError) return fail(restoreError.status, restoreError.detail, restoreError.code);
+      // 与 `resolve_snapshot()` 同规则：名字不在白名单里就拒绝，且不动当前库。
+      if (!SNAPSHOT_NAME.test(name)) return fail(400, '这份备份的名字不是本机快照文件名，已拒绝，当前库没有改动。', 'validation_failed');
+      if (!rows.some((row) => row.name === name)) return fail(404, '本机找不到这份备份，可能已被轮转删掉。列表里最新的一份总是安全的。', 'not_found');
+      const safety = snapshotFixture('pre-restore', nextStamp());
+      rows = [safety, ...rows];
+      return ok({ restored: name, pre_restore: safety.name });
+    }),
+
+    http.get(`${API_BASE}/attempts/trash`, () => ok({ items: trash, total })),
+
+    http.post(`${API_BASE}/attempts/:id/restore`, ({ params }) => {
+      const id = String(params.id);
+      restoreAttemptCalls.push(id);
+      if (!trash.some((item) => item.id === id)) return fail(404, '练习记录不存在', 'not_found');
+      trash = trash.filter((item) => item.id !== id);
+      total = Math.max(0, total - 1);
+      return ok({ restored: true });
+    }),
+
+    http.delete(`${API_BASE}/attempts/:id/purge`, ({ params }) => {
+      const id = String(params.id);
+      purgeCalls.push(id);
+      if (purgeError) return fail(purgeError.status, purgeError.detail, purgeError.code);
+      if (!trash.some((item) => item.id === id)) return fail(404, '练习记录不存在', 'not_found');
+      trash = trash.filter((item) => item.id !== id);
+      total = Math.max(0, total - 1);
+      return ok({ purged: true });
+    }),
+  ];
+
+  return {
+    handlers,
+    rows: () => rows,
+    trash: () => trash,
+    totals: () => ({ trash: total }),
+    restoreCalls,
+    restoreAttemptCalls,
+    purgeCalls,
+    get backupCalls() {
+      return counters.backupCalls;
+    },
+    setBackupCreateError: (error) => {
+      backupCreateError = error;
+    },
+    setRestoreError: (error) => {
+      restoreError = error;
+    },
+    setPurgeError: (error) => {
+      purgeError = error;
     },
   };
 }

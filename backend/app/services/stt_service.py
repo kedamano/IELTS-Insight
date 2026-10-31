@@ -21,6 +21,7 @@ from typing import Any, Optional
 import numpy as np
 
 from app.config import settings
+from app.services import faultlog
 
 SAMPLE_RATE = 16000
 DEFAULT_LANGUAGE = "en"
@@ -43,13 +44,9 @@ def _get_model() -> Any:
             import whisper  # 延迟导入：模块导入期绝不拖入 torch
 
             name = (settings.WHISPER_MODEL or "base") if hasattr(settings, "WHISPER_MODEL") else "base"
-            # 日志只用 ASCII：打包 sidecar / 探针子进程在 GBK 控制台下打印中文会炸 stdout。
-            print(
-                f"[STT] loading whisper model '{name}' on '{getattr(settings, 'WHISPER_DEVICE', 'cpu')}' (lazy)...",
-                flush=True,
-            )
+            faultlog.info("STT", f"懒加载 whisper 模型 '{name}'（设备 {getattr(settings, 'WHISPER_DEVICE', 'cpu')}）")
             _model = whisper.load_model(name, device=getattr(settings, "WHISPER_DEVICE", "cpu"))
-            print("[STT] whisper model loaded.", flush=True)
+            faultlog.info("STT", "whisper 模型装载完成")
     return _model
 
 

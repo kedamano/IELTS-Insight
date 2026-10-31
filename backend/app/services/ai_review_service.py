@@ -9,6 +9,7 @@
 import json
 from typing import Optional
 from app.config import settings
+from app.services import faultlog
 
 # 中国学生常见音素错误提示模板
 PHONEME_TIPS_CN = {
@@ -191,7 +192,7 @@ def generate_ai_review(
         return result
 
     except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
-        print(f"[AI Review] 模型输出不可解析，降级为离线模板：{type(exc).__name__}", flush=True)
+        faultlog.warn("AI Review", f"模型输出不可解析，降级为离线模板：{type(exc).__name__}")
         result = generate_offline_review(original_text, user_text, word_scores, overall_score)
         result["degraded_reason"] = "invalid_model_output"
         return result
@@ -199,7 +200,7 @@ def generate_ai_review(
     except Exception as exc:
         # 降级可以，但必须可见（CONSTITUTION §3）。异常文本里绝不包含 key。
         reason = "network_error" if "timeout" not in type(exc).__name__.lower() else "timeout"
-        print(f"[AI Review] 降级为离线模板：{type(exc).__name__}: {exc}", flush=True)
+        faultlog.warn("AI Review", f"降级为离线模板：{type(exc).__name__}: {exc}")
         result = generate_offline_review(original_text, user_text, word_scores, overall_score)
         result["degraded_reason"] = reason
         return result

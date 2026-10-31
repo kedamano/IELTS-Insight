@@ -37,7 +37,7 @@ NEW_MARKER_TABLE = "attempts"
 # 新库的结构版本（契约 §14.2：唯一真源）。库内真相是 `PRAGMA user_version`。
 # 改动结构 = 在这里抬高一格 **并且** 往 app/db/migrations.py 追加同号的步骤；
 # 只改常量不加步骤会被 validate_chain 拒绝启动（那等于假装升级完成）。
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 PRIVATE_SETTING_KEYS = frozenset({"ai_key"})
 
@@ -75,6 +75,11 @@ def ensure_schema() -> None:
         raise migrations.SchemaUpgradeError(_schema_failed)
     if _schema_ready:
         return
+    if _storage_readonly is not None:
+        # §14.6：启动体检没通过（结构从未就绪 + 已闩只读）时**绝不**跑迁移链。
+        # migrate 的坏库分支会把残损文件改名成 `app.db.corrupt.<ts>.bak` 再建空库 ——
+        # 那正是「顺手重建」，而这条分支在 7f 实拍里真的被第一个读请求踩中了。
+        raise StorageUnavailableError(_storage_readonly)
     _schema_ready = True
     from app.db import migrate  # 延迟导入，避免 store <-> migrate 循环依赖
 
@@ -108,6 +113,122 @@ def schema_failed_detail() -> Optional[str]:
     return _schema_failed
 
 
+# ---------------------------------------------------------------------------
+# 存储层健康（契约 §14.6）
+# ---------------------------------------------------------------------------
+
+STORAGE_STATE_OK = "ok"
+STORAGE_STATE_READONLY = "readonly"
+
+
+class StorageUnavailableError(RuntimeError):
+    """降级期间连「打开库」这个动作都不该发生时抛的错（§14.6）。
+
+    `detail` 已经是措辞表里的中文，可以直接进响应；它**不是** sqlite 异常的转述。
+    """
+
+    def __init__(self, detail: str) -> None:
+        super().__init__(detail)
+        self.detail = detail
+
+# 只读闩：置上之后所有写请求在中间件里就被挡掉，读照常 —— 用户至少要看得到自己的记录。
+# 只有「继续写会让库更坏」的结构性故障才配闩它：磁盘满与锁库都会自己好起来，
+# 闩住等于逼用户重启，反而更糟。
+_storage_readonly: Optional[str] = None
+
+# 结构性故障的特征（sqlite 给的是英文消息，这里只做判定，不往界面回原文）
+STRUCTURAL_MARKERS = ("no such table", "no such column", "malformed", "not a database")
+
+# (特征串, 中文文案)。顺序有意义：`attempt to write a readonly database` 里同时有
+# "database" 和 "readonly"，先判 locked 再判 readonly 才不会串台。
+_STORAGE_MESSAGES: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("database is locked", "database table is locked"),
+     "本机学习库正被另一个进程占用，这次操作没有保存。请关闭其它正在使用它的程序后重试。"),
+    (("readonly", "read-only"),
+     "本机学习库当前是只读的，这次操作没有保存。请检查文件权限或磁盘状态后重启应用。"),
+    (("no such table", "no such column"),
+     "本机学习库的结构不完整，这次操作没有保存。请重启应用完成升级。"),
+    (("no space", "not enough space", "quota"),
+     "本机磁盘已满，这次操作没有保存。请清理空间后重启应用。"),
+    (("disk i/o", "io error", "disk write", "unable to open database file"),
+     "本机学习库读写失败（磁盘或文件异常），这次操作没有保存。"),
+    (("malformed", "not a database"),
+     "本机学习库文件已损坏，本次启动以只读方式运行，改动不会保存。"),
+)
+STORAGE_GENERIC = "本机学习库暂时不可用，这次操作没有保存。请重启应用；若仍然失败，请查看日志。"
+
+
+def storage_error_detail(exc_or_text: Any) -> str:
+    """把 sqlite 的英文消息换成中文文案。
+
+    硬约束（CONSTITUTION §3）：返回值里不许出现原始英文消息、SQL 片段、表名或文件路径 ——
+    sqlite 的 `unable to open database file: '<path>'` 这类消息是带路径的，所以一律不转述。
+    """
+    msg = str(exc_or_text).lower()
+    for markers, text in _STORAGE_MESSAGES:
+        if any(marker in msg for marker in markers):
+            return text
+    return STORAGE_GENERIC
+
+
+def is_structural_storage_error(exc_or_text: Any) -> bool:
+    """是否属于「结构坏了」—— 只有这类才允许闩成只读。"""
+    msg = str(exc_or_text).lower()
+    return any(marker in msg for marker in STRUCTURAL_MARKERS)
+
+
+def quick_check() -> dict[str, Any]:
+    """跑一次 `PRAGMA quick_check`（§14.6）。只读打开，绝不创建、改动或重建文件。
+
+    返回 `{"ok": bool, "reason": str|None, "absent": bool}`：
+    - `absent` 单独拎出来，是因为「新机器还没有库」和「库坏了」在界面上必须说两样话；
+    - `reason` 是给人看的中文，不含路径。
+    """
+    path = Path(_cfg.DB_PATH)
+    if not path.exists():
+        return {"ok": True, "reason": None, "absent": True}
+    try:
+        # mode=ro：连不上/读不出都不该顺手改文件；as_uri() 负责 Windows 路径的百分号转义
+        conn = sqlite3.connect(f"{path.as_uri()}?mode=ro", uri=True)
+    except sqlite3.Error as exc:
+        return {"ok": False, "reason": storage_error_detail(exc), "absent": False}
+    try:
+        row = conn.execute("PRAGMA quick_check").fetchone()
+        verdict = str(row[0]) if row and row[0] is not None else ""
+    except sqlite3.Error as exc:
+        return {"ok": False, "reason": storage_error_detail(exc), "absent": False}
+    finally:
+        conn.close()
+    if verdict.strip().lower() == "ok":
+        return {"ok": True, "reason": None, "absent": False}
+    # quick_check 失败时输出里可能带表名/页号，只用于日志，不进界面
+    return {"ok": False, "reason": storage_error_detail(verdict), "absent": False}
+
+
+def storage_state() -> dict[str, Any]:
+    """给健康检查与界面用的存储状态；`reason` 已是可直接展示的中文。"""
+    return {
+        "state": STORAGE_STATE_READONLY if _storage_readonly else STORAGE_STATE_OK,
+        "reason": _storage_readonly,
+    }
+
+
+def storage_is_readonly() -> bool:
+    return _storage_readonly is not None
+
+
+def set_storage_readonly(reason: str) -> None:
+    """闩成只读（幂等：已经闩上就保持第一条原因，别把真因覆盖掉）。"""
+    global _storage_readonly
+    if _storage_readonly is None:
+        _storage_readonly = reason
+
+
+def clear_storage_readonly() -> None:
+    global _storage_readonly
+    _storage_readonly = None
+
+
 @contextmanager
 def tx() -> Iterator[sqlite3.Connection]:
     """写事务：正常提交，异常回滚。"""
@@ -123,8 +244,9 @@ def tx() -> Iterator[sqlite3.Connection]:
 # 时间工具
 # ---------------------------------------------------------------------------
 
-def utc_now_iso() -> str:
-    return _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat()
+def utc_now_iso(moment: Optional[_dt.datetime] = None) -> str:
+    """当前时刻（或传入时刻）的秒级 ISO 文本 —— 全库时间戳共用一种格式，才能按字符串比先后。"""
+    return (moment or _dt.datetime.now(_dt.timezone.utc)).replace(microsecond=0).isoformat()
 
 
 def today_local() -> str:
@@ -275,8 +397,10 @@ def effective_ai_key(raw: Optional[dict[str, Any]] = None) -> tuple[Optional[str
 
     优先级：设置页写入（settings 表）> `.env`/环境变量（CONSTITUTION §3）。
     返回值只允许在 ai_client 内部使用；绝不写日志、绝不出现在响应里。
+
+    `raw is None` 才去读库；传空字典是「库不可用，只按环境变量算」的显式表达（§14.6）。
     """
-    raw = raw or get_settings()
+    raw = get_settings() if raw is None else raw
     stored = (raw.get("ai_key") or "").strip()
     if stored:
         return stored, "settings"
@@ -289,14 +413,14 @@ def effective_ai_key(raw: Optional[dict[str, Any]] = None) -> tuple[Optional[str
 
 
 def ai_base_url(raw: Optional[dict[str, Any]] = None) -> Optional[str]:
-    raw = raw or get_settings()
+    raw = get_settings() if raw is None else raw
     from app.config import ai_base_url as _env_base_url
 
     return (raw.get("ai_base_url") or "").strip() or _env_base_url()
 
 
 def ai_model(raw: Optional[dict[str, Any]] = None) -> str:
-    raw = raw or get_settings()
+    raw = get_settings() if raw is None else raw
     from app.config import ai_model as _env_model
 
     return (raw.get("ai_model") or "").strip() or _env_model()
@@ -311,8 +435,11 @@ def _host_of(url: Optional[str]) -> Optional[str]:
 
 
 def ai_block(raw: Optional[dict[str, Any]] = None) -> dict[str, Any]:
-    """契约 §4 的只读 `ai` 视图（永不含 key 明文）。"""
-    raw = raw or get_settings()
+    """契约 §4 的只读 `ai` 视图（永不含 key 明文）。
+
+    传 `{}` = 库读不出来时按环境变量报（§14.6 降级期间 `/health` 还得能答）。
+    """
+    raw = get_settings() if raw is None else raw
     _, source = effective_ai_key(raw)
     return {
         "configured": source != "none",
@@ -332,6 +459,75 @@ def settings_response(raw: Optional[dict[str, Any]] = None) -> dict[str, Any]:
 
 def strip_private_settings(raw: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in raw.items() if k not in PRIVATE_SETTING_KEYS}
+
+
+# ---------------------------------------------------------------------------
+# drafts（草稿副本，契约 §14.5）
+# ---------------------------------------------------------------------------
+
+DRAFT_KEY_PATTERN = r"^(listening|reading|writing)_[A-Za-z0-9_.-]{1,120}$"
+"""白名单写在这里、校验写在 API 层：key 来自 URL，是用户可控字符串。
+
+它只当主键用、不参与任何路径拼接，但仍然要限长限字符集 —— 一个写错的客户端能把学习库
+塞满无用 blob，而 §14.3 的每一份快照都会把它们复制一遍。`listening_none`（setId 缺失时的
+兜底键）必须在名单内，否则听力屏每次渲染都在报错。
+"""
+
+MAX_DRAFT_VALUE_CHARS = 200_000
+"""放得下一篇写满的作文（约 6 000 字符）三十倍；拦的是「粘进整份 PDF」这类 runaway 输入。"""
+
+
+def draft_module_ref(key: str) -> tuple[str, Optional[str]]:
+    """从 key 前缀拆出 (module, ref)；不匹配白名单返回 ("", None)。"""
+    head, _, tail = key.partition("_")
+    if head not in MODULES or not tail:
+        return "", None
+    return head, tail
+
+
+def upsert_draft(key: str, value: str, saved_at: Optional[int] = None) -> dict[str, Any]:
+    """写入/覆盖一份草稿。`updated_at` 由后端写 UTC —— 恢复时「取较新的一份」比的就是它，
+    让客户端自报时间等于把这条规则交给每台机器各自的时钟。"""
+    module, ref = draft_module_ref(key)
+    stamp = int(saved_at) if isinstance(saved_at, (int, float)) and saved_at > 0 else int(_dt.datetime.now(_dt.timezone.utc).timestamp() * 1000)
+    now = utc_now_iso()
+    payload = json.dumps({"v": value, "t": stamp}, ensure_ascii=False)
+    with tx() as conn:
+        conn.execute(
+            "INSERT INTO drafts (key, module, ref, payload_json, updated_at) VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(key) DO UPDATE SET module=excluded.module, ref=excluded.ref, "
+            "payload_json=excluded.payload_json, updated_at=excluded.updated_at",
+            (key, module, ref, payload, now),
+        )
+    return {"key": key, "updated_at": now, "size": len(value)}
+
+
+def get_draft(key: str) -> Optional[dict[str, Any]]:
+    """读回一份草稿；不存在返回 None（调用方据此给 404，而不是 200 + 空串 ——
+    空串会被前端当成「远端有一份空草稿」从而盖掉本地正文）。"""
+    conn = connect()
+    try:
+        row = conn.execute("SELECT payload_json, updated_at FROM drafts WHERE key = ?", (key,)).fetchone()
+    finally:
+        conn.close()
+    if row is None:
+        return None
+    parsed = _load_json(row["payload_json"], None)
+    value = parsed.get("v") if isinstance(parsed, dict) else None
+    if not isinstance(value, str):
+        # 早期/手写的裸字符串副本：正文就是整段 payload
+        value = str(parsed) if parsed is not None else ""
+    return {"key": key, "value": value, "updated_at": row["updated_at"]}
+
+
+def delete_draft(key: str) -> None:
+    """清除草稿，**幂等**：删不存在的 key 不报错。
+
+    前端提交成功后的清理顺序是「先删远端、成功后才清本地」（§14.5），靠的就是这条 ——
+    否则「远端其实已经没有」会让清理失败，本地留下一篇已经交掉的作文当草稿。
+    """
+    with tx() as conn:
+        conn.execute("DELETE FROM drafts WHERE key = ?", (key,))
 
 
 # ---------------------------------------------------------------------------
@@ -701,6 +897,14 @@ JOB_STATUS = ("queued", "running", "succeeded", "failed")
 JOB_UNFINISHED = ("queued", "running")
 """未完成状态：启动时若还停在这两个状态，说明进程在批改中途退出。"""
 
+JOB_REUSE_GRACE_SEC = 5.0
+"""`succeeded` 之后仍视同「刚刚提交过」的秒数（契约 §1 行 20b 条款 4）。
+
+本地近似引擎几十毫秒就批完，连点两次的第二次点击通常落在任务完成**之后**；只认
+`queued/running` 会让同一篇作文在库里长出两份记录，报告和统计把一次练习算成两次。
+`failed` 不在这个窗口里 —— 没批成功的一次不该挡住重试。
+"""
+
 
 def new_job_id() -> str:
     return f"job_{uuid.uuid4().hex[:16]}"
@@ -723,15 +927,20 @@ def create_job(*, module: str, task_ref: str, request: dict[str, Any], dedupe_ke
     return job
 
 
-def find_active_job(dedupe_key: str) -> Optional[dict[str, Any]]:
-    """同一目标已在排队/执行时取回它（连点两次提交不该拿到两份批改）。"""
+def find_reusable_job(dedupe_key: str, *, grace_sec: float = JOB_REUSE_GRACE_SEC) -> Optional[dict[str, Any]]:
+    """同一目标已在排队/执行、或刚批完不到 `grace_sec` 时取回它（契约 §1 行 20b 条款 4）。
+
+    两个时间戳都出自 `utc_now_iso()`（同格式、秒级），所以按字符串比较就是按时间比较。
+    """
+    期限内 = utc_now_iso(_dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(seconds=grace_sec))
     placeholders = ",".join("?" for _ in JOB_UNFINISHED)
     conn = connect()
     try:
         row = conn.execute(
-            f"SELECT * FROM jobs WHERE dedupe_key = ? AND status IN ({placeholders}) "
-            "ORDER BY created_at DESC LIMIT 1",
-            (dedupe_key, *JOB_UNFINISHED),
+            f"SELECT * FROM jobs WHERE dedupe_key = ? AND ("
+            f"status IN ({placeholders}) OR (status = 'succeeded' AND finished_at IS NOT NULL AND finished_at >= ?)"
+            ") ORDER BY created_at DESC LIMIT 1",
+            (dedupe_key, *JOB_UNFINISHED, 期限内),
         ).fetchone()
     finally:
         conn.close()

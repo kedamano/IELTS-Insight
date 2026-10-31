@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Badge, Button, Card, Icon, cx, type BadgeTone, type IconName } from './components/ui';
+import { Badge, Button, Card, EngineNotice, ErrorBoundary, Icon, StorageNotice, cx, usesStaleEngine, type BadgeTone, type IconName } from './components/ui';
 import { useBackendReady } from './hooks/useBackendReady';
 import { useGradingJobs } from './hooks/useGradingJobs';
 import { useTheme } from './hooks/useTheme';
@@ -111,9 +111,14 @@ export default function App() {
           <GradingRailBadge jobs={grading.jobs} onOpen={(job) => setView(job.module)} />
           <ThemeSwitch />
           <div className="flex flex-col gap-2">
-            <Badge tone={backend.ready ? 'good' : backend.state === 'failed' ? 'poor' : 'mid'} dot>
+            <Badge
+              tone={backend.state === 'ready' && usesStaleEngine(backend.health) ? 'mid' : backend.ready ? 'good' : backend.state === 'failed' ? 'poor' : 'mid'}
+              dot
+            >
               {backend.state === 'ready'
-                ? '引擎已就绪'
+                ? usesStaleEngine(backend.health)
+                  ? '引擎已就绪（上一个实例）'
+                  : '引擎已就绪'
                 : backend.state === 'failed'
                   ? '引擎未就绪'
                   : '启动中'}
@@ -144,9 +149,22 @@ export default function App() {
           ) : null}
         </header>
 
+        {/* 只读降级期间每一屏都要看到（契约 §14.6）：用户会在任何一屏点保存 */}
+        <StorageNotice storage={backend.health?.storage} />
+        {/* 连上的可能是上一个没退出的旧引擎（契约 §15.4 第 7 条）：同样是每一屏都可能撞上 */}
+        <EngineNotice health={backend.health} />
+
         {/* key 变化即重放入场动画：视图切换要有方向感，不能是硬切 */}
         <div key={backend.ready ? view : 'boot'} className="view-enter flex flex-col gap-4">
-          {!backend.ready ? <BootPanel backend={backend} /> : renderView(view, setView)}
+          {!backend.ready ? (
+            <BootPanel backend={backend} />
+          ) : (
+            /* 契约 §15.1：一屏抛错不许全站白屏。外层 div 按 view 加 key，边界随之复位，
+               所以坏屏切到别的导航项就能继续用，不必重启应用。 */
+            <ErrorBoundary scope="view">
+              {renderView(view, setView, backend.health?.storage.state === 'readonly', backend.refreshHealth)}
+            </ErrorBoundary>
+          )}
         </div>
       </main>
 
@@ -307,6 +325,11 @@ function EngineCard({ backend }: { backend: BackendReady }) {
       tone: health?.whisper.loaded ? 'good' : 'mid',
     },
     { label: 'AI 批改', value: health?.ai_configured ? '已配置' : '未配置（离线近似分）', tone: health?.ai_configured ? 'good' : 'mid' },
+    {
+      label: '学习库',
+      value: health ? (health.storage.state === 'readonly' ? '只读 · 改动不保存' : '可读写') : '待确认',
+      tone: health?.storage.state === 'readonly' ? 'poor' : 'good',
+    },
     { label: '音频合成', value: health ? (health.tts_ok ? '可用' : '不可用') : '待确认', tone: health?.tts_ok ? 'good' : 'mid' },
   ];
 
@@ -329,7 +352,16 @@ function viewMeta(view: ViewId): ViewMeta {
 }
 
 /** §7：外壳只负责视图切换与跨页入口，业务状态一律留在各 features 组件内。 */
-function renderView(view: ViewId, setView: (next: ViewId) => void): ReactNode {
+/**
+ * `storageReadonly` 只有设置屏用（契约 §14.8：只读降级时禁用备份与恢复、清除）。
+ * 值取自外壳那份 `/health` 轮询，避免设置屏再发一次探活、出现两份互相过期的状态。
+ */
+function renderView(
+  view: ViewId,
+  setView: (next: ViewId) => void,
+  storageReadonly = false,
+  refreshHealth?: () => void,
+): ReactNode {
   switch (view) {
     case 'overview':
       return <Dashboard />;
@@ -353,6 +385,6 @@ function renderView(view: ViewId, setView: (next: ViewId) => void): ReactNode {
         />
       );
     case 'settings':
-      return <SettingsPage />;
+      return <SettingsPage storageReadonly={storageReadonly} refreshHealth={refreshHealth} />;
   }
 }

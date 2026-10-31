@@ -12,13 +12,14 @@
 - **§3-P 第 4/5 条**：`temperature ≤ 0.3`、`max_tokens` 显式、超时 30s、
   只在**解析失败**时重试恰好 1 次（网络/超时/无 key 不重试，避免把一次故障放大成两次请求）。
 
-关于「ONLINE=False 不许出门」
+关于「不许出门」的判定
 --------------------
-`Settings.ONLINE`（`IELTS_ONLINE`）是**进程级**开关。L2 契约测试整会话都是
+出站许可只有一个来源：:func:`network_allowed` = 进程级 `Settings.ONLINE`（`IELTS_ONLINE`）
+**与** 用户设置 `settings.online_enabled`（契约 §15.2）。L2 契约测试整会话都是
 `IELTS_ONLINE=0`，同时又要求假 LLM 真的被调用（`tests/conftest.py` 的网络围栏才是测试侧的
 真护栏），所以本模块不把它写死成内部判断，而是暴露 `allow_network=` 注入点：
 API 层（`api/{speaking,writing}.py`、`speaking_session`）一律传
-`allow_network=ai_client.network_allowed()`，于是「关联网 ⇒ 零网络请求」在真实运行里成立，
+`allow_network=ai_client.network_allowed()`，于是「任一开关关闭 ⇒ 零网络请求」在真实运行里成立，
 而单测仍然只打假客户端。见交付报告的「偏离」一节。
 
 关于 key 缺失（qa 测试面互斥，已作为 spec 缺口上报）
@@ -35,10 +36,12 @@ from __future__ import annotations
 import json
 import os
 import re
+import sqlite3
 from dataclasses import dataclass
 from typing import Any, Optional
 
 from app.config import settings as _cfg
+from app.services import faultlog
 
 # 契约 §0 的 degraded_reason 枚举（本模块只产出这些值）
 REASON_NO_API_KEY = "no_api_key"
@@ -146,8 +149,29 @@ def ai_configured() -> bool:
 
 
 def network_allowed() -> bool:
-    """进程级在线开关（`IELTS_ONLINE` / `ONLINE`）；关闭时一切 LLM 调用就地降级。"""
-    return bool(getattr(_cfg, "ONLINE", True))
+    """生效的在线许可（契约 §15.2）：进程级 `IELTS_ONLINE` **与** 用户设置 `online_enabled`。
+
+    本站**唯一**的出站判定点 —— AI 评分、edge-tts（`api/media.py`、`api/listening.py`）、
+    口语发音音频（`services/speaking_session.py`）、健康读数（`api/health.py`）都调它，
+    不许再各自读 `_cfg.ONLINE`：分成两处读就有第二份「谁说了算」，而 B2 的缺陷正是
+    用户可见的那个开关从来没被读过。
+
+    两条规矩：
+    - **每次现读设置**，不许在导入时求成常量 —— 取消勾选后下一次练习就该不出门。
+    - **读不到设置 ⇒ 关门**（fail-closed）。理由不对称：误判成离线，用户看到
+      「已关闭联网，改用本地近似」，可恢复；误判成在线，是在用户以为关掉的情况下
+      把作文内容发了出去，收不回。
+    """
+    if not bool(getattr(_cfg, "ONLINE", True)):
+        return False
+    from app.db import store
+
+    try:
+        return bool(store.get_settings().get("online_enabled", True))
+    except (sqlite3.Error, OSError, store.StorageUnavailableError) as exc:
+        # 原始异常只进 stdout（类名，不含路径与 SQL）；界面拿到的是「已关闭联网」的降级文案
+        faultlog.warn("OnlineGate", f"设置读不出来，按离线处理：{type(exc).__name__}")
+        return False
 
 
 # --------------------------------------------------------------------------
@@ -247,6 +271,21 @@ def _classify(exc: BaseException) -> str:
             return REASON_NETWORK_ERROR
     return REASON_NETWORK_ERROR
 
+def _degraded(*, level: str = "warn", **kwargs: Any) -> AiResult:
+    """构造失败结果，并**顺手把原因落盘**（契约 §15.3 第 7 条）。
+
+    `degraded_reason` 进库只能回答「network_error」，回答不了「哪一次、什么异常」。
+    这里只写 reason + 已脱敏诊断 + 尝试次数：prompt 与模型原文一概不进日志。
+    `offline_template`（用户主动关在线）是预期行为，记 INFO；真实失败记 WARNING。
+    """
+    result = AiResult(**kwargs)
+    text = (
+        f"{result.reason}：{result.detail or '（无更多诊断）'}"
+        f"（model={result.model}，尝试 {result.attempts} 次）"
+    )
+    (faultlog.info if level == "info" else faultlog.warn)("AI", text)
+    return result
+
 
 def complete_json(
     prompt: str,
@@ -263,7 +302,8 @@ def complete_json(
 
     `allow_network=False` 表示「这次就是离线跑」：**一个请求都不会发出**，
     直接返回 `offline_template` 供上层组装本地近似报告。API 层用
-    `allow_network=ai_client.network_allowed()` 把它接上进程级在线开关；
+    `allow_network=ai_client.network_allowed()` 把它接上生效在线许可（进程开关 **与** 用户
+    设置 `online_enabled`，契约 §15.2）；
     默认 `True` 是因为 L2 契约测试整会话 `IELTS_ONLINE=0` 却必须让假 LLM 被真的调用
     （测试侧的真护栏是 `tests/_isolation.py` 的网络围栏）。
 
@@ -276,10 +316,18 @@ def complete_json(
     api_key = resolve_api_key()
 
     if not allow_network:
-        return AiResult(ok=False, reason=REASON_OFFLINE_TEMPLATE, model=model_name, detail="已关闭联网，未发出请求")
+        return _degraded(
+            level="info",
+            ok=False,
+            reason=REASON_OFFLINE_TEMPLATE,
+            model=model_name,
+            detail="已关闭联网，未发出请求",
+        )
     if not api_key:
         if require_api_key:
-            return AiResult(ok=False, reason=REASON_NO_API_KEY, model=model_name, detail="未配置 API key")
+            return _degraded(
+                ok=False, reason=REASON_NO_API_KEY, model=model_name, detail="未配置 API key"
+            )
         api_key = KEYLESS_PLACEHOLDER  # 无凭据本地端点：占位串不是凭据，绝不写日志
 
     safe_temperature = min(max(float(temperature or 0.0), 0.0), MAX_TEMPERATURE)  # §3-P 第 4 条
@@ -297,7 +345,9 @@ def complete_json(
     try:
         client = _make_client(api_key, base_url, safe_timeout)
     except Exception as exc:  # SDK 构造失败也不能泄漏异常文本（里面可能有凭据）
-        return AiResult(ok=False, reason=REASON_NETWORK_ERROR, model=model_name, detail=type(exc).__name__)
+        return _degraded(
+            ok=False, reason=REASON_NETWORK_ERROR, model=model_name, detail=type(exc).__name__
+        )
 
     for attempt in range(PARSE_RETRIES + 1):
         attempts = attempt + 1
@@ -311,7 +361,7 @@ def complete_json(
             )
         except Exception as exc:  # noqa: BLE001 - 必须分类降级，不许向上抛（CONSTITUTION §3）
             # 只取类名：异常文本可能回显请求头里的凭据。
-            return AiResult(
+            return _degraded(
                 ok=False,
                 reason=_classify(exc),
                 model=model_name,
@@ -329,7 +379,7 @@ def complete_json(
                 f"端点返回空响应（choices={n_choices}）。请检查 OPENAI_MODEL={model_name} "
                 f"是否为该端点支持的模型，以及端点是否提供标准 chat.completions 协议。"
             )
-            return AiResult(
+            return _degraded(
                 ok=False,
                 reason=REASON_INVALID_OUTPUT,
                 model=model_name,
@@ -350,7 +400,7 @@ def complete_json(
                 attempts=attempts,
             )
 
-    return AiResult(
+    return _degraded(
         ok=False,
         reason=REASON_INVALID_OUTPUT,
         model=model_name,

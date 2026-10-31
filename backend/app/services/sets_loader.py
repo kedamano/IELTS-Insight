@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any, Iterable, Optional
 
 from app.db import store
+from app.services import faultlog
 
 MODULE_ABBR = {"speaking": "sp", "listening": "li", "reading": "re", "writing": "wr"}
 # 契约 §2 的 id 规则写的是 `wr_`，但 §2-W 的示例 id 是 `w1_line_energy_04`（按 task 编号）。
@@ -349,11 +350,11 @@ def load_sets(root: Optional[Path] = None) -> dict[str, Any]:
     report["data_dir"] = str(base)
     if not base.exists():
         report["errors"].append({"file": str(base), "id": None, "error": "题库目录尚不存在（内容 agent 未产出）"})
-        print(f"[Sets] 题库目录不存在，跳过装载：{base}", flush=True)
+        faultlog.warn("Sets", f"题库目录不存在，跳过装载：{base}")
         return report
     if not any(iter_files(base)):
         report["errors"].append({"file": str(base), "id": None, "error": "题库目录为空"})
-        print(f"[Sets] 题库目录为空：{base}", flush=True)
+        faultlog.warn("Sets", f"题库目录为空：{base}")
         return report
 
     for path in iter_files(base):
@@ -387,12 +388,9 @@ def load_sets(root: Optional[Path] = None) -> dict[str, Any]:
     counts = store.refresh_sets_meta()
     report["counts"] = counts
     summary = ", ".join(f"{m}:{counts.get(m, 0)}" for m in store.MODULES)
-    print(
-        f"[Sets] 文件 {report['files']} 个，装载 {report['loaded']} 条，拒绝 {report['rejected']} 条（{summary}）",
-        flush=True,
-    )
+    faultlog.info("Sets", f"文件 {report['files']} 个，装载 {report['loaded']} 条，拒绝 {report['rejected']} 条（{summary}）")
     for item in report["errors"][:20]:
-        print(f"[Sets] 跳过 {item['file']} {item['id']}: {item['error']}", flush=True)
+        faultlog.warn("Sets", f"跳过 {item['file']} {item['id']}: {item['error']}")
     if len(report["errors"]) > 20:
-        print(f"[Sets] 其余 {len(report['errors']) - 20} 条问题见返回报告", flush=True)
+        faultlog.warn("Sets", f"其余 {len(report['errors']) - 20} 条问题见返回报告")
     return report

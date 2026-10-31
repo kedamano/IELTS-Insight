@@ -12,6 +12,7 @@ from fastapi import APIRouter
 from app.api import (
     attempts,
     backup,
+    drafts,
     health,
     jobs,
     listening,
@@ -37,6 +38,7 @@ api_router.include_router(plan.router)
 api_router.include_router(review.router)
 api_router.include_router(vocab.router)
 api_router.include_router(backup.router)
+api_router.include_router(drafts.router)
 api_router.include_router(media.router)
 api_router.include_router(speaking.router)
 api_router.include_router(listening.router)

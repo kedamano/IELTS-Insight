@@ -27,6 +27,7 @@ from app.api.common import (
     ok,
 )
 from app.config import settings as _cfg, data_dir_for
+from app.services import ai_client, faultlog
 from app.services.tts_service import VOICE_MAP, generate_tts
 
 router = APIRouter(tags=["media"])
@@ -89,7 +90,7 @@ async def tts(
         raise bad_request("text 不能为空")
     if len(content) > MAX_TTS_TEXT:
         raise bad_request(f"text 过长（最多 {MAX_TTS_TEXT} 字符）")
-    if not _cfg.ONLINE:
+    if not ai_client.network_allowed():
         raise dependency_unavailable("已关闭联网，无法合成语音", code="tts_offline")
 
     normalized = _normalize_voice(voice)
@@ -99,7 +100,7 @@ async def tts(
         else:
             path = await _synthesize(content, normalized, speed)
     except Exception as exc:  # 网络失败要可见：503 + 机器码，不伪装成成功
-        print(f"[TTS] 合成失败: {type(exc).__name__}: {exc}", flush=True)
+        faultlog.error("TTS", f"合成失败: {type(exc).__name__}: {exc}")
         raise dependency_unavailable("语音合成失败（网络不可用？），可改用文本模式练习", code="tts_unavailable") from exc
 
     if not path:

@@ -37,6 +37,8 @@ export interface UseBackendReadyResult {
   message: string;
   /** 手动重试（清空计数重新开始）。 */
   retry: () => void;
+  /** 只刷新健康读数（契约 §15.2 第 5 条）：改完在线开关后用，绝不动 `state`。 */
+  refreshHealth: () => Promise<void>;
 }
 
 const DEFAULTS = {
@@ -99,6 +101,16 @@ export function useBackendReady(options: UseBackendReadyOptions = {}): UseBacken
     controllerRef.current?.abort();
     if (timerRef.current !== null) clearTimeout(timerRef.current);
     setNonce((n) => n + 1);
+  }, []);
+
+  const refreshHealth = useCallback(async (): Promise<void> => {
+    try {
+      const data = await probeRef.current({});
+      if (mountedRef.current) setHealthData(data);
+    } catch {
+      // 故意不报错也不改 state：重探失败时退回上一次读数，
+      // 总比把用户踢回启动面板（§15.2 第 5 条）更接近真相。
+    }
   }, []);
 
   useEffect(() => {
@@ -171,6 +183,7 @@ export function useBackendReady(options: UseBackendReadyOptions = {}): UseBacken
     lastError,
     message,
     retry,
+    refreshHealth,
   };
 }
 

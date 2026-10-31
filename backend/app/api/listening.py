@@ -18,9 +18,8 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from app.api import media
 from app.api.common import bad_request, not_found, ok
-from app.config import settings as _cfg
 from app.db import store
-from app.services import listening_grader
+from app.services import ai_client, faultlog, listening_grader
 
 router = APIRouter(tags=["listening"])
 
@@ -85,7 +84,7 @@ async def get_audio(set_id: str, accent: Optional[str] = Query(None)):
     voice_key = requested or doc.get("audio_voice") or store.get_settings().get("tts_voice") or "en-GB"
     voice = media._normalize_voice(voice_key)  # 非法音色 → 400（契约 §0）
 
-    if not _cfg.ONLINE:
+    if not ai_client.network_allowed():
         return _audio_unavailable("已关闭联网，无法合成音频；可进入原文精读模式")
 
     from pathlib import Path
@@ -95,7 +94,7 @@ async def get_audio(set_id: str, accent: Optional[str] = Query(None)):
     try:
         path_str = await media._synthesize(text, voice, 1.0)
     except Exception as exc:  # 失败可见：503 + 机器码，不伪装成成功（CONSTITUTION §3）
-        print(f"[ListeningAudio] TTS 异常: {type(exc).__name__}: {exc}", flush=True)
+        faultlog.error("ListeningAudio", f"TTS 异常: {type(exc).__name__}: {exc}")
         return _audio_unavailable("语音合成失败（网络不可用？），可改用原文精读模式")
     if not path_str:
         return _audio_unavailable("语音合成失败（网络不可用？），可改用原文精读模式")

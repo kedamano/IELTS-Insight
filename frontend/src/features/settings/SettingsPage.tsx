@@ -26,6 +26,8 @@ import {
 import { formatDateOnly } from '../report/format';
 import { AiPanel, type AiPatch } from './AiPanel';
 import { AudioDeviceField } from './AudioDeviceField';
+import { BackupPanel } from './BackupPanel';
+import { TrashPanel } from './TrashPanel';
 import { ChoiceField, DraftField, ToggleField, numberRule, type ChoiceFieldProps } from './fields';
 
 /** `PATCH /settings` 实际发送的 body：`SettingsPatch` 加上后端允许的嵌套 `ai` 子块。 */
@@ -33,6 +35,16 @@ export type SettingsPatchBody = SettingsPatch & { ai?: AiPatch };
 
 export interface SettingsPageProps {
   className?: string;
+  /**
+   * §14.6 → §14.8 联动：学习库处于只读降级时，「数据与备份」与「回收站」的写动作禁用。
+   * 由外壳那份已有的 `/health` 轮询传入，本屏不再重复发探活请求。
+   */
+  storageReadonly?: boolean;
+  /**
+   * 契约 §15.2 第 5 条：`online_enabled` 是唯一会改变后端**能力**的设置项，
+   * 保存后要请外壳重探一次 `/health`，否则右栏「音频合成」还停在启动时的读数。
+   */
+  refreshHealth?: () => void;
 }
 
 const ACCENT_OPTIONS: ChoiceFieldProps<Accent>['options'] = [
@@ -70,7 +82,7 @@ const AI_PLACEHOLDER: Settings['ai'] = {
   key_source: 'none',
 };
 
-export function SettingsPage({ className }: SettingsPageProps) {
+export function SettingsPage({ className, storageReadonly = false, refreshHealth }: SettingsPageProps) {
   const call = useApi((options) => getSettings(options), []);
   const theme = useTheme();
   const themeMode: ThemeMode = theme.mode;
@@ -83,10 +95,16 @@ export function SettingsPage({ className }: SettingsPageProps) {
   const settings = saved ?? call.data;
 
   /** 只发一个（或一组显式）键；返回值即后端合并后的完整设置。 */
-  const patch = useCallback(async (body: SettingsPatchBody): Promise<void> => {
-    const next = await patchSettings(body);
-    setSaved(next);
-  }, []);
+  const patch = useCallback(
+    async (body: SettingsPatchBody): Promise<void> => {
+      const next = await patchSettings(body);
+      setSaved(next);
+      // §15.2 第 5 条：`online_enabled` 改变的是后端能力，改完要让外壳重探一次，
+      // 否则右栏「音频合成」会一直显示启动时的读数（关掉开关却说可用 = 说谎）。
+      if ('online_enabled' in body) refreshHealth?.();
+    },
+    [refreshHealth],
+  );
 
   const reload = useCallback(async (): Promise<void> => {
     const next = await call.refetch();
@@ -300,7 +318,7 @@ export function SettingsPage({ className }: SettingsPageProps) {
             id="setting-online-enabled"
             label="允许在线服务"
             checked={settings.online_enabled}
-            hint="偏好开关：无法联网时后端会自动落回本地近似评分，报告会如实标注降级原因。"
+            hint="取消勾选后，本应用不再向远程服务发出任何练习内容：AI 批改改用本地近似，语音合成会明确提示已关闭联网。"
             onChange={(next) => patch({ online_enabled: next })}
           />
         </div>
@@ -329,6 +347,11 @@ export function SettingsPage({ className }: SettingsPageProps) {
       </Card>
 
       <AiPanel ai={ai} onPatch={(aiPatch) => patch({ ai: aiPatch })} onKeyChanged={reload} />
+
+      {/* Wave 7 的数据入口（契约 §14.8）：放在最后，因为这是低频高后果动作。
+          两张卡各自拉自己的端点，只读降级状态由外壳那份 /health 轮询传下来，本屏不再探活。 */}
+      <BackupPanel storageReadonly={storageReadonly} />
+      <TrashPanel storageReadonly={storageReadonly} />
     </div>
   );
 }

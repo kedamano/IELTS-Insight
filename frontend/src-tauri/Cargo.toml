@@ -17,6 +17,8 @@ tauri = { version = "2", features = ["config-json5"] }
 tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# 启动结论要落盘（契约 §15.4 第 6 条）：时间戳必须与后端 faultlog 同一个本地时区口径。
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]

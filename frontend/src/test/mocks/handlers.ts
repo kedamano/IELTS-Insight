@@ -14,6 +14,7 @@
  */
 import { http, HttpResponse } from 'msw';
 import { API_BASE } from '../../services/api';
+import { APP_VERSION } from '../../version';
 import type {
   AiKeyPresence,
   Analytics,
@@ -74,12 +75,19 @@ function audioResponse() {
 // ============================================================
 
 const HEALTH: HealthResponse = {
-  version: '2.0.0',
+  // 默认桩代表「引擎和界面是同一版」这个正常世界；旧实例场景由用例显式覆盖版本号。
+  version: APP_VERSION,
+  // §15.4 引擎自证身份：mock 也要带齐，界面才分得清「就绪」与「连的是上一个实例」
+  pid: 4321,
+  port: 8765,
+  port_source: 'probe',
+  started_at: '2026-10-30T21:10:00+08:00',
   ai_configured: false,
   ai_base_url_host: null,
   whisper: { loaded: false, model: 'small' },
   tts_ok: true,
   content_counts: { speaking: 8, listening: 8, reading: 8, writing: 8 },
+  storage: { state: 'ok', reason: null },
 };
 
 export const healthHandlers = [
@@ -111,6 +119,9 @@ let settingsState: Settings = structuredClone(DEFAULT_SETTINGS);
 /** 复位 handler 内部可变状态（setup.ts afterEach 调用）。 */
 export function resetMockState() {
   settingsState = structuredClone(DEFAULT_SETTINGS);
+  draftsState.clear();
+  draftWrites.length = 0;
+  draftDeletes.length = 0;
 }
 
 export const settingsHandlers = [
@@ -738,6 +749,73 @@ export const sttHandlers = [
 ];
 
 // ============================================================
+// #48–#50 drafts（契约 §14.5：草稿的第二份副本）
+// ============================================================
+
+interface DraftRow {
+  value: string;
+  updated_at: string;
+}
+
+/** 远端副本的内存态：测试用它扮演「学习库里那一行」，别把它当第二个被测对象。 */
+const draftsState = new Map<string, DraftRow>();
+const draftWrites: Array<{ key: string; value: string; saved_at?: number }> = [];
+const draftDeletes: string[] = [];
+
+/** 预置一份远端草稿（用于「远端比本地新」这类比较的对照组）。 */
+export function seedRemoteDraft(key: string, value: string, updatedAt = '2026-10-18T09:00:00+00:00') {
+  draftsState.set(key, { value, updated_at: updatedAt });
+}
+
+export function remoteDraft(key: string): DraftRow | undefined {
+  return draftsState.get(key);
+}
+
+/** PUT 收到的请求体（断言双写真的发出去了，而不是只写了 localStorage）。 */
+export function draftWriteLog() {
+  return [...draftWrites];
+}
+
+/** DELETE 收到的 key 序列（补发 pendingClear 那条用例靠它数次数）。 */
+export function draftDeleteLog() {
+  return [...draftDeletes];
+}
+
+/** 与后端同一口径：`updated_at` 由「服务端」写，客户端自报的 `saved_at` 只进 payload。 */
+function nowIso(): string {
+  return new Date().toISOString().replace(/\.\d{3}Z$/, '+00:00');
+}
+
+export const draftsHandlers = [
+  http.put(`${API_BASE}/drafts/:key`, async ({ params, request }) => {
+    const key = String(params.key);
+    const body = (await request.json()) as { value?: unknown; saved_at?: number };
+    if (typeof body?.value !== 'string') {
+      return fail(400, '草稿正文必须是字符串', 'validation_failed');
+    }
+    draftWrites.push({ key, value: body.value, saved_at: body.saved_at });
+    const updated_at = nowIso();
+    draftsState.set(key, { value: body.value, updated_at });
+    return ok({ key, updated_at, size: body.value.length });
+  }),
+
+  http.get(`${API_BASE}/drafts/:key`, ({ params }) => {
+    const key = String(params.key);
+    const row = draftsState.get(key);
+    // 404 是「远端没有副本」的正常答案，不是错误
+    if (!row) return fail(404, '本机还没有这份草稿的副本。', 'not_found');
+    return ok({ key, value: row.value, updated_at: row.updated_at });
+  }),
+
+  http.delete(`${API_BASE}/drafts/:key`, ({ params }) => {
+    const key = String(params.key);
+    draftDeletes.push(key);
+    draftsState.delete(key); // 幂等：删不存在的 key 同样 200
+    return ok({ cleared: true });
+  }),
+];
+
+// ============================================================
 // 全量集合（server.ts 默认挂载用；feature 测试请优先按组 server.use）
 // ============================================================
 
@@ -749,6 +827,7 @@ export const handlers = [
   ...readingHandlers,
   ...writingHandlers,
   ...attemptsHandlers,
+  ...draftsHandlers,
   ...progressHandlers,
   ...planHandlers,
   ...reviewHandlers,

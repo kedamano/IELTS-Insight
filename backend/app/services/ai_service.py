@@ -1,6 +1,7 @@
 import os
 from openai import OpenAI
 from app.config import settings
+from app.services import faultlog
 
 # OpenAI 兼容客户端（支持 DeepSeek / 通义千问等）
 _client = None
@@ -53,5 +54,5 @@ def get_ai_feedback(original: str, user_text: str, word_scores: list[dict]) -> s
         )
         return resp.choices[0].message.content or ""
     except Exception as e:
-        print(f"[AI] GPT feedback failed: {e}")
+        faultlog.error("AI", f"GPT feedback failed: {e}")
         return ""
