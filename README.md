@@ -262,37 +262,52 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
 
 ## 已知限制
 
-诚实清单，按影响排序：
+诚实清单，按影响排序。**只列今天仍然成立的**——修掉的问题进提交历史与
+`spec-contracts.md` 的实跑记录，不在这份清单里占位。
 
-- **NSIS 安装器未在本机执行安装**（会写入用户系统，需明确同意）。打包版 GUI 的 WebView2 麦克风**已实测**（2026-11-07，用户在便携布局里实际录音成功，`--use-fake-ui-for-media-stream` 方案成立）；NSIS 安装版理论上同一机制，未单独走一遍。
-- 冻结包已实跑验证（临时库启动 EXE，`/health` 回 `2.0.0`、四科题量齐全、能判分、断网走可见降级）；Wave 8 起
-  `excludes` 与随包数据**在产物上逐个核对**：`backend/tools/check_frozen_excludes.py` 读 PyInstaller 的
-  Analysis TOC，只认「带路径的已收集条目」——第一版按裸名字计数时差点把 excludes 列表自身误报成收集。
-  陪练 10 个话题、迁移 v4、schema.sql、dictionary.json 均确认随包（`spec-contracts.md` §11.3）。
-- 单文件 EXE 首启解包约 20–30s 才绑定端口，期间前端显示「正在启动本地引擎」（AC-G1）。
-  **Wave 8 加了出路**：`scripts/build.ps1 -Onedir` 产出便携目录布局（实测首启 **2.6s**，窗口冒烟通过）。
-  取舍：Tauri 的 `externalBin` 只收单个文件，`_internal/` 进不了 sidecar 位置，所以 onedir 走便携目录分发、
-  **不产 NSIS 安装包**；安装包路径仍是 onefile（默认）。两个实测坑（都已在 `build.ps1` 里防住）：
-  ① 便携目录里 sidecar 必须叫 `backend.exe`（运行时名，不是构建期的 triple 全名）；
-  ② 便携目录若留在被沙箱工具接管过的工作区里，会继承「拒绝创建子目录」的权限项，
-     WebView2 建不出用户数据目录、**双击后窗口永不出现** —— 拷到工作区外即可，
-     `build.ps1 -Onedir` 现在会探测并警告。根因与对照实验见 [spec-contracts.md §11.4](docs/specs/ielts/spec-contracts.md)。
-- CSP 的 `connect-src` 已收紧为 `'self' http://127.0.0.1:8765 http://ipc.localhost ipc:`（Wave 8）。
-  原先的 `https://*` 是为「放行任意 AI 兼容端点」加的 —— 但 AI 调用实际发生在**后端进程**，
-  webview CSP 并不约束后端出网，那条通配只是白白放开了网页侧的任意出站面。换 AI host 不需要动 CSP；
-  `media-src` 仍额外放行 `127.0.0.1:8765`（`<audio src>` 直连后端音频）。收紧过程见
-  [spec-contracts.md §11](docs/specs/ielts/spec-contracts.md)。
-- 应用给的是 **AI 估计分**，不是官方成绩；口语发音分依赖 Whisper 转写质量（转写置信度 <0.5 时界面会提示重录或改用文本）。
-- 题库 52 套（四科 42 + 陪练话题 10；内容生产仍是本项目最慢的一环），刷完需要自己扩；扩题只需往 `backend/app/data/ielts/<module>/` 放 JSON 并通过校验脚本。
-- 两处**首次**需要联网（之后缓存本机）：听力音频由 edge-tts 现合成（TTS 缓存目录不随包分发），口语转写用的 whisper `base.pt`（约 145 MB）首次加载时从官方源下载。在那之前对应功能会走可见降级（听力「看原文精读」、口语键盘输入）。
-- 设置屏的用例曾约 1/8 概率偶发红灯。根因**不是**机器负载、也不是缺全局 RTL cleanup（此前这条写错了），
-  而是测试助手的竞态：`openSettings()` 只等标签出现，而 GET 回填时 `DraftField` 的 `[value]` effect
-  会把草稿刷回服务端值，抢在它前面写入的断言（「未保存」徽标、越界 alert、密钥「已保存」提示）就被覆盖。
-  助手现在等回填落地才返回，单文件连跑 12 次全绿。教训：**这类「填了值就断言」的用例要等数据落地，别只等元素出现**。
-- `backend/app/data/dictionary.json`（392 词条：音标 + 中文释义 + 难度）的来源**已查清**（Wave 8）：
-  词表 99.7% 逐条出现在 ECDICT（MIT）中、释义为其 `translation` 的摘录或同义改写、音标是人工规范化成 IPA 的。
-  核对判据与复跑命令见 [dictionary-provenance.md](docs/specs/dictionary-provenance.md)，
-  重建脚本 `backend/tools/rebuild_dictionary.py`；[LICENSE-CONTENT.md §3](LICENSE-CONTENT.md) 已同步改写。
+### 产品与体验
+
+1. **分数是 AI 估计分，不是官方成绩。** 四维 band、证据引用、范文、替换词全部出自模型；
+   发音维度依赖 Whisper 转写质量——转写错词会直接污染评分依据（置信度 < 0.5 时界面提示
+   重录或改用文本输入）。备考参考可以，别把它当报名前的成绩单。
+2. **AI 批改要一把标准 OpenAI 兼容 key。** 没配 key、或端点不提供标准 `chat.completions`
+   （只服务特定客户端的中转站是实测过的坑）时，评分与追问全线走本地近似：界面如实挂
+   「离线近似 / 离线模板」，`ai_used=false`。流程照样走得通、分数照样落库，但逐条证据、
+   范文、词表升级这些**只有接了真端点才有**。
+3. **联网时你的作答内容会出门。** 开启联网后，转写文本与作文正文会发往**你自己配置的**
+   AI 端点（凭据只进后端进程，绝不进日志与返回值）。设置页有全局「允许在线服务」开关，
+   关掉后实测零出站——但反过来，AI 批改与 edge-tts 也随之降级。
+4. **两处首次使用需要联网**（之后缓存本机）：听力音频由 edge-tts 现合成（缓存目录不随包
+   分发）；口语转写的 whisper `base.pt`（约 145 MB）首次加载时从官方源下载。在那之前听力
+   走「看原文精读」、口语走键盘输入，都是可见降级不是白屏。
+5. **题库 52 套**（四科 42 + 陪练话题 10），内容生产仍是本项目最慢的一环，刷完要自己扩：
+   往 `backend/app/data/ielts/<module>/` 放 JSON、跑 `tools/validate_ielts_data.py` 即可。
+   陪练没有「完整考试模拟」——它是 Part 3 式的接话训练，Part 2 独白仍归题库练习模式。
+
+### 打包与分发
+
+6. **NSIS 安装器未在本机执行安装**（会写入用户系统，需明确同意）。打包版 GUI 的 WebView2
+   麦克风**已实测**（2026-11-07，用户在便携布局里实际录音成功，`--use-fake-ui-for-media-stream`
+   方案成立，[mic-on-windows.md §6](docs/specs/ielts/mic-on-windows.md)）；NSIS 安装版理论上
+   同一机制，未单独走一遍。
+7. **单文件 EXE 首启解包约 20–30s** 才绑定端口，期间界面显示「正在启动本地引擎」（不是卡死）。
+   嫌慢用 `scripts/build.ps1 -Onedir`：便携目录布局实测首启 **2.6s**、窗口冒烟通过，
+   代价是**不产 NSIS 安装包**（Tauri 的 `externalBin` 只收单文件，`_internal/` 进不了 sidecar 位置）。
+   便携目录有两个已在 `build.ps1` 里防住的实测坑：sidecar 运行时必须叫 `backend.exe`
+   （不是构建期的 triple 全名）；目录若留在被沙箱工具接管过的工作区里，会继承
+   「拒绝创建子目录」权限项，WebView2 建不出用户数据目录、**双击后窗口永不出现**——
+   最省事的办法是组装到工作区外（`%LOCALAPPDATA%\IELTSInsight\portable\` 实测正常）。
+   根因与对照实验见 [spec-contracts.md §11.4](docs/specs/ielts/spec-contracts.md)。
+
+### 开发注意（给贡献者，不是产品缺陷）
+
+8. **jsdom 全绿 ≠ 能用。** 本项目抓到的真缺陷各有各的捕获方式：STT 成功路径漏 `import math`
+   （失败分支全被覆盖、唯一正常分支零覆盖，500+ 单测长期全绿）与刷新接回只做了一段
+   （view/mode/sessionId 三段缺二等于没做）——**只有真浏览器实跑抓得到**（CONSTITUTION §7-5）；
+   陪练多轮被「只提交一次」闸门卡死是契约测试抓的，但它同样是「单测模式覆盖不到真实序列」的
+   一例。新功能的验收必须包含一次真实点击。
+9. **`.ps1` 必须 UTF-8 with BOM**（Windows PowerShell 5.1 按 GBK 解析无 BOM 的中文会当场报
+   语法错）；这条在 Wave 8 又复发过一次，`build.ps1` 文件头写了警告。
 
 ## 给贡献者：先读这三个文件
 
