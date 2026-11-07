@@ -29,14 +29,18 @@ _worker: Optional[threading.Thread] = None
 _lock = threading.Lock()
 
 
-def submit(job_id: str, runner: Runner) -> None:
-    """排队一个已入库的任务；worker 懒启动、进程内常驻。"""
+def submit(job_id: str, runner: Runner, *, expects_attempt: bool = True) -> None:
+    """排队一个已入库的任务；worker 懒启动、进程内常驻。
+
+    `expects_attempt=False` 给非批改类任务（§17 内容生成）：它们的产物是文件不是练习记录。
+    默认 True —— 批改的「没有 attempt_id 就是失败」这条既有契约不许被顺手放宽。
+    """
     global _worker
     with _lock:
         if _worker is None or not _worker.is_alive():
             _worker = threading.Thread(target=_loop, name="grading-worker", daemon=True)
             _worker.start()
-    _tasks.put((job_id, runner))
+    _tasks.put((job_id, runner, expects_attempt))
 
 
 def queue_size() -> int:
@@ -48,14 +52,14 @@ def _loop() -> None:
         item = _tasks.get()
         if item is None:
             continue
-        job_id, runner = item
+        job_id, runner, expects_attempt = item
         try:
-            _execute(job_id, runner)
+            _execute(job_id, runner, expects_attempt=expects_attempt)
         except Exception as exc:  # 执行器自身故障也不能让 worker 死掉
             faultlog.error("Job", f"worker 内部错误: {type(exc).__name__}: {exc}")
 
 
-def _execute(job_id: str, runner: Runner) -> None:
+def _execute(job_id: str, runner: Runner, *, expects_attempt: bool = True) -> None:
     store.mark_job_running(job_id)
     try:
         report = runner()
@@ -64,13 +68,21 @@ def _execute(job_id: str, runner: Runner) -> None:
         store.mark_job_failed(job_id, reason)
         faultlog.error("Job", f"{job_id} 批改失败: {type(exc).__name__}: {exc}")
         return
-    if not isinstance(report, dict) or not report.get("attempt_id"):
+    if not isinstance(report, dict):
+        store.mark_job_failed(job_id, "任务没有产出有效结果，请重新提交")
+        return
+    if expects_attempt and not report.get("attempt_id"):
+        # 批改必须落练习记录（AC-G2）；没落库的「成功」是假成功。
         store.mark_job_failed(job_id, "批改没有产出有效结果，请重新提交")
+        return
+    if not expects_attempt and not report.get("generated"):
+        # 生成类任务：一个 set 都没写成才算失败（§17.3 条款 4），部分成功是 succeeded。
+        store.mark_job_failed(job_id, "没有生成出任何合格的题目，请检查 AI 端点后重试")
         return
     degraded = report.get("degraded_reason")
     store.mark_job_succeeded(
         job_id,
-        attempt_id=str(report["attempt_id"]),
+        attempt_id=report.get("attempt_id"),
         report=report,
         degraded_reason=degraded if isinstance(degraded, str) and degraded else None,
     )

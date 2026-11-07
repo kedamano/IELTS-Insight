@@ -420,15 +420,16 @@ describe('Wave 7 数据入口（契约 §14.8）', () => {
     await screen.findByRole('list', { name: '回收站里的练习记录' });
   });
 
-  it('只读降级时两张卡各说明一次并禁用写动作（§14.6 → §14.8）', async () => {
+  it('只读降级时三张写卡各说明一次并禁用写动作（§14.6 → §14.8 / §17.4）', async () => {
     const ctx = createSettingsHandlers({
       data: { items: [snapshotFixture('manual')], trash: [trashFixture()], daysSinceLast: 0 },
     });
     server.use(...ctx.handlers);
     render(<SettingsPage storageReadonly />);
 
+    // Wave 8 起第三处是「题库生成」：产物要写 generated 目录，只读期同样禁用并说明
     const notes = await screen.findAllByText(/学习库当前只能读/);
-    expect(notes).toHaveLength(2);
+    expect(notes).toHaveLength(3);
     // 禁用不等于消失：降级期用户更要看清自己还有几份副本，所以先等内容落地再断言禁用
     await screen.findByRole('list', { name: '本机快照' });
     await screen.findByRole('list', { name: '回收站里的练习记录' });

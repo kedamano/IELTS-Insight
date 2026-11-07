@@ -1108,6 +1108,60 @@ export interface GradingJob<R extends ModuleReport = ModuleReport> {
 export type WritingGradingJob = GradingJob<WritingReport>;
 export type SpeakingGradingJob = GradingJob<SpeakingReport>;
 
+// ============================================================
+// 题库生成（契约 §17；§1 行 40–41）
+// ============================================================
+
+/** 生成任务的目标模块：四科 + 陪练话题。 */
+export type ContentModule = 'speaking' | 'listening' | 'reading' | 'writing' | 'sparring';
+
+export const CONTENT_MODULE_LABEL_ZH: Record<ContentModule, string> = {
+  speaking: '口语题库',
+  listening: '听力套题',
+  reading: '阅读套题',
+  writing: '写作题目',
+  sparring: '陪练话题',
+};
+
+/** §17.3 的 ContentJobReport：产物是文件，不是练习记录。 */
+export interface ContentJobReport {
+  generated: { id: string; title_zh: string; path: string }[];
+  rejected: { id?: string; reasons: string[] }[];
+  written: number;
+  requested: number;
+  model: string | null;
+}
+
+/**
+ * content 任务的 JobView（§1 行 41）。刻意**不复用** `GradingJob`：
+ * 那个类型的 module 只有 writing/speaking（批改语义），且 `useGradingJobs` 的
+ * 左轨角标、批改磁贴都按它过滤——生成任务混进去会让「正在批改 N」把等题的
+ * 生成也算成批改（§17.3 条款 3）。
+ */
+export interface ContentJob {
+  job_id: string;
+  module: 'content';
+  /** 目标题库模块。 */
+  task_ref: ContentModule | string;
+  status: GradingJobStatus;
+  attempt_id: null;
+  report: ContentJobReport | null;
+  error: string | null;
+  degraded_reason: string | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+export interface GenerateContentBody {
+  module: ContentModule;
+  count?: number;
+  target_band?: Band;
+  part?: SpeakingPart;
+  task?: 'task1' | 'task2';
+  topic_hint?: string;
+}
+
 export function isJobSettled(status: GradingJobStatus): boolean {
   return status === 'succeeded' || status === 'failed';
 }

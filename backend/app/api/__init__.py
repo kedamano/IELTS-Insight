@@ -1,8 +1,8 @@
 """API 聚合（契约 §6：`api_router = APIRouter(prefix="/api")`）。
 
 四科模块（speaking/listening/reading/writing）已由 Wave 2 交付并在下方注册。
-`api/content.py`（§1 行 40–41 `/content/generate`、`/content/jobs/{id}`）文件已存在但**故意不注册**，
-属 test-plan §5 的 P3，见该文件说明。
+`api/content.py`（§1 行 40–41 `/content/generate`、`/content/jobs/{id}`）由 Wave 8 转正注册
+（管线见 `services/content_gen.py` 与契约 §17）。
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ from fastapi import APIRouter
 from app.api import (
     attempts,
     backup,
+    content,
     drafts,
     health,
     jobs,
@@ -47,5 +48,7 @@ api_router.include_router(sparring.router)
 api_router.include_router(listening.router)
 api_router.include_router(reading.router)
 api_router.include_router(writing.router)
+# 题库生成（契约 §17）：产物落用户数据目录，装载在下次启动。
+api_router.include_router(content.router)
 
 __all__ = ["api_router"]

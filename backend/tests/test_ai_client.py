@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import httpx
+import os
 import pytest
 
 FAKE_KEY = "sk-TESTSECRET-0123456789abcdef"
@@ -31,6 +32,61 @@ DEGRADED_REASONS = {
     # 私有字符串会被 `AiResult.__post_init__` 误改成 network_error，也逃过所有统一翻译面。
     "preset_exhausted",
 }
+
+
+def test_clash注入的括号IPv6不挡住AI调用(fake_openai, monkeypatch):
+    """真浏览器实跑抓到的环境级缺陷。
+
+    clash-verge 把 `NO_PROXY=localhost,127.0.0.1,::1,[::1]` 写进环境，httpx 0.28 把
+    NO_PROXY 每一项按 URL 解析 —— `[::1]` 的端口段解析成 `:1]`，`openai.OpenAI()`
+    **构造当场抛 InvalidURL**，于是每一次 AI 调用都变成 network_error。
+    装了 clash 的用户全线命中，且日志里只有一个光秃秃的 `InvalidURL`，毫无指向性。
+
+    fake 默认不碰 httpx，所以这里把 `OpenAI` 换成一个**构造期真的建
+    `httpx.Client(trust_env=True)`** 的桩（真客户端就是这么炸的）：
+    消毒没生效 ⇒ 构造期 InvalidURL ⇒ `fake.calls` 为空；生效 ⇒ 请求正常发出。
+    """
+    import httpx
+    import types as _types
+
+    from app.services import ai_client
+
+    monkeypatch.setenv("NO_PROXY", "localhost,127.0.0.1,::1,[::1]")
+    monkeypatch.setenv("no_proxy", "localhost,127.0.0.1,::1,[::1]")
+    fake = fake_openai
+    fake.queue('{"ok": true}')
+
+    def _stub_openai(**ctor_kwargs):
+        httpx.Client(trust_env=True, timeout=5)  # 当年真实的炸点就在构造期
+        fake.ctor_kwargs = ctor_kwargs
+        fake.instances += 1
+
+        class _Completions:
+            def create(self, **kwargs):
+                payload = fake._next(kwargs)
+                content = payload if isinstance(payload, str) else json.dumps(payload)
+                return _types.SimpleNamespace(
+                    choices=[_types.SimpleNamespace(
+                        message=_types.SimpleNamespace(content=content), finish_reason="stop",
+                    )],
+                    model="fake-model",
+                    usage=_types.SimpleNamespace(prompt_tokens=1, completion_tokens=1, total_tokens=2),
+                )
+
+        return _types.SimpleNamespace(chat=_types.SimpleNamespace(completions=_Completions()))
+
+    # fake_openai 已经把 openai.OpenAI 换成假类；这里再换成「构造期建 httpx.Client」的版本。
+    # monkeypatch 会把它连同 fake_openai 的替换一起还原。
+    import openai as openai_pkg
+
+    monkeypatch.setattr(openai_pkg, "OpenAI", _stub_openai, raising=True)
+
+    result = ai_client.complete_json("hi", allow_network=True, require_api_key=False)
+    assert result.ok, f"NO_PROXY 带括号时调用应当成功，实际 reason={result.reason} detail={result.detail}"
+    assert fake.calls, "请求没发出去：失败发生在构造期而不是传输期"
+    # 消毒只动进程内环境：括号去掉、裸 ::1 保留（httpx 认这个写法）
+    assert "[" not in os.environ["NO_PROXY"]
+    assert "::1" in os.environ["NO_PROXY"]
 
 
 def test_实现枚举与契约枚举一致():

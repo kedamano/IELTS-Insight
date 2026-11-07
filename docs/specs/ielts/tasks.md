@@ -220,3 +220,46 @@ vite `:5181` + Chrome 全新 profile + CDP），驱动 `drive.mjs` 在仓库外�
 
 诊断中自己踩的坑也记在 §11.4：`icacls /inheritance:r` 会把 harness 沙箱自己的授权一并剥掉
 （之后我的工具对该目录 Access denied，用户账户不受影响）——清权限只针对具体 ACE 增删。
+
+---
+
+## Wave 8 第五轮（2026-11-07）：题库生成端点转正（契约 §17 / FR-CT）
+
+用户追问「题库可以接入真实的题库吗」→ 答案是不能接真题（CONSTITUTION §2），但
+「刷完要自己扩」的 CLI 门槛可以拆掉：`api/content.py`（§1 行 40–41，此前故意未注册）转正。
+
+| 项 | 落点 |
+| --- | --- |
+| 规格 | `spec-product.md` FR-CT / AC-CT-1–5 |
+| 契约 | `spec-contracts.md` §17（产物落点、管线纪律、队列差异、前端面、§17.5 环境缺陷） |
+| 后端 | `services/content_gen.py`（生成管线）、`prompts/content.py`（schema 提示词唯一真源，CLI 改 import 它防漂移）、`sets_loader.generated_root()/load_roots()`（双根装载，generated 赢）、`job_queue` 泛化 `expects_attempt`、`api/content.py` 实现并注册 |
+| 前端 | `features/settings/ContentPanel.tsx` + api/types；设置页接进 AI 卡之后 |
+| 测试 | 后端 `test_api_content.py` 15 例 + `test_ai_client.py` clash 判据 1 例；前端 `ContentPanel.test.tsx` 8 例 |
+
+**实跑抓到并修掉的真缺陷（§17.5）**：clash-verge 注入的 `NO_PROXY=[::1]` 让
+`openai.OpenAI()` **构造期即抛 InvalidURL**，每一次 AI 调用都变 network_error，日志里只有
+光秃秃一句 `InvalidURL`。装了 clash 的用户全线命中。修法：`ai_client._sanitize_no_proxy()`
+构造前剥方括号（只动进程环境）；判据用「桩构造函数里真建一次 `httpx.Client(trust_env=True)`」
+复刻炸点，反向探针（注释消毒）转红验证过。
+
+**实跑同时抓到自己两个测试假象（都改掉了）**：①驱动扫整页文本找「重启应用后」——卡片
+副标题本来就含这四个字，永远命中，判据改为限定在结果卡内；②驱动无条件点在线开关——
+第二轮把上一轮点开的那个又关了，改为读状态幂等处理。
+
+**端到端证据链（隔离栈 :8799 临时库 + fake LLM :8899 + vite :5182 + Chrome CDP）**：
+UI 提交 → job succeeded → 产物 `generated/ielts/sparring/sb_atm_31.json`（source=ai:）→
+**重启后端** → `[Sets] 文件 53 个，装载 53 条` → `GET /sparring/topics` 回 11 个话题
+（「重启应用后生效」第一次被真跑证实，不是文案）。
+
+质量门（第五轮）：后端 **524 passed**；前端 **49 文件 / 496 用例**（SettingsPage 那条
+「两张卡」断言如实改为「三张写卡」并补 §17.4 依据）；`tsc -b` 无错误；内容校验 52 set。
+
+**实跑范围（如实）**：端到端验过 sparring（UI 全链路 6/6）+ speaking/writing（API 直连，
+产物重启后分别出现在 `speaking/sets` 23、`writing/tasks` 13、`sparring/topics` 11）；
+**listening/reading 没真跑**——同一管线同一校验器，但这两种 schema 最重（20 题/13 题 +
+篇章字数），模型输出不合格的概率也最高，`rejected` 路径恰好被它们喂了假合格产物之外的
+真实样本还没测过。`git commit` 由主控处理。
+
+**实跑同时抓到一条环境级真缺陷（§17.5，已修）**：clash-verge 注入的
+`NO_PROXY=[::1]` 让 `openai.OpenAI()` 构造期即抛 InvalidURL，AI 调用全线变
+network_error 且日志毫无指向性。修法为进程内消毒 + 复刻炸点的判据（反向探针验证过）。

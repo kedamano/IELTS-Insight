@@ -27,6 +27,7 @@ import { formatDateOnly } from '../report/format';
 import { AiPanel, type AiPatch } from './AiPanel';
 import { AudioDeviceField } from './AudioDeviceField';
 import { BackupPanel } from './BackupPanel';
+import { ContentPanel } from './ContentPanel';
 import { TrashPanel } from './TrashPanel';
 import { ChoiceField, DraftField, ToggleField, numberRule, type ChoiceFieldProps } from './fields';
 
@@ -347,6 +348,9 @@ export function SettingsPage({ className, storageReadonly = false, refreshHealth
       </Card>
 
       <AiPanel ai={ai} onPatch={(aiPatch) => patch({ ai: aiPatch })} onKeyChanged={reload} />
+
+      {/* 题库生成（契约 §17）：紧跟 AI 配置卡，因为它的能力完全取决于 ai.configured + online_enabled。 */}
+      <ContentPanel aiConfigured={ai.configured} onlineEnabled={settings.online_enabled} storageReadonly={storageReadonly} />
 
       {/* Wave 7 的数据入口（契约 §14.8）：放在最后，因为这是低频高后果动作。
           两张卡各自拉自己的端点，只读降级状态由外壳那份 /health 轮询传下来，本屏不再探活。 */}

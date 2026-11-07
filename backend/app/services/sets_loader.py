@@ -72,6 +72,24 @@ def data_root() -> Path:
     return Path(__file__).resolve().parents[1] / "data" / "ielts"
 
 
+def generated_root() -> Path:
+    """用户生成题的根：<DB 所在目录>/generated/ielts（契约 §17.1）。
+
+    放这里而不是 content_gen：本模块是「从哪些目录装载」的权威，装载侧与写入侧
+    必须引用同一个函数，否则「写到 A、从 B 读」这种漂移只有真跑一次才会暴露。
+    跟着 `IELTS_DB_PATH` 派生：测试隔离（CONSTITUTION §6）要求一切写路径都从 DB 路径
+    走，多一个 env 开关就多一处「测试忘了设、写进用户目录」的事故面。
+    """
+    from app.config import settings as _cfg
+
+    return Path(_cfg.DB_PATH).expanduser().resolve().parent / "generated" / "ielts"
+
+
+def load_roots() -> list[Path]:
+    """装载顺序 = 优先级顺序：打包/仓库根在前，generated 根在后（同 id 后者覆盖前者）。"""
+    return [data_root(), generated_root()]
+
+
 def _iter_records(payload: Any, file_hint: str) -> list[dict[str, Any]]:
     """一个 JSON 文件可以是：单个 set、set 数组、或 {"sets": [...]}。"""
     if isinstance(payload, dict) and isinstance(payload.get("sets"), list):
@@ -383,7 +401,11 @@ def iter_files(root: Path) -> Iterable[Path]:
 
 
 def load_sets(root: Optional[Path] = None) -> dict[str, Any]:
-    """装载题库，返回报告（不抛异常）。"""
+    """装载题库，返回报告（不抛异常）。
+
+    `root` 给定时只扫那一个目录（CLI/测试用）；缺省扫 `load_roots()` 的两个根
+    ——打包/仓库根 + 用户生成根（§17.1）。同 id 时后者覆盖前者：用户生成的题赢。
+    """
     report: dict[str, Any] = {
         "data_dir": "",
         "exists": False,
@@ -393,44 +415,53 @@ def load_sets(root: Optional[Path] = None) -> dict[str, Any]:
         "counts": {module: 0 for module in store.MODULES},
         "errors": [],
     }
-    base = root or data_root()
-    report["data_dir"] = str(base)
-    if not base.exists():
-        report["errors"].append({"file": str(base), "id": None, "error": "题库目录尚不存在（内容 agent 未产出）"})
-        faultlog.warn("Sets", f"题库目录不存在，跳过装载：{base}")
-        return report
-    if not any(iter_files(base)):
-        report["errors"].append({"file": str(base), "id": None, "error": "题库目录为空"})
-        faultlog.warn("Sets", f"题库目录为空：{base}")
-        return report
-
-    for path in iter_files(base):
-        report["files"] += 1
-        hint = _module_from_path(path, base)
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            report["errors"].append({"file": path.name, "id": None, "error": f"JSON 解析失败：{exc}"})
-            continue
-        except (OSError, UnicodeDecodeError) as exc:
-            report["errors"].append({"file": path.name, "id": None, "error": f"读取失败：{exc}"})
-            continue
-
-        for record in _iter_records(payload, path.name):
-            record_id = record.get("id") if isinstance(record, dict) else None
-            module_hint = hint or (record.get("module") if isinstance(record, dict) else None)
-            problems = validate_record(record, module_hint)
-            if problems:
-                report["rejected"] += 1
-                report["errors"].append({"file": path.name, "id": record_id, "error": "；".join(problems[:4])})
+    bases = [root] if root is not None else load_roots()
+    scanned = 0
+    for base in bases:
+        if not base.exists():
+            # generated 根不存在是常态（还没生成过题），不该打警告刷日志
+            if base != bases[0]:
                 continue
+            report["errors"].append({"file": str(base), "id": None, "error": "题库目录尚不存在（内容 agent 未产出）"})
+            faultlog.warn("Sets", f"题库目录不存在，跳过装载：{base}")
+            return report
+        found = list(iter_files(base))
+        if not found:
+            if base != bases[0]:
+                continue
+            report["errors"].append({"file": str(base), "id": None, "error": "题库目录为空"})
+            faultlog.warn("Sets", f"题库目录为空：{base}")
+            return report
+        scanned += 1
+        report["exists"] = True
+        report["data_dir"] = str(base) if len(bases) == 1 else str(bases[0])
+        for path in found:
+            report["files"] += 1
+            hint = _module_from_path(path, base)
             try:
-                store.upsert_set(record)
-            except Exception as exc:  # 单条写库失败不能拖垮启动
-                report["rejected"] += 1
-                report["errors"].append({"file": path.name, "id": record_id, "error": f"写库失败：{exc}"})
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                report["errors"].append({"file": path.name, "id": None, "error": f"JSON 解析失败：{exc}"})
                 continue
-            report["loaded"] += 1
+            except (OSError, UnicodeDecodeError) as exc:
+                report["errors"].append({"file": path.name, "id": None, "error": f"读取失败：{exc}"})
+                continue
+
+            for record in _iter_records(payload, path.name):
+                record_id = record.get("id") if isinstance(record, dict) else None
+                module_hint = hint or (record.get("module") if isinstance(record, dict) else None)
+                problems = validate_record(record, module_hint)
+                if problems:
+                    report["rejected"] += 1
+                    report["errors"].append({"file": path.name, "id": record_id, "error": "；".join(problems[:4])})
+                    continue
+                try:
+                    store.upsert_set(record)
+                except Exception as exc:  # 单条写库失败不能拖垮启动
+                    report["rejected"] += 1
+                    report["errors"].append({"file": path.name, "id": record_id, "error": f"写库失败：{exc}"})
+                    continue
+                report["loaded"] += 1
 
     counts = store.refresh_sets_meta()
     report["counts"] = counts

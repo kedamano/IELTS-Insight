@@ -78,6 +78,8 @@ import type {
   WritingTask1,
   WritingTaskKind,
   WritingTasksQuery,
+  ContentJob,
+  GenerateContentBody,
 } from '../types/ielts';
 
 // ============================================================
@@ -826,6 +828,23 @@ export function restoreBackup(name: string, opts?: ApiRequestOptions): Promise<B
 }
 
 // ============================================================
+// 12. 题库生成（契约 §17：§1 行 40–41）
+// ============================================================
+
+/**
+ * #40 `POST /content/generate`：排队生成，立即拿 `job_id`（§10.6 同规则）。
+ * 离线时后端当场 503 `content_offline`（§17.2），不会排一个两分钟后才失败的队。
+ */
+export function generateContent(body: GenerateContentBody, opts?: ApiRequestOptions): Promise<ContentJob> {
+  return fetchJson<ContentJob>(apiUrl('/content/generate'), postJson(body), opts);
+}
+
+/** #41 `GET /content/jobs/{job_id}`：与 `GET /jobs/{id}` 同形状的 JobView。 */
+export function contentJob(jobId: string, opts?: ApiRequestOptions): Promise<ContentJob> {
+  return fetchJson<ContentJob>(apiUrl(`/content/jobs/${enc(jobId)}`), {}, opts);
+}
+
+// ============================================================
 // 汇总对象（方便 `api.xxx()` 调用与 mock 替换）
 // ============================================================
 
@@ -876,6 +895,8 @@ export const api = {
   backups,
   createBackup,
   restoreBackup,
+  generateContent,
+  contentJob,
   progressSummary,
   progressTrend,
   progressAnalytics,

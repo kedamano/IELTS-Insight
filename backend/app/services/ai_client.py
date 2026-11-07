@@ -249,6 +249,23 @@ def _finish_reason(response: Any) -> str:
 # 客户端
 # --------------------------------------------------------------------------
 
+def _sanitize_no_proxy() -> None:
+    """把 NO_PROXY 里的带括号 IPv6 字面量（`[::1]`）改成裸 `::1`。
+
+    真浏览器实跑抓到的环境级缺陷：clash-verge 等本机代理会把
+    `NO_PROXY=localhost,127.0.0.1,::1,[::1]` 写进环境变量，而 httpx 0.28 把 NO_PROXY
+    的每一项按 URL 解析 —— `[::1]` 的端口段解析成 `:1]`，**客户端构造当场抛
+    `InvalidURL`**，`openai.OpenAI()` 连建都建不起来，于是每一次 AI 调用都变成
+    `network_error`（日志里的 detail 就是光秃秃一个 `InvalidURL`）。
+    装了 clash 的用户（国内备考人群里非常普遍）会全线命中，且错误毫无指向性。
+    裸 `::1` 是 httpx 认得的写法，语义不变；只改进程内环境，不动用户系统配置。
+    """
+    for key in ("NO_PROXY", "no_proxy"):
+        value = os.environ.get(key)
+        if value and "[" in value:
+            os.environ[key] = value.replace("[", "").replace("]", "")
+
+
 def _make_client(api_key: str, base_url: Optional[str], timeout: int):
     """每次调用现建客户端：不缓存 ⇒ 设置页改 key/base_url 立即生效，也不会把 key 存在模块里。
 
@@ -257,6 +274,7 @@ def _make_client(api_key: str, base_url: Optional[str], timeout: int):
     """
     import openai
 
+    _sanitize_no_proxy()  # 必须在构造前：httpx 的 env 解析发生在 Client.__init__
     kwargs: dict[str, Any] = {"api_key": api_key, "timeout": timeout, "max_retries": 0}
     if base_url:
         kwargs["base_url"] = base_url

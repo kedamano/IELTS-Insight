@@ -64,8 +64,8 @@
 | 37 | `DELETE /vocab/{word}` | – | `{deleted: true}` | 保留 |
 | 38 | `GET /vocab/export?format=csv\|anki` | – | `text/csv`（TSV for anki） | 保留 |
 | 39 | `GET /tts?text=&voice=&speed=` | – | `audio/mpeg`（保留，voice 增加口音参数） | 保留 |
-| 40 | `POST /content/generate` | `{module, count, target_band}` | `{job_id}` | 新，可后置 |
-| 41 | `GET /content/jobs/{job_id}` | – | `{state, created, errors[]}` | 新，可后置 |
+| 40 | `POST /content/generate` | `{module, count?, target_band?, part?, task?, topic_hint?}` | `JobView`（§10.6，`module="content"`，`task_ref=<目标模块>`） | Wave 8 已接入（§17） |
+| 41 | `GET /content/jobs/{job_id}` | – | `JobView`；成功时 `report` 为 `ContentJobReport`（§17.3） | Wave 8 已接入（§17） |
 | 42 | `GET /backup` | – | `{items, keep, max_age_days, days_since_last, directory}`（§14.3） | Wave 7 |
 | 43 | `POST /backup` | – | 那一行的 `manual` 快照 | Wave 7 |
 | 44 | `POST /backup/{name}/restore` | – | `{restored, pre_restore}`；名字非法 400，找不到 404 | Wave 7 |
@@ -1895,6 +1895,77 @@ SparringSessionStart / SparringSession / SparringTurnResult`；`SpeakingReport` 
   暖面槽给「离线追问」状态（`fallback` 计数 > 0 时才渲染，规则 3）。
 - 评分走异步路径（§10.6）：提交后进 `assessing` 骨架态，可离开；左轨角标与选题横幅照旧。
 - **不做**「暂停/继续录音」（一段一段答，跟考试一致）、**不做**多话题混谈。
+
+## 17. 题库生成端点（Wave 8 接入；§1 行 40–41 从「可后置」转正）
+
+背景：README 已知限制里「刷完要自己扩」原本只有一条 CLI 路（`backend/tools/gen_ielts_bank.py`），
+对会敲命令的人成立、对普通用户不成立。`POST /content/generate` 把同一条管线接到界面上：
+设置页「题库生成」卡 → 排队生成 → 产物落**用户数据目录** → 重启装载。
+
+### 17.1 产物位置（为什么不是 `app/data/ielts/`）
+
+生成结果写 `<数据目录>/generated/ielts/<module>/<id>.json`（默认 `%LOCALAPPDATA%\IELTSInsight\generated\`），
+**不写打包资源目录**。三个理由，缺一个都会坏：
+
+1. 冻结包里 `app/data` 在 `_MEIPASS` 解出的**临时目录**里，进程退出即消失——写那里等于没写；
+2. 装进 `Program Files` 后资源目录不可写（§14 的老坑换了个目录重演）；
+3. 用户数据目录享有 §14.3 的**快照保护**——生成的题也是学习成果，硬盘故障前它得在备份里。
+
+`sets_loader.load_sets()` 因此扫两个根：打包/仓库根在前，generated 根在后（同 id 后者覆盖前者，
+即「用户生成的赢」）。装载仍只在启动时发生：**生成成功的界面文案必须写「重启应用后生效」**，
+不许假装题库当场变多（`content_counts` 是启动快照，当场不会动）。
+
+### 17.2 管线纪律（与既有链路同一条）
+
+- LLM 只经 `ai_client.complete_json`（唯一出口：凭据、脱敏、超时、`max_retries=0`、解析重试 1 次）；
+- 出站许可走 `network_allowed()`（§15.2 唯一判定点）：关闭在线/进程离线 ⇒ **503 拒绝提交**，
+  不是排队后静默失败；
+- 校验用 `sets_loader.validate_record`（装载侧真源）+ `FORBIDDEN_SOURCE_TERMS` 版权扫描
+  （CONSTITUTION §2：产出文本命中「剑桥雅思/真题/Cambridge IELTS」等即拒绝，**这是硬闸**）；
+- 产物 `source = "ai:<model>"`、`generated_at` UTC；
+- **`source=hand` 的手工题永不覆盖**——同 id 已存在且为 hand 时拒绝写入（错误里说明原因），
+  `ai:*` 允许覆盖（重生成语义）；
+- 每次任务上限 5 个 set、`count` 1–5、`module ∈ {speaking, listening, reading, writing, sparring}`。
+
+### 17.3 队列与响应
+
+复用 §10.6 的 `jobs` 表与 worker，`jobs.module = "content"`。两处与批改的**刻意差异**：
+
+1. `report` 不是模块报告而是生成摘要：
+   ```json
+   { "generated": [{"id": "sp_p2_water_07", "path": "…", "title_zh": "…"}],
+     "rejected": [{"id": "sp_p2_x_99", "reasons": ["…"]}],
+     "written": 1, "requested": 2, "model": "glm-4.6" }
+   ```
+2. 因此 `job_queue._execute` 的「成功必须有 `attempt_id`」判定按任务类型豁免
+   （`expects_attempt=False`）——**批改仍强制**，那条「runner 返回无 attempt_id → failed」
+   的既有契约不许被顺手放宽。
+3. 前端 `useGradingJobs` 不认领 content 任务（它只过滤 writing/speaking），设置屏自己轮询
+   `GET /content/jobs/{job_id}`；左轨「正在批改」角标不许混入生成任务。
+4. 部分成功 = `succeeded`（`written>0`），`rejected` 逐条带中文原因；**全部失败** = `failed` +
+   可读 `error`（CONSTITUTION §3 的可见性同样适用于「一题没成」）。
+
+### 17.4 前端（设置屏「题库生成」卡）
+
+模块/数量/band 选择 → 提交 → 本地轮询（复用 2.5s 节奏）→ 结果区列 generated/rejected；
+未配置 AI（`health.ai_configured=false`）或在线关闭时**禁用提交并写明原因**，
+不出现「点了转圈两分钟然后失败」。文案纪律：成功后写「N 套已写入本机，**重启应用后**进入题库」。
+「重启应用后」这句必须出现在**结果区**里 —— 卡片副标题本来就含这四个字，
+拿整页文本当判据是假绿（实跑第一版驱动就这么骗过自己一次，判据必须限定 `[aria-label="生成结果"]` 所在卡）。
+
+### 17.5 环境级缺陷：clash 注入的 `[::1]` 让每一次 AI 调用构造期即炸（Wave 8 实跑抓到，已修）
+
+真浏览器实跑 content 链路时，任务稳定 `failed`，后端日志只有一句毫无指向性的
+`[AI] network_error：InvalidURL`。现场：clash-verge 往用户环境写
+`NO_PROXY=localhost,127.0.0.1,::1,[::1]`，httpx 0.28 把 NO_PROXY 每一项按 URL 解析，
+带括号的 `[::1]` 端口段解析成 `:1]` → `openai.OpenAI()` **构造当场抛 InvalidURL**。
+装了 clash 的用户（国内备考人群里非常普遍）全线命中，且错误不指向代理。
+
+修法在 `ai_client._make_client` 构造前调 `_sanitize_no_proxy()`：把进程内
+`NO_PROXY/no_proxy` 的方括号剥掉（裸 `::1` 是 httpx 认得的写法，语义不变），
+**只改进程环境，不动用户系统配置**。判据：`test_ai_client.py::test_clash注入的括号IPv6不挡住AI调用`
+——桩客户端的构造函数里显式建一次 `httpx.Client(trust_env=True)` 复刻真实炸点，
+反向探针（注释掉消毒调用）转红验证过。
 
 ### 16.6 Wave 8 真浏览器实跑记录（结论只写在这里，条款只写要求）
 

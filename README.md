@@ -96,7 +96,7 @@
 | 写作 | Task 1 由 `chart.data` 本地 SVG 渲染（饼 / 线 / 柱 / 表 / 动态对比），Task 2 议论文；四维批改 + 证据引用 + 升级表达 + 范文 |
 | 生词本 / 错题本 | 跨模块积累、话题标签、按错误类型筛选、CSV / Anki 导出 |
 | 报告 | Bento 摘要区（综合 Band 与目标、累计时长与逐周柱状、分科正确率、TOP 错误、分项 Band 四维）、Band 趋势（0–9 固定轴）、题型正确率、错误类型分布、近 8 周练习时长热力 |
-| 设置 | 目标分、考试日期、口音与音色语速、录音设备与增益、AI 端点、主题；**数据与备份**：本机快照列表 / 立即备份 / 从快照恢复 / 回收站（软删的练习记录在这里还原或彻底删除） |
+| 设置 | 目标分、考试日期、口音与音色语速、录音设备与增益、AI 端点、主题；**题库生成**：选模块/难度/数量一键扩题（产物写本机、重启生效，§17）；**数据与备份**：本机快照列表 / 立即备份 / 从快照恢复 / 回收站（软删的练习记录在这里还原或彻底删除） |
 
 客观题（听力 / 阅读）判分是**纯本地规则**：答案归一化（拼写变体、单词限制、题号与大小写）+ 官方 raw→Band 换算表，不依赖任何网络。
 
@@ -140,7 +140,7 @@
 graph LR
   U["你"] --> W["Tauri 2 壳（Rust）<br/>窗口 + sidecar 生命周期 + 端口探测"]
   W --> F["React 19 + Vite 6 + Tailwind v4<br/>九屏 UI · 设计 token"]
-  F -->|"fetch http://127.0.0.1:8765/api"| B["FastAPI 引擎<br/>60 端点 · 判分 · 会话 · 陪练 · job 队列"]
+  F -->|"fetch http://127.0.0.1:8765/api"| B["FastAPI 引擎<br/>62 端点 · 判分 · 会话 · 陪练 · 生成 · job 队列"]
   B --> D[("SQLite（标准库）<br/>%LOCALAPPDATA%/IELTSInsight/app.db")]
   B -->|可选| L["任意 OpenAI 兼容端点<br/>批改 / 追问 / 释义"]
   B -->|可选| T["edge-tts 合成音频<br/>缓存本机"]
@@ -280,8 +280,10 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
 4. **两处首次使用需要联网**（之后缓存本机）：听力音频由 edge-tts 现合成（缓存目录不随包
    分发）；口语转写的 whisper `base.pt`（约 145 MB）首次加载时从官方源下载。在那之前听力
    走「看原文精读」、口语走键盘输入，都是可见降级不是白屏。
-5. **题库 52 套**（四科 42 + 陪练话题 10），内容生产仍是本项目最慢的一环，刷完要自己扩：
-   往 `backend/app/data/ielts/<module>/` 放 JSON、跑 `tools/validate_ielts_data.py` 即可。
+5. **题库 52 套**（四科 42 + 陪练话题 10），内容生产仍是本项目最慢的一环。扩题有两条路：
+   设置页「题库生成」卡（配好 AI 端点后点按钮即可，产物写本机、重启生效，见
+   [spec-contracts.md §17](docs/specs/ielts/spec-contracts.md)），或直接往
+   `backend/app/data/ielts/<module>/` 放 JSON 再跑校验脚本。
    陪练没有「完整考试模拟」——它是 Part 3 式的接话训练，Part 2 独白仍归题库练习模式。
 
 ### 打包与分发
@@ -314,7 +316,7 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
 | 文件 | 作用 |
 | --- | --- |
 | [docs/specs/CONSTITUTION.md](docs/specs/CONSTITUTION.md) | 不可违反的产品宪法（离线优先、无遥测、不抄真题、凭据不外泄） |
-| [docs/specs/ielts/spec-contracts.md](docs/specs/ielts/spec-contracts.md) | 前后端唯一契约真源：60 个端点（53 条路径）、响应信封、错误码、内容 schema、设计 token |
+| [docs/specs/ielts/spec-contracts.md](docs/specs/ielts/spec-contracts.md) | 前后端唯一契约真源：62 个端点（55 条路径）、响应信封、错误码、内容 schema、设计 token |
 | [docs/specs/ielts/spec-product.md](docs/specs/ielts/spec-product.md) | 逐条验收标准（AC-xx），改行为先改这里 |
 
 本项目按 **SDD + TDD** 推进：契约先行 → 测试先红 → 实现转绿 → `scripts/check.sh` 三道门。
@@ -323,7 +325,7 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
 ### 目录
 
 ```
-backend/app/         api/（60 端点） · services/（评分·会话·陪练·题库·job 队列·TTS/STT） · db/（sqlite） · prompts/ · data/ielts/（题库）
+backend/app/         api/（62 端点） · services/（评分·会话·陪练·生成·题库·job 队列·TTS/STT） · db/（sqlite） · prompts/ · data/ielts/（题库）
 frontend/src/        features/（四科 + 报告/设置/复盘/共享） · components/ui/（设计系统） · hooks/ · services/api.ts · types/ielts.ts · test/（msw）
 frontend/src-tauri/  main.rs（sidecar 生命周期 + 端口探测） · tauri.conf.json · capabilities/
 docs/specs/          CONSTITUTION.md · ielts/{spec-product, spec-contracts, tasks, test-plan, content-notes, mic-on-windows}.md

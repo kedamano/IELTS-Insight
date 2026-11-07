@@ -898,7 +898,9 @@ def purge_attempt(attempt_id: str) -> Optional[bool]:
 # jobs（异步批改队列，契约 §1 行 20b/11b）
 # ---------------------------------------------------------------------------
 
-JOB_MODULES = ("writing", "speaking")
+# content：题库生成任务（契约 §17.3）。它复用同一张 jobs 表与同一个 worker，
+# 但产物是文件不是练习记录 —— `job_queue.submit(..., expects_attempt=False)` 区分这两种。
+JOB_MODULES = ("writing", "speaking", "content")
 JOB_STATUS = ("queued", "running", "succeeded", "failed")
 JOB_UNFINISHED = ("queued", "running")
 """未完成状态：启动时若还停在这两个状态，说明进程在批改中途退出。"""

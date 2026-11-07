@@ -30,110 +30,28 @@ import sys
 import urllib.error
 import urllib.request
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import validate_ielts_data as V  # noqa: E402  同目录工具，复用同一套 schema 规则
-
 BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(BACKEND, "tools"))
+sys.path.insert(0, BACKEND)  # 仓库根：让 `app.*` 可导入
+import validate_ielts_data as V  # noqa: E402  同目录工具，复用同一套 schema 规则
+from app.prompts import content as P  # noqa: E402  schema 提示词唯一真源（契约 §17.2）
+
 DEFAULT_OUT = os.path.join(BACKEND, "app", "data", "ielts")
 DEFAULT_BASE_URL = "https://api.openai.com/v1"
 TIMEOUT_SEC = 30
 MAX_TOKENS = 6000
 TEMPERATURE = 0.3
 
-BANDS = (5.5, 6.5, 7.5)
+BANDS = P.BANDS
 
-LEGAL = (
-    "LEGAL RULE: produce 100% original text. Do not copy, close-paraphrase or imitate any passage, "
-    "audio script, question or task from Cambridge IELTS books, official practice papers or real exam "
-    "material. Match only the FORMAT, question types, word limits, timing and difficulty. Never write "
-    "the words 'Cambridge IELTS', 'Official IELTS', 'authentic' or 剑桥雅思/真题 anywhere in the output. "
-    "All statistics/datasets must be invented and labelled as invented for practice.\n"
-)
-
-OUTPUT_RULES = (
-    "OUTPUT RULES: reply with ONE JSON object only, no prose, no markdown fences. "
-    "All keys exactly as in the schema. Every user-facing explanation must be Simplified Chinese in a "
-    "key ending with _zh; question stems and passages in English. "
-    "Numbers must be plain digits so text-to-speech can read them.\n"
-)
-
-COMMON_HEADER = ('Common header fields every set object must carry: "id", "module", "kind": "practice", '
-                 '"target_band" (one of 5.0/5.5/6.0/6.5/7.0/7.5/8.0/8.5/9.0), "title_zh", "topic" '
-                 '(lowercase ascii slug), and nothing that identifies a real source. '
-                 'Do NOT emit "source" or "generated_at"; the tool adds them.\n')
-
-SPEAK_SCHEMA = (
-    "Speaking set schema (spec-contracts.md 2-S). id rule: sp_p1_<topic>_<nn> for a Part 1 topic set, "
-    "sp_p2_<topic>_<nn> for a Part 2 cue-card set.\n"
-    "Part 1 set: {\"id\",\"module\":\"speaking\",\"kind\":\"practice\",\"part\":1,\"target_band\",\"title_zh\","
-    "\"topic\",\"part1\":[{\"id\":\"q1\",\"question\"},{\"id\":\"q2\",...},{\"id\":\"q3\",...}],"
-    "\"fallback_questions\":[\"...\",\"...\"],\"examiner_voice\":\"en-GB-SoniaNeural\"} - exactly 3 Part 1 "
-    "questions of real IELTS small-talk style about one everyday topic, plus 2 fallback questions.\n"
-    "Part 2 set: {\"id\",\"module\":\"speaking\",\"kind\":\"practice\",\"part\":2,\"target_band\",\"title_zh\","
-    "\"topic\",\"part2\":{\"cue_card\":{\"prompt\",\"bullets\":[3 strings],\"preparation_sec\":60,"
-    "\"speaking_sec\":120}},\"part3\":[{\"id\":\"q1\",\"question\",\"depends_on_part2\":true} x3],"
-    "\"fallback_questions\":[3 strings],\"examiner_voice\":\"en-GB-SoniaNeural\"} - one cue card with 3 bullet "
-    "prompts, 3 Part 3 discussion questions that grow out of the card topic, and 3 fallback Part 3 questions "
-    "used when no AI is available.\n")
-
-LISTEN_SCHEMA = (
-    "Listening set schema (2-L). id rule: li_s<section>_<topic>_<nn>, section 1-4.\n"
-    "{\"id\",\"module\":\"listening\",\"kind\":\"practice\",\"section\":1-4,\"target_band\",\"title_zh\",\"topic\","
-    "\"instruction_zh\",\"audio_text\",\"audio_voice\",\"sentences\":[{\"idx\":0,\"text\",\"anchor_sec\":0.0},...],"
-    "\"questions\":[20 items]}\n"
-    "Hard requirements: audio_text is 550-700 words of natural spoken English (a two-speaker conversation for "
-    "sections 1/3, a monologue for 2/4) built by joining sentences[] with a single space; sentences[] has 25-45 "
-    "items with idx 0,1,2... and anchor_sec computed at ~150 words per minute so it strictly increases; the "
-    "transcript must NOT contain speaker labels, brackets, asterisks, underscores or non-ASCII letters, and "
-    "timings must be spelled the way they are spoken. Write the answer words exactly as spoken so they appear "
-    "verbatim in audio_text.\n"
-    "questions: exactly 20, \"number\" 1..20, \"id\" q1..q20, each with \"type\" in "
-    "gap_fill|multiple_choice|matching|map_diagram_label, a stem in \"prompt\" and a Chinese "
-    "\"explanation_zh\" that quotes the audio sentence inside single quotes. Mix the types: at least 8 gap_fill "
-    "(each with integer \"word_limit\" 1-3 and at least one \"accepted_alternatives\" spelling/number variant), "
-    "at least 4 multiple_choice (\"options\": 3-4 strings each starting \"A. \", \"B. \" and \"answer\": the "
-    "letter), at least 3 matching (\"options_list\": 4-6 lettered options reusable across questions), at least "
-    "2 map_diagram_label (\"labels\":[\"A\",\"B\",\"C\",...], and the prompt must itself describe what each "
-    "letter is, because there is no picture). Distractors must be mentioned in audio_text and rejected in "
-    "explanation_zh.\n")
-
-READING_SCHEMA = (
-    "Reading set schema (2-R). id rule: re_p_<topic>_<nn> (p = one academic passage, 13 questions).\n"
-    "{\"id\",\"module\":\"reading\",\"kind\":\"practice\",\"level\":\"upper-intermediate\"|\"advanced\","
-    "\"target_band\",\"title\",\"title_zh\",\"topic\",\"time_limit_sec\":1200,\"word_count\",\"instruction_zh\","
-    "\"passage\":{\"paragraphs\":[{\"label\":\"A\",\"text\"},...5 to 8 paragraphs]},\"questions\":[13 items]}\n"
-    "The passage is ONE original expository text of 800-950 words (word_count must equal the real count of "
-    "whitespace-separated words over all paragraphs), IELTS Academic style: a topic in science, cities, "
-    "history, technology or the environment, with invented researcher names and institutions, hedged claims, "
-    "numbers and definitions. \"word_count\": integer, must be exact.\n"
-    "questions: exactly 13, number 1..13, id q1..q13, each with a \"prompt\" or \"statement\", \"answer\", "
-    "\"answer_paragraph\" (a paragraph label) and \"answer_quote\" that is a VERBATIM substring (exact case) of "
-    "that paragraph's text, plus Chinese \"explanation_zh\". Mix: 5 true_false_notgiven (\"statement\", "
-    "\"answer\": TRUE|FALSE|NOTGIVEN, \"answer_label\": A for TRUE, B for FALSE, C for NOTGIVEN - NOT GIVEN must "
-    "be genuinely absent, not contradicted), 4 heading_match (\"paragraph_label\", \"options_headings\": 7 items "
-    "{\"i\":\"i\",\"text\":...} with 3 unused distractors, \"answer\": the roman numeral), 3 sentence_completion "
-    "(\"word_limit\" 1-3, \"answer\" must appear verbatim in the passage, \"accepted_alternatives\" list), "
-    "1 multiple_choice (4 \"options\" starting \"A. \" .. \"D. \", \"answer\": the letter).\n")
-
-WRITING_SCHEMA = (
-    "Writing task schema (2-W). id rule: wr_t1_<topic>_<nn> or wr_t2_<topic>_<nn>.\n"
-    "Task 1: {\"id\",\"module\":\"writing\",\"kind\":\"practice\",\"task\":\"task1\",\"target_band\",\"title_zh\","
-    "\"topic\",\"time_recommend_sec\":1200,\"min_words\":150,\"prompt\",\"chart\":{\"type\":\"line\"|\"bar\"|\"pie\""
-    "|\"table\"|\"dynamic_chart\",\"unit\",\"labels\":[...],\"years\":[ints],\"series\":[{\"name\",\"values\""
-    ":[numbers of the same length as labels]}],\"source_note\"},\"band_descriptors_ref\":\"task1\"}. The prompt "
-    "is the official-style English task wording ('The chart below shows ... Summarise the information by "
-    "selecting and reporting the main features, and make comparisons where relevant.'). Invent realistic data "
-    "(energy mix, migration, household spending, university enrolment, visitor numbers, commuting shares): "
-    "for pie the values must sum to 100, for table labels are the columns and series are the rows, and "
-    "source_note must say the data is invented for practice.\n"
-    "Task 2: {\"id\",\"module\":\"writing\",\"kind\":\"practice\",\"task\":\"task2\",\"target_band\",\"title_zh\","
-    "\"topic\",\"time_recommend_sec\":2400,\"min_words\":250,\"question_type\",\"prompt\",\"outline_hint\""
-    ":[4-5 strings],\"band_descriptors_ref\":\"task2\"} with question_type in agree_disagree|discuss_both_views|"
-    "advantages_disadvantages|problem_solution|two_part_question and an official-style English prompt of 25-60 "
-    "words on a topic that no real exam has used in the same wording.\n")
-
-SCHEMAS = {"speaking": SPEAK_SCHEMA, "listening": LISTEN_SCHEMA,
-           "reading": READING_SCHEMA, "writing": WRITING_SCHEMA}
+# schema 提示词全部来自 `app.prompts.content`（CLI 与端点共用，防漂移：两份规则各存一份
+# 的结局是 CLI 生成的题过了更严的校验、端点生成的过不了装载，用户只看到「生成失败」）。
+# 注意 §17.2 的「LLM 只经 ai_client」约束的是**端点路径**（进程内凭据与脱敏纪律）；
+# CLI 跑在 app 进程外，保留 urllib 直连通道 —— 它读的是同一份提示词，不是同一个客户端。
+LEGAL = P.LEGAL
+OUTPUT_RULES = P.OUTPUT_RULES
+COMMON_HEADER = P.COMMON_HEADER
+SCHEMAS = P.SCHEMAS
 
 
 def utc_now():
@@ -211,7 +129,8 @@ def validate_candidate(obj, module, out_dir, model, rep):
         obj["topic"] = re.sub(r"^(sp_p[123]|li_[a-z0-9]+|re_[a-z0-9]+|wr_t[12])_", "", sid).rsplit("_", 1)[0]
     where, texts = V.check_common(module, os.path.join(out_dir, module, sid + ".json"), obj, rep)
     checker = {"speaking": V.check_speaking, "listening": V.check_listening,
-               "reading": V.check_reading, "writing": V.check_writing}[module]
+               "reading": V.check_reading, "writing": V.check_writing,
+               "sparring": V.check_sparring}[module]
     try:
         checker(where, obj, rep)
     except (KeyError, TypeError, AttributeError) as exc:
@@ -255,7 +174,8 @@ def from_mock(path):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="按 spec-contracts.md §2 增量生成 IELTS set")
-    ap.add_argument("--module", required=True, choices=V.MODULES)
+    # sparring 也在列：端点（§17）能生成陪练话题，CLI 不该是更窄的那条路
+    ap.add_argument("--module", required=True, choices=(*V.MODULES, "sparring"))
     ap.add_argument("--count", type=int, default=1, help="生成几个 set")
     ap.add_argument("--target-band", type=float, dest="band", default=None)
     ap.add_argument("--topic", default=None, help="限定话题领域（英文 slug 或中文描述）")
@@ -317,7 +237,8 @@ def main(argv=None):
 
     if written and not args.no_manifest:
         sets = []
-        for module in V.MODULES:
+        # 与 V.MODULES + sparring 全部目录对齐（manifest 的语义是「题库目录的索引」，§16.1）
+        for module in (*V.MODULES, "sparring"):
             d = os.path.join(out_dir, module)
             if not os.path.isdir(d):
                 continue

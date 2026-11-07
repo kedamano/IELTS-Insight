@@ -97,6 +97,32 @@ IA（左侧竖轨，顺序即优先级）：
     进屏自动 `GET` 回整段对话；凭据指向的会话已不存在（换库/被清理）时静默丢弃、停在选题页不弹红；
     提交评分后清掉凭据（已交付的对话不再「继续」）。
 
+## FR-CT 题库生成（设置页；契约 §17）
+
+背景：README「刷完要自己扩」原本只有 CLI（`tools/gen_ielts_bank.py`）一条路，对普通用户不成立。
+`POST /content/generate` 把同一条管线接到界面：选目标模块 → 排队生成 → 产物写本机 → 重启生效。
+
+- **FR-CT1 提交与排队**：`POST /api/content/generate`（`module ∈ 四科+sparring`、`count 1–5`、
+  可选 `target_band/part/task/topic_hint`）返回 `JobView`（`jobs.module="content"`），复用 §10.6 全套
+  队列规则（去重、5s 复用、failed 不复用、启动 reap）。
+  - AC-CT-1a 形状错误（非法 module/count 越界/band 非 0.5 步长/part 越界）⇒ 400 `validation_failed`，
+    **就地拒绝**，不许排队后才发现（§10.6 条款 1）。
+  - AC-CT-1b 离线（`network_allowed()=false`）⇒ 503 `content_offline` 当场拒绝并中文说明；
+    界面在未配 AI/关在线/只读降级时**禁用提交并写明原因**（不出现「点了转圈两分钟然后失败」）。
+- **FR-CT2 产物落点与生效**：合格产物写 `<数据目录>/generated/ielts/<module>/<id>.json`
+  （§17.1：冻结包里 `app/data` 是 `_MEIPASS` 临时目录、Program Files 不可写；用户数据目录才有快照保护），
+  `source="ai:<model>"`、`generated_at` UTC；`sets_loader` 装载时合并两个根（generated 覆盖打包根）。
+  - AC-CT-2a 生成成功 ⇒ 产物文件在 generated 根、重启装载后 `GET /api/<module>/sets` 读得到。
+  - AC-CT-2b 界面文案必须写「重启应用后生效」——装载只在启动时发生，`content_counts` 当场不动，
+    宣称立刻进题库就是界面说谎。
+- **FR-CT3 版权硬闸**：产出文本命中禁用来源词（剑桥雅思/官方真题/Cambridge IELTS 等）⇒ 拒绝入库
+  （CONSTITUTION §2；提示词里的 LEGAL 段是第一道防线，这里是第二道，两道都要过）。
+- **FR-CT4 hand 保护**：同 id 已存在且 `source=hand` ⇒ 拒绝覆盖（含端点重试与 CLI `--force`），
+  错误里说清原因。手工题是溯源资产，生成器无权覆盖。
+- **FR-CT5 结果可见**：部分成功 = `succeeded`（`written>0`），`rejected[]` 逐条带中文原因；
+  全部失败 = `failed` + 中文 `error`（不含原始异常文本，CONSTITUTION §3）。
+  `GET /content/jobs/{id}` 与 `GET /jobs/{id}` 同形状。content 任务**不进**批改队列的左轨角标/磁贴。
+
 ## FR-L 听力
 
 - **FR-L1 音频来源**：听力篇章文本存于题库，音频由 **edge-tts 按篇章合成并缓存**（复用 `tts_service` 的 MD5 缓存），避免引入外部音频版权与体积。两种口音可选：`en-GB-SoniaNeural`（英音）/ `en-US-GuyNeural`（美音）。
