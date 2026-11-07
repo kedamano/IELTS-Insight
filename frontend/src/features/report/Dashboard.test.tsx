@@ -20,7 +20,8 @@ import {
   reportHandlers,
   type ReportSpies,
 } from './testHandlers';
-import type { PlanTodayResult } from '../../types/ielts';
+import type { GradingJobStatus, PlanTodayResult } from '../../types/ielts';
+import type { TrackedJob } from '../../hooks/useGradingJobs';
 
 /**
  * 磁贴条（契约 §8.3）只按 `data-metric` 取块：class 与文案都会随设计改动，
@@ -31,6 +32,30 @@ async function metric(name: string): Promise<HTMLElement> {
   const node = grid.querySelector<HTMLElement>(`[data-metric="${name}"]`);
   if (!node) throw new Error(`找不到 data-metric="${name}" 的磁贴`);
   return node;
+}
+
+/**
+ * 队列 store 里的一条任务（契约 §8.3「第二处可见」）。磁贴只吃 `jobs`，
+ * 三面读数全从这里推 —— 不在测试里重算 `pendingCount` / `doneCount`，
+ * 否则测试与实现各算一遍、一起算错也照样绿。
+ */
+function job(status: GradingJobStatus, over: Partial<TrackedJob> = {}): TrackedJob {
+  return {
+    job_id: `job_${status}_${Math.random().toString(36).slice(2, 8)}`,
+    module: 'writing',
+    task_ref: 'wr_t2_remotework_01',
+    label: '写作 · 远程办公',
+    status,
+    attempt_id: null,
+    report: null,
+    error: status === 'failed' ? '评分服务无响应' : null,
+    degraded_reason: null,
+    submitted_at: Date.now(),
+    started_at: null,
+    finished_at: null,
+    viewed: false,
+    ...over,
+  };
 }
 
 describe('Dashboard 概览页', () => {
@@ -201,5 +226,51 @@ describe('Dashboard 概览页', () => {
 
     expect(screen.queryByLabelText('概览关键指标')).not.toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/NaN|Invalid Date|undefined/);
+  });
+
+  // ---------- 排队中的批改：左轨之外的第二处可见（契约 §8.3「第二处可见」）----------
+
+  it('有任务在批改时多一块「正在批改 N」，hint 说清去哪看结果（§8.3 第 5 条）', async () => {
+    install(...reportHandlers(spies, { summary: structuredClone(REPORT_SUMMARY) }));
+    render(<Dashboard grading={{ jobs: [job('queued'), job('running')] }} />);
+
+    const tile = await metric('overview.grading');
+    expect(within(tile).getByText('正在批改')).toBeInTheDocument();
+    expect(within(tile).getByText('2')).toBeInTheDocument();
+    expect(within(tile).getByText(/写作/)).toBeInTheDocument();
+    // plain 面：本屏的暖面名额仍然只有「最弱一科」一块
+    const grid = await screen.findByLabelText('概览关键指标');
+    expect(grid.querySelectorAll('[data-surface="warm"]')).toHaveLength(1);
+  });
+
+  it('批改完成的那一刻同一块砖接力成「待查看 N」，不是整块消失让用户以为任务没了', async () => {
+    install(...reportHandlers(spies, { summary: structuredClone(REPORT_SUMMARY) }));
+    const first = render(<Dashboard grading={{ jobs: [job('queued')] }} />);
+    const queued = await metric('overview.grading');
+    expect(within(queued).getByText('正在批改')).toBeInTheDocument();
+
+    first.rerender(<Dashboard grading={{ jobs: [job('succeeded')] }} />);
+    const relayed = await metric('overview.grading');
+    expect(within(relayed).getByText('待查看')).toBeInTheDocument();
+    expect(within(relayed).getByText('1')).toBeInTheDocument();
+    expect(relayed).toBe(queued);
+  });
+
+  it('失败的那一份不许被写成「待查看」（doneCount 混装 succeeded 与 failed，§8.3 第 2 条②）', async () => {
+    install(...reportHandlers(spies, { summary: structuredClone(REPORT_SUMMARY) }));
+    render(<Dashboard grading={{ jobs: [job('failed'), job('failed'), job('succeeded', { viewed: true })] }} />);
+
+    const tile = await metric('overview.grading');
+    expect(within(tile).getByText('批改失败')).toBeInTheDocument();
+    expect(within(tile).getByText('2')).toBeInTheDocument();
+    expect(tile.textContent).not.toMatch(/待查看/);
+  });
+
+  it('没排队、没失败、报告也都看过了时这块不渲染（§8.3 规则 3）', async () => {
+    install(...reportHandlers(spies, { summary: structuredClone(REPORT_SUMMARY) }));
+    render(<Dashboard grading={{ jobs: [job('succeeded', { viewed: true })] }} />);
+    await metric('overview.weakest');
+
+    expect(document.querySelector('[data-metric="overview.grading"]')).toBeNull();
   });
 });

@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_childhood_game_07",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 5.5,
+  "title_zh": "小时候常玩的游戏",
+  "topic": "childhood_game",
+  "source": "hand",
+  "generated_at": "2026-11-07T00:00:00Z",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe a game or sport you enjoyed playing when you were a child.",
+      "bullets": [
+        "what the game was and where you played it",
+        "who you played with",
+        "explain why you remember it so clearly"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "Why do some childhood games stay with people for a lifetime?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "Do you think children today play differently from how you did?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "Should schools protect time for unstructured play, or is organised sport enough?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "What games are popular among children in your country now?",
+    "Are traditional games worth teaching to the next generation?",
+    "Do competitive games teach children anything useful?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

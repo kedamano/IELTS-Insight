@@ -11,11 +11,13 @@ import {
   cx,
 } from '../../components/ui';
 import { useApi } from '../../hooks/useApi';
+import type { TrackedJob } from '../../hooks/useGradingJobs';
 import { planToday, progressSummary, progressTrend } from '../../services/api';
 import {
   MODULES,
   MODULE_LABEL_ZH,
   formatBand,
+  isJobSettled,
   type Module,
   type TrendPoint,
 } from '../../types/ielts';
@@ -27,6 +29,19 @@ const TREND_DAYS = 90;
 
 export interface DashboardProps {
   className?: string;
+  /**
+   * 异步批改队列的读数（契约 §8.3「第二处可见」）。由 App 把它自己那份 `useGradingJobs`
+   * 传下来 —— 本屏不许再订阅一次，更不许为这块磁贴加请求。
+   */
+  grading?: GradingTileSource;
+}
+
+/**
+ * 这块砖只需要 `jobs`：三面读数全从这里推，不直接吃 store 的 `pendingCount` / `doneCount` ——
+ * `doneCount` 把 `failed` 与 `succeeded` 混在一起，照抄会把一次失败写成「待查看」（§8.3 第 2 条②）。
+ */
+export interface GradingTileSource {
+  jobs: ReadonlyArray<TrackedJob>;
 }
 
 /**
@@ -39,7 +54,7 @@ export interface DashboardProps {
  * 分数显示只走 band（0–9），`current[module]` 为 null 时由 `ScoreBand` 渲染「尚无数据」，
  * 任何缺失数值都经 `format.ts` 兜底，页面上不可能出现 NaN（AC-P3）。
  */
-export function Dashboard({ className }: DashboardProps) {
+export function Dashboard({ className, grading }: DashboardProps) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const summary = useApi((options) => progressSummary(options), [refreshKey]);
@@ -75,6 +90,24 @@ export function Dashboard({ className }: DashboardProps) {
   const lead = deltas.length > 0 ? [...deltas].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))[0] : null;
   const deltaCopy = lead == null ? null : lead.delta === 0 ? '0.0' : `${lead.delta > 0 ? '+' : '-'}${Math.abs(lead.delta).toFixed(1)}`;
   const doneTasks = planTasks.filter((task) => task.done).length;
+
+  // 排队中的批改（契约 §8.3「第二处可见」）：排队 / 失败 / 待查看三面共用同一块砖，
+  // 完成那一刻必须接力而不是消失 —— 整块撤下会被读成「任务没了」，而不是「结果出来了」。
+  const queue = grading?.jobs ?? [];
+  const pendingJobs = queue.filter((entry) => !isJobSettled(entry.status)).length;
+  const unreadJobs = queue.filter((entry) => isJobSettled(entry.status) && !entry.viewed);
+  const unreadFailed = unreadJobs.filter((entry) => entry.status === 'failed').length;
+  const unreadSucceeded = unreadJobs.length - unreadFailed;
+  const gradingTile =
+    pendingJobs > 0
+      ? { label: '正在批改', value: pendingJobs, hint: '完成后去写作 / 口语屏看报告，可以先离开本页' }
+      : unreadFailed > 0
+        ? { label: '批改失败', value: unreadFailed, hint: '去写作 / 口语屏看原因，可以直接重试' }
+        : unreadSucceeded > 0
+          ? { label: '待查看', value: unreadSucceeded, hint: '批改已完成，去写作 / 口语屏打开报告' }
+          : null;
+  const tileCount =
+    Number(weakest != null) + Number(deltaCopy != null && lead != null) + Number(planTasks.length > 0) + Number(gradingTile != null);
 
   return (
     <div className={cx('flex flex-col gap-4', className)}>
@@ -138,9 +171,13 @@ export function Dashboard({ className }: DashboardProps) {
         </div>
       </section>
 
-      {/* 磁贴条（契约 §8.3）：暖面只给「最弱一科」，其余 plain；缺数的块整块不渲染。 */}
-      {weakest != null || lead != null || planTasks.length > 0 ? (
-        <dl aria-label="概览关键指标" className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      {/* 磁贴条（契约 §8.3）：暖面只给「最弱一科」，其余 plain；缺数的块整块不渲染。
+          四块同屏时改四等分，否则第 4 块会孤零零掉在第二行左边。 */}
+      {tileCount > 0 ? (
+        <dl
+          aria-label="概览关键指标"
+          className={cx('grid grid-cols-2 gap-3', tileCount >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3')}
+        >
           {weakest != null ? (
             <Tile
               metric="overview.weakest"
@@ -167,6 +204,15 @@ export function Dashboard({ className }: DashboardProps) {
               value={`${doneTasks}/${planTasks.length}`}
               unit="项"
               hint="勾选完成项会立即重算"
+            />
+          ) : null}
+          {gradingTile ? (
+            <Tile
+              metric="overview.grading"
+              label={gradingTile.label}
+              value={String(gradingTile.value)}
+              unit="项"
+              hint={gradingTile.hint}
             />
           ) : null}
         </dl>

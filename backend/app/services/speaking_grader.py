@@ -510,10 +510,14 @@ def grade(
         metrics=metrics,
         has_audio=has_audio,
     )
+    # 陪练（part="sparring"）追加一段专用口径（契约 §16.4）：不追加的话，模型会拿
+    # 「有没有覆盖题卡三个提示点」来扣 FC，而陪练里根本没有题卡 —— 那会把自由对话评成低分。
+    sparring_mode = str(part or "").strip().lower() == "sparring"
     system = "\n\n".join(
         [
             speaking_prompts.SYSTEM_PROMPT,
             speaking_prompts.BAND_RULES,
+            *([speaking_prompts.SPARRING_SCORING_RULES] if sparring_mode else []),
             speaking_prompts.EVIDENCE_RULES,
             f"调用参数固定为 temperature={TEMPERATURE}（§3-P 第 4 条：temperature ≤ 0.3），max_tokens 显式设置。",
         ]

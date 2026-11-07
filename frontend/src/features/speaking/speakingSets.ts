@@ -154,3 +154,36 @@ export function isLowConfidence(confidence: number | null | undefined): boolean 
 
 /** AC-S3：置信度过低时「说明问题 + 给出下一步」（文本来自 spec，不是后端英文）。 */
 export const LOW_CONFIDENCE_TEXT = '转写置信度较低，录音可能不清晰：可重录本题，或改用键盘输入答案文本继续。';
+
+// ============================================================
+// 口语屏的「上次用哪种模式」（契约 §16.3 第 6 条的前置条件）
+// ============================================================
+
+/**
+ * 刷新后要回到上次的模式（`bank` / `sparring`）。
+ *
+ * 为什么必须记住它：`SparringPanel` 只在 `mode === 'sparring'` 时才挂载，而刷新后 `mode`
+ * 会退回默认的 `bank` —— 那时「自动接回上一场」的 effect 根本没有机会跑，
+ * 会话凭据格式再正确也接不回来（真浏览器实跑抓到的就是这个：刷新后一条
+ * `GET /sparring/sessions/{id}` 都没发出去）。
+ */
+export const SPEAKING_MODE_STORAGE_KEY = 'ielts.speaking-mode';
+
+export function rememberMode(mode: 'bank' | 'sparring'): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(SPEAKING_MODE_STORAGE_KEY, mode);
+  } catch {
+    // 写不进去就退回「每次默认题库练习」，不影响任何功能
+  }
+}
+
+export function rememberedMode(): 'bank' | 'sparring' | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const value = localStorage.getItem(SPEAKING_MODE_STORAGE_KEY);
+    return value === 'sparring' || value === 'bank' ? value : null;
+  } catch {
+    return null;
+  }
+}

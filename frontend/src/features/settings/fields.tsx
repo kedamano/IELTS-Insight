@@ -123,7 +123,7 @@ export function DraftField({
               {...aria}
               id={id}
               type={type}
-              className="h-9 min-w-0 flex-1 rounded-card border border-rule bg-paper px-2.5 text-sm text-ink outline-none focus:border-[var(--accent)]"
+              className="h-9 min-w-0 flex-1 rounded-card border border-rule bg-paper px-2.5 text-sm text-ink focus:border-[var(--accent)]"
               value={draft}
               step={step}
               min={min}
@@ -197,7 +197,7 @@ export function ChoiceField<T extends string>({
         <select
           {...aria}
           id={id}
-          className="h-9 w-full rounded-card border border-rule bg-paper px-2 text-sm text-ink outline-none focus:border-[var(--accent)]"
+          className="h-9 w-full rounded-card border border-rule bg-paper px-2 text-sm text-ink focus:border-[var(--accent)]"
           value={value}
           disabled={disabled || busy}
           onChange={(event) => void change(event.target.value as T)}

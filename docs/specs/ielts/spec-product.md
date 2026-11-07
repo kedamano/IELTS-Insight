@@ -47,6 +47,56 @@ IA（左侧竖轨，顺序即优先级）：
 - **FR-S6 考官追问**：Part 3 追问基于考生 Part 2 回答由 LLM 动态生成（无网络时用题库预置追问）。
   - AC-S6 `ai_used=false` 时 session 仍能完整走完，使用预置 `fallback_questions`。
 
+## FR-S7 1 对 1 口语陪练（自由对话，AI 陪练官）
+
+定位：**不是**把题库再背一遍，而是把 Part 1/3 的「被追问」这件事练成条件反射。
+用户在口语屏切成「1 对 1 陪练」模式，选一个场景（点餐、租房、面试、学术讨论…）后与 AI 陪练官
+**自由多轮对话**：每答完一轮，陪练官必须**接着你的话**追问一句（不是念题库里的下一题），
+直到轮次上限或用户主动结束，再整场四维评分。
+
+- **FR-S7.1 话题（陪练场景）**：`GET /api/sparring/topics` 返回 ≥6 个原创场景，每个含
+  `id / title_zh / scenario_zh / level / opening / preset_questions[] (≥6) / target_band`。
+  开场白与预置追问全部本项目自写（CONSTITUTION §2），不含任何官方样题原文。
+  - AC-S7.1 返回 ≥6 项且每项 `preset_questions` ≥6、`opening` 非空；`GET /api/sparring/topics/{id}` 同形状。
+- **FR-S7.2 会话**：`POST /api/sparring/sessions`（`topic_id` 必填，可选 `level`）创建会话，
+  返回 `session_id / topic / opening / turn_index=0 / max_turns / state`；`GET /api/sparring/sessions/{id}`
+  返回完整对话（`messages: [{role: partner|user, text, ...}]`），供刷新/重开接回。
+  - AC-S7.2 未知 topic 返回 404；`level` 非法返回 400 且 `detail` 为中文；会话不存在返回 404。
+- **FR-S7.3 每轮追问**：`POST /api/sparring/sessions/{id}/turn`（multipart `audio` 或 form `text` + `duration_sec`）
+  存下用户作答后**必须**返回陪练官的一句追问（`partner.text`），并带 `source: "ai" | "fallback"`。
+  - AC-S7.3a 无音频/>5MB/空文本 → 400 或 413，`detail` 为中文可理解文本（沿用 AC-S3 口径）。
+  - AC-S7.3b `ai_used=false` 时（断网/无 key/AI 非法输出/重复问题）`partner.source="fallback"`，
+    追问取自该话题 `preset_questions` 中**尚未出现过**的一条，且 `degraded_reason` 如实回传；
+    整场对话在完全离线时也能走完（CONSTITUTION §3、FR-G3）。
+  - AC-S7.3d **追问不许重复**：AI 追问与预置回落都记进「已问过」集合，去重比对整句（归一化后），
+    范围是全部已问过而非仅相邻一句。判据：让模型回一句 3 轮前问过的问题 → 必须判 `invalid_model_output`
+    并回落预置，不许照发。
+  - AC-S7.3e **预置用尽**：`preset_questions` 全部问过之后回固定收尾句 + `preset_exhausted`，
+    不重念最后一条，也不把收尾句本身记进「已问过」（否则下一轮的用尽判定失真）。
+  - AC-S7.3c 用户作答的转写文本原样出现在 `messages` 里，`quote` 校验（§3-P 规则 2）因此可执行。
+- **FR-S7.4 轮次上限**：`max_turns`（默认 10，话题可配 8–12）。到达上限后服务端回
+  `remaining=0` 且 `state="awaiting_assess"`，不再接受新一轮作答（409 `conflict`）。
+  - AC-S7.4 第 `max_turns+1` 次 turn 返回 409 且 `code="conflict"`，会话 `state` 不被写坏。
+- **FR-S7.5 整场评分**：`POST /api/sparring/sessions/{id}/assess`（同步）与
+  `POST .../assess/async`（§10.6 队列）产出的报告**与 §3-S `SpeakingReport` 同形状**，
+  额外带 `sparring: {topic_id, turns, mode:"sparring"}`；`attempts` 落一条
+  `module="speaking"`、`part="sparring"`、`task_ref=<topic_id>` 的记录（AC-G2）。
+  - AC-S7.5a 报告四维齐全、`band.overall` = 四维平均后按 0.5 夹紧；`attempt_id` 在报告与库里一致。
+  - AC-S7.5b `ai_used=false` 时仍是完整报告（离线近似分 + 可见降级），不 500、不静默成功。
+  - AC-S7.5d 陪练评分的 system prompt 必须追加「这是自由对话，不是题库背诵」的专用口径
+    （不按题卡三个提示点扣 FC）；题库练习的口径不许被这条污染。
+    判据：`part="sparring"` 与 `part=2` 各调一次，断言 system 里出现 / 不出现该段。
+  - AC-S7.5c 没有作作答就评分 → 400 `empty_answer`；重复评分复用同一个 job（§10.6 条款 4）。
+- **FR-S7.6 界面**：口语屏内以标签切「题库练习 / 1 对 1 陪练」，**不新增导航项**（IA 保持九屏）。
+  陪练界面必须显示：对话流（陪练官/我，逐条可读）、剩余轮次、当前话题与场景说明、
+  录音或键盘文本兜底（AC-S3b 同口径）、陪练官追问的朗读按钮（离线时标注「无音频」）、
+  「结束并评分」入口；降级时在对话流里逐条标注而非只在页脚说明。
+  - AC-S7.6a 断网时对话仍可完整进行，每条追问标注「预置追问（离线）」。
+  - AC-S7.6b 轮次上限到达时「发送」禁用，并给出一句可读原因；评分按钮可用。
+  - AC-S7.6c **刷新/重开应用能接回未结束的那一场**：建会话即把 `session_id` 落 `localStorage`，
+    进屏自动 `GET` 回整段对话；凭据指向的会话已不存在（换库/被清理）时静默丢弃、停在选题页不弹红；
+    提交评分后清掉凭据（已交付的对话不再「继续」）。
+
 ## FR-L 听力
 
 - **FR-L1 音频来源**：听力篇章文本存于题库，音频由 **edge-tts 按篇章合成并缓存**（复用 `tts_service` 的 MD5 缓存），避免引入外部音频版权与体积。两种口音可选：`en-GB-SoniaNeural`（英音）/ `en-US-GuyNeural`（美音）。
@@ -122,7 +172,8 @@ IA（左侧竖轨，顺序即优先级）：
 
 ## 非目标（本轮明确不做）
 
-多用户/云同步、真实考试预约对接、真题还原、社区分享、多语言界面、机考模拟的全真 UI、口语真人对练、题库付费。
+多用户/云同步、真实考试预约对接、真题还原、社区分享、多语言界面、机考模拟的全真 UI、
+口语**真人**对练（FR-S7 是 AI 陪练，不是真人匹配）、题库付费。
 
 ## 已知外部阻塞（实测于 2026-10-18，主控验证记录）
 

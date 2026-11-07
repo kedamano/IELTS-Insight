@@ -26,6 +26,9 @@ TEMPERATURE = 0.2
 SPEAKING_MAX_TOKENS = 7000
 WRITING_MAX_TOKENS = 8000
 FOLLOWUP_MAX_TOKENS = 3000
+# 陪练官一句追问的上限（契约 §16.3 第 2 条）。它不是「答案」，所以不必为隐藏思考留 7000：
+# 1500 已经够推理型端点先想再写一句 40 词以内的英文。
+SPARRING_MAX_TOKENS = 1500
 
 JSON_ONLY = "只输出 JSON 对象本身：不要 markdown 之外的说明文字，不要输出任何解释。"
 
@@ -40,6 +43,7 @@ __all__ = [
     "SPEAKING_MAX_TOKENS",
     "WRITING_MAX_TOKENS",
     "FOLLOWUP_MAX_TOKENS",
+    "SPARRING_MAX_TOKENS",
     "JSON_ONLY",
     "BAND_SCALE",
     "ZH_FIELDS",

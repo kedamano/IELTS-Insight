@@ -1,0 +1,25 @@
+{
+  "id": "sb_interview_03",
+  "module": "sparring",
+  "kind": "practice",
+  "title_zh": "求职面试",
+  "topic": "interview",
+  "level": "b2",
+  "target_band": 7.0,
+  "source": "hand",
+  "generated_at": "2026-11-06T00:00:00Z",
+  "scenario_zh": "你正在应聘一家公司的市场助理岗位。面试官会先让你自我介绍，再追问经历、动机与团队协作。",
+  "opening": "Thanks for making time today. Before we go into the details, could you tell me a little about yourself and what drew you to this role?",
+  "preset_questions": [
+    "Which part of your current job do you find most rewarding?",
+    "Can you walk me through a project you had to deliver under pressure?",
+    "How do you usually handle disagreement with a colleague?",
+    "What would you say is your weakest area, professionally?",
+    "Why would you leave your current position for this one?",
+    "How do you decide what to prioritise when several tasks land at once?",
+    "Where do you see yourself in three years' time?",
+    "Do you have any questions for us about the team or the role?"
+  ],
+  "max_turns": 10,
+  "partner_voice": "en-GB-SoniaNeural"
+}

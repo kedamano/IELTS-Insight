@@ -25,6 +25,9 @@ export type RecorderControlsProps = {
   disabled?: boolean;
   busy?: boolean;
   label?: string;
+  /** 文本兜底输入框的标签与占位（陪练屏用「这一轮我的话」，题库练习保留默认口径） */
+  textLabel?: string;
+  textPlaceholder?: string;
   /** 录音区右侧附加操作（如「跳过录音，直接评分」） */
   extraActions?: ReactNode;
   onSubmitAudio: (audio: Blob, durationSec: number) => Promise<void> | void;
@@ -59,6 +62,8 @@ export default function RecorderControls({
   disabled = false,
   busy = false,
   label,
+  textLabel = '直接输入答案文本（麦克风不可用时练习不中断）',
+  textPlaceholder = '例如：I would like to talk about a book I have read twice because…',
   extraActions,
   onSubmitAudio,
   onSubmitText,
@@ -90,7 +95,8 @@ export default function RecorderControls({
     setLimitHandled(true);
     onLimit?.();
     if (!autoSubmitOnLimit) return;
-    if (result.blob.size > 0 && markSubmitted()) {
+    // 契约 §15.6：出错的那一段不许自动提交 —— 否则失败只是「按钮藏起来了」
+    if (result.blob.size > 0 && !result.failed && markSubmitted()) {
       void onSubmitAudio(result.blob, toSeconds(result.durationMs));
     }
   };
@@ -169,11 +175,20 @@ export default function RecorderControls({
             <Button
               variant="primary"
               size="sm"
-              disabled={disabled || busy || blocked}
+              disabled={disabled || busy || blocked || recorder.starting}
               onClick={startAgain}
               title={blocked ? '已达时长上限，录音不可续（AC-S2）' : undefined}
             >
-              {blocked ? '录音不可续' : recorder.lastResult ? '重新录音' : '开始录音'}
+              {/* 「正在申请麦克风」这一段必须有自己的读数（契约 §15.6 同族）：
+                  以前这段窗口里按钮仍写着「开始录音」，界面把「慢」显示成「没反应」，
+                  用户于是连点两下 —— 第二下会再开一次 getUserMedia，第一份轨道没人关。 */}
+              {blocked
+                ? '录音不可续'
+                : recorder.starting
+                  ? '正在开启麦克风…'
+                  : recorder.lastResult
+                    ? '重新录音'
+                    : '开始录音'}
             </Button>
           ) : (
             <Button variant="danger" size="sm" onClick={() => void recorder.stop()}>
@@ -218,7 +233,7 @@ export default function RecorderControls({
 
         <div className="flex flex-col gap-2">
           <label htmlFor="speaking-text-answer" className="text-xs font-medium text-ink-secondary">
-            直接输入答案文本（麦克风不可用时练习不中断）
+            {textLabel}
           </label>
           <textarea
             id="speaking-text-answer"
@@ -227,7 +242,7 @@ export default function RecorderControls({
               'disabled:cursor-not-allowed disabled:opacity-45',
             )}
             value={text}
-            placeholder="例如：I would like to talk about a book I have read twice because…"
+            placeholder={textPlaceholder}
             disabled={disabled || busy || submitted}
             onChange={(event) => setText(event.target.value)}
           />

@@ -21,7 +21,7 @@ from typing import Any, Iterable, Optional
 from app.db import store
 from app.services import faultlog
 
-MODULE_ABBR = {"speaking": "sp", "listening": "li", "reading": "re", "writing": "wr"}
+MODULE_ABBR = {"speaking": "sp", "listening": "li", "reading": "re", "writing": "wr", "sparring": "sb"}
 # 契约 §2 的 id 规则写的是 `wr_`，但 §2-W 的示例 id 是 `w1_line_energy_04`（按 task 编号）。
 # 这里同时接受 wr_/w1_/w2_，并把该矛盾原样上报给主控。
 WRITING_ID_PREFIXES = ("wr_", "w1_", "w2_")
@@ -44,6 +44,10 @@ TASK2_TYPES = {
 }
 KINDS = {"practice", "mock_test"}
 
+SPARRING_LEVELS = {"a2", "b1", "b2"}
+SPARRING_MAX_TURNS_RANGE = (8, 12)
+SPARRING_MIN_PRESETS = 6
+
 READING_WORD_COUNT_RANGE = (800, 950)
 
 # 版权来源标记（CONSTITUTION §2：严禁复制剑桥/官方真题原文）
@@ -56,7 +60,9 @@ COPYRIGHT_MARKERS = (
     "官方真题",
 )
 
-_DIR_MODULES = ("speaking", "listening", "reading", "writing")
+_DIR_MODULES = ("speaking", "listening", "reading", "writing", "sparring")
+# 校验层认第五个模块，统计层不认（契约 §16.1）。这个别名只在本模块内用。
+SET_MODULES = store.SET_MODULES
 
 
 def data_root() -> Path:
@@ -93,8 +99,8 @@ def _check_common(record: dict[str, Any], module_hint: Optional[str]) -> tuple[l
         return ["记录不是 JSON 对象"], str(module or ""), str(record_id or "")
     if not isinstance(record_id, str) or not record_id.strip():
         errors.append("缺少 id")
-    if module not in store.MODULES:
-        errors.append(f"module 非法：{module!r}（应为 {', '.join(store.MODULES)}）")
+    if module not in SET_MODULES:
+        errors.append(f"module 非法：{module!r}（应为 {', '.join(SET_MODULES)}）")
     elif isinstance(record_id, str) and record_id:
         prefix = MODULE_ABBR.get(module, "")
         allowed = (f"{prefix}_",) if module != "writing" else WRITING_ID_PREFIXES
@@ -296,11 +302,52 @@ def _check_writing(record: dict[str, Any]) -> list[str]:
     return errors
 
 
+def _check_sparring(record: dict[str, Any]) -> list[str]:
+    """1 对 1 陪练话题的不变量（契约 §16.1 / AC-S7.1）。
+
+    不断言条数（内容只增不减），只断言「一条话题要能被陪练用起来」：
+    要有开场白、要有足够多的预置追问（离线兜底就靠它）、轮次上限在合理区间。
+    """
+    errors: list[str] = []
+    level = record.get("level")
+    if level not in SPARRING_LEVELS:
+        errors.append(f"level 非法：{level!r}（应为 {'/'.join(sorted(SPARRING_LEVELS))}）")
+
+    scenario = record.get("scenario_zh")
+    if not isinstance(scenario, str) or not scenario.strip():
+        errors.append("缺少 scenario_zh（界面要告诉用户这是个什么场合）")
+
+    opening = record.get("opening")
+    if not isinstance(opening, str) or not opening.strip():
+        errors.append("缺少 opening（陪练官的第一句）")
+
+    presets = record.get("preset_questions")
+    if not isinstance(presets, list) or len(presets) < SPARRING_MIN_PRESETS:
+        got = len(presets) if isinstance(presets, list) else 0
+        errors.append(f"preset_questions 至少 {SPARRING_MIN_PRESETS} 条（当前 {got}）：离线整场都靠它")
+    else:
+        for i, item in enumerate(presets):
+            text = item.strip() if isinstance(item, str) else ""
+            if not text:
+                errors.append(f"preset_questions[{i}] 不是非空字符串")
+            elif not text.endswith(("?", ".")):
+                errors.append(f"preset_questions[{i}] 不是完整问句：{text[:40]!r}")
+
+    low, high = SPARRING_MAX_TURNS_RANGE
+    turns = record.get("max_turns")
+    if not isinstance(turns, int) or isinstance(turns, bool):
+        errors.append("缺少 max_turns（整数）")
+    elif not low <= turns <= high:
+        errors.append(f"max_turns {turns} 不在 {low}–{high} 区间")
+    return errors
+
+
 _CHECKERS = {
     "speaking": _check_speaking,
     "listening": _check_listening,
     "reading": _check_reading,
     "writing": _check_writing,
+    "sparring": _check_sparring,
 }
 
 

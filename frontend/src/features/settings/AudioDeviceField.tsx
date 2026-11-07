@@ -71,7 +71,7 @@ export function AudioDeviceField({ value, onChange, disabled = false }: AudioDev
             <select
             {...aria}
             id="setting-audio-device"
-            className="h-9 min-w-0 flex-1 rounded-card border border-rule bg-paper px-2 text-sm text-ink outline-none focus:border-[var(--accent)]"
+            className="h-9 min-w-0 flex-1 rounded-card border border-rule bg-paper px-2 text-sm text-ink focus:border-[var(--accent)]"
             value={value ?? SYSTEM_DEFAULT}
             disabled={disabled || saving}
             onChange={(event) => {

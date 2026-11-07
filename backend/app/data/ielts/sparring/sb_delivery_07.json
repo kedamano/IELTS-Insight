@@ -1,0 +1,25 @@
+{
+  "id": "sb_delivery_07",
+  "module": "sparring",
+  "kind": "practice",
+  "title_zh": "外卖订餐",
+  "topic": "delivery",
+  "level": "a2",
+  "target_band": 5.5,
+  "source": "hand",
+  "generated_at": "2026-11-07T00:00:00Z",
+  "scenario_zh": "你在家点外卖，骑手打电话确认地址和放哪儿。你要说清门牌、楼层，以及能不能按门铃。",
+  "opening": "Hi, this is the delivery from the noodle place — I'm outside the building. Could you confirm the flat number for me?",
+  "preset_questions": [
+    "Which entrance should I come through — the front door or the side one?",
+    "Is there a buzzer number I should use, or do you prefer a call?",
+    "Would you like me to leave it at the door if you don't answer?",
+    "How long will it take you to come down?",
+    "Do you need any cutlery with the order, or have you got your own?",
+    "Is the soup likely to spill if I hang it on the handle?",
+    "Should I wait while you check the bag, or is that fine?",
+    "Is there anything else I can help with today?"
+  ],
+  "max_turns": 10,
+  "partner_voice": "en-GB-SoniaNeural"
+}

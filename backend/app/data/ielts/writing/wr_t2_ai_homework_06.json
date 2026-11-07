@@ -1,0 +1,23 @@
+{
+  "id": "wr_t2_ai_homework_06",
+  "module": "writing",
+  "kind": "practice",
+  "task": "task2",
+  "target_band": 7.5,
+  "title_zh": "AI 工具与学生独立能力",
+  "topic": "education",
+  "source": "hand",
+  "generated_at": "2026-11-07T00:00:00Z",
+  "time_recommend_sec": 2400,
+  "min_words": 250,
+  "question_type": "discuss_both_views",
+  "prompt": "Some people think that AI study tools help students learn more efficiently, while others believe they weaken students' ability to think independently.\n\nDiscuss both these views and give your own opinion.",
+  "outline_hint": [
+    "Introduce the disagreement and state the view you will argue for.",
+    "View 1: efficiency — instant feedback, personalised practice, wider access.",
+    "View 2: dependence — drafting outsourced, weaker persistence, doubts about authorship.",
+    "Your position: tools amplify learning only when students must show their working.",
+    "Conclusion: what schools should require alongside tool use."
+  ],
+  "band_descriptors_ref": "task2"
+}

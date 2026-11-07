@@ -1,0 +1,25 @@
+{
+  "id": "sb_travel_06",
+  "module": "sparring",
+  "kind": "practice",
+  "title_zh": "旅行计划",
+  "topic": "travel",
+  "level": "b1",
+  "target_band": 6.5,
+  "source": "hand",
+  "generated_at": "2026-11-06T00:00:00Z",
+  "scenario_zh": "你和一个朋友在讨论下个月的短途旅行。对方会问你想去哪、预算多少，再一起比较交通与住宿方案。",
+  "opening": "So, we've got that long weekend coming up — have you thought about where you'd like to go?",
+  "preset_questions": [
+    "What kind of trip are you after — city break or somewhere quiet?",
+    "How much are you hoping to spend on transport?",
+    "Would you rather fly, or take the train and enjoy the view?",
+    "How many nights do you think we need to make it worthwhile?",
+    "Do you mind sharing a room to keep costs down?",
+    "What's the one thing you'd really want to do there?",
+    "Have you travelled with this group of friends before?",
+    "What would you do if the weather turned out badly?"
+  ],
+  "max_turns": 10,
+  "partner_voice": "en-US-GuyNeural"
+}

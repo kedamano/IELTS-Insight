@@ -33,12 +33,16 @@ BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_DATA = os.path.join(BACKEND, "app", "data", "ielts")
 
 MODULES = ("speaking", "listening", "reading", "writing")
-MODULE_ABBR = {"speaking": "sp", "listening": "li", "reading": "re", "writing": "wr"}
+# 第五个模块目录：1 对 1 陪练话题（spec-contracts §16.1）。刻意**不进 MODULES**：
+# MODULES 是「四科」的语义（manifest.counts / 首轮下限都按它说话），陪练只做结构校验与条数下限。
+SPARRING_DIR = "sparring"
+MODULE_ABBR = {"speaking": "sp", "listening": "li", "reading": "re", "writing": "wr", "sparring": "sb"}
 ID_RES = {
     "speaking": re.compile(r"^sp_p[123]_[a-z][a-z0-9_]*_\d{2}$"),
     "listening": re.compile(r"^li_[a-z][a-z0-9]*_[a-z][a-z0-9_]*_\d{2}$"),
     "reading": re.compile(r"^re_[a-z][a-z0-9]*_[a-z][a-z0-9_]*_\d{2}$"),
     "writing": re.compile(r"^wr_t[12]_[a-z][a-z0-9_]*_\d{2}$"),
+    "sparring": re.compile(r"^sb_[a-z][a-z0-9_]*_\d{2}$"),
 }
 ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$")
 BANDS = {5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0}
@@ -55,7 +59,10 @@ FORBIDDEN = ("cambridge ielts", "official ielts", "ielts authentic", "cambridge 
              "real exam material", "剑桥雅思", "官方真题", "真题还原")
 CAUTION = ("cambridge", "剑橋", "剑桥")
 FLOORS = {"speaking_part1": 12, "speaking_part2": 6, "listening": 2, "reading": 2,
-          "writing_task1": 3, "writing_task2": 3}
+          "writing_task1": 3, "writing_task2": 3, "sparring_topics": 6}
+SPARRING_LEVELS = {"a2", "b1", "b2"}
+SPARRING_PRESET_MIN = 6
+SPARRING_TURNS_RANGE = (8, 12)
 WORDS = re.compile(r"\S+")
 
 
@@ -81,11 +88,19 @@ class Report:
 
 
 def load_sets(data_dir, rep):
-    """读取四个模块子目录（manifest.json 在根目录，不参与 set 校验）。"""
+    """读取模块子目录（manifest.json 在根目录，不参与 set 校验）。
+
+    `sparring` 与四科同一套文件规则（UTF-8 / LF / 2 空格 / 文件名=id），但它**不进
+    `check_common` 的四科公共头校验**：陪练话题没有 `task`/`section`/`part`，公共头却一样。
+    见 `check_sparring()`。
+    """
     sets = []
-    for module in MODULES:
+    for module in (*MODULES, SPARRING_DIR):
         d = os.path.join(data_dir, module)
         if not os.path.isdir(d):
+            if module == SPARRING_DIR:
+                rep.err(d, "陪练话题目录不存在（契约 §16.1；只影响陪练模式，不影响四科）")
+                continue
             rep.err(d, "模块目录不存在")
             continue
         for name in sorted(os.listdir(d)):
@@ -116,6 +131,9 @@ def load_sets(data_dir, rep):
 
 
 def check_common(module, path, obj, rep):
+    """公共头校验。`sparring` 走 `check_sparring()` 自己的口径（它没有四科那套 task/section）。"""
+    if module == SPARRING_DIR:
+        return check_sparring_common(path, obj, rep)
     where = os.path.basename(path)
     for key in HEADERS:
         if key not in obj:
@@ -461,6 +479,79 @@ def check_writing(where, obj, rep):
         rep.err(where, "Task 2 不应带 chart")
 
 
+def check_sparring(where, obj, rep):
+    """1 对 1 陪练话题（契约 §16.1 / AC-S7.1）。
+
+    这里和 `sets_loader._check_sparring` 守同一组不变量，但校验脚本更严：它还要求
+    **每条预置追问都是完整英文问句**（陪练官要把它念出来，缺问号等于念一句断掉的句子），
+    以及开场白必须含第二人称（是「在对你说」而不是旁白）。
+    """
+    if obj.get("level") not in SPARRING_LEVELS:
+        rep.err(where, "level=%r 不在 %s" % (obj.get("level"), sorted(SPARRING_LEVELS)))
+    if not str(obj.get("scenario_zh", "")).strip():
+        rep.err(where, "scenario_zh 不能为空（界面要说明这是什么场合）")
+    opening = str(obj.get("opening", "")).strip()
+    if not opening:
+        rep.err(where, "opening 不能为空（陪练官的第一句）")
+    elif "?" not in opening:
+        rep.err(where, "opening 应以问句收尾或至少含一个问句：%r" % opening[:60])
+
+    presets = obj.get("preset_questions")
+    if not isinstance(presets, list) or len(presets) < SPARRING_PRESET_MIN:
+        rep.err(where, "preset_questions 至少 %d 条（当前 %s）—— 离线整场都靠它"
+                % (SPARRING_PRESET_MIN, len(presets) if isinstance(presets, list) else 0))
+        presets = presets if isinstance(presets, list) else []
+    if len(set(map(str, presets))) != len(presets):
+        rep.err(where, "preset_questions 有重复条目（离线回落会被同一句反复念）")
+    for i, item in enumerate(presets):
+        text = str(item).strip()
+        if not text:
+            rep.err(where, "preset_questions[%d] 为空" % i)
+        elif not text.endswith("?"):
+            rep.err(where, "preset_questions[%d] 不是问句（应以 ? 结尾）：%r" % (i, text[:60]))
+        elif word_count(text) > 40:
+            rep.warn(where, "preset_questions[%d] 超过 40 词，陪练官念起来偏长" % i)
+
+    turns = obj.get("max_turns")
+    low, high = SPARRING_TURNS_RANGE
+    if not isinstance(turns, int) or isinstance(turns, bool):
+        rep.err(where, "max_turns 必须是整数")
+    elif not low <= turns <= high:
+        rep.err(where, "max_turns=%d 不在 %d–%d 区间（一场陪练太长/太短都不成立）" % (turns, low, high))
+
+
+def check_sparring_common(path, obj, rep):
+    """陪练话题的公共头（与 §2 公共头同名同义，只是没有 `task`/`section` 这些题型字段）。"""
+    where = os.path.basename(path)
+    for key in HEADERS:
+        if key not in obj:
+            rep.err(where, "缺少公共头字段 %s" % key)
+    if obj.get("module") != SPARRING_DIR:
+        rep.err(where, "module=%r 应为 'sparring'" % (obj.get("module"),))
+    if obj.get("kind") != "practice":
+        rep.err(where, "kind=%r 只允许 'practice'" % (obj.get("kind"),))
+    band = obj.get("target_band")
+    if not isinstance(band, (int, float)) or isinstance(band, bool) or float(band) not in BANDS:
+        rep.err(where, "target_band=%r 必须是 5.0–9.0 的 0.5 步长数值" % (band,))
+    if not str(obj.get("title_zh", "")).strip():
+        rep.err(where, "title_zh 不能为空")
+    if not str(obj.get("topic", "")).strip():
+        rep.err(where, "topic 不能为空")
+    if not str(obj.get("source", "")).strip():
+        rep.err(where, "source 不能为空（CONSTITUTION §2 要求可追溯）")
+    if not ISO_RE.match(str(obj.get("generated_at", ""))):
+        rep.err(where, "generated_at=%r 必须是 ISO-8601 UTC（以 Z 结尾）" % (obj.get("generated_at"),))
+    sid = str(obj.get("id", ""))
+    if not sid:
+        rep.err(where, "id 为空")
+        return where, []
+    if not ID_RES[SPARRING_DIR].match(sid):
+        rep.err(where, "id=%r 不符合 sb_<topic>_<nn>（应匹配 %s）" % (sid, ID_RES[SPARRING_DIR].pattern))
+    if os.path.basename(path)[:-5] != sid:
+        rep.err(where, "文件名 %s.json 与 id=%r 不一致" % (os.path.basename(path)[:-5], sid))
+    return where, [json.dumps(obj, ensure_ascii=False)]
+
+
 def check_manifest(data_dir, sets, rep):
     path = os.path.join(data_dir, "manifest.json")
     by_module = {}
@@ -496,7 +587,9 @@ def check_manifest(data_dir, sets, rep):
 
 
 def write_manifest(data_dir, sets):
-    by_module = {m: [] for m in MODULES}
+    # sparring 也进清单：不列它的话，读 manifest 的人会以为陪练话题不存在
+    # （装载器按目录扫，不靠 manifest，但 manifest 是「题库目录的索引」这个语义要求全覆盖）。
+    by_module = {m: [] for m in (*MODULES, SPARRING_DIR)}
     for _, _, obj in sets:
         if obj.get("module") in by_module:
             by_module[obj["module"]].append(obj["id"])
@@ -507,6 +600,7 @@ def write_manifest(data_dir, sets):
         "generated_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "note": "索引文件，位于模块子目录之外；sets_loader 只加载 <module>/*.json，不要把本文件当 set。",
         "counts": {m: len(by_module[m]) for m in MODULES},
+        "sparring_count": len(by_module[SPARRING_DIR]),
         "sets": by_module,
     }
     path = os.path.join(data_dir, "manifest.json")
@@ -553,6 +647,8 @@ def main(argv=None):
                 check_reading(where, obj, rep)
             elif module == "writing":
                 check_writing(where, obj, rep)
+            elif module == SPARRING_DIR:
+                check_sparring(where, obj, rep)
         except (KeyError, TypeError, AttributeError) as exc:
             rep.err(where, "结构异常，无法完成校验：%s" % exc)
 
@@ -574,8 +670,9 @@ def main(argv=None):
     w1 = sum(1 for _, _, o in sets if o.get("task") == "task1")
     w2 = sum(1 for _, _, o in sets if o.get("task") == "task2")
     bands = sorted({o.get("target_band") for _, _, o in sets if o.get("module") == "speaking"})
+    sb = len(by_module.get(SPARRING_DIR, []))
     floors = {"speaking_part1": p1, "speaking_part2": p2, "listening": li, "reading": re_,
-              "writing_task1": w1, "writing_task2": w2}
+              "writing_task1": w1, "writing_task2": w2, "sparring_topics": sb}
     for key, floor in FLOORS.items():
         if floors[key] < floor:
             rep.err("CONTENT_FLOORS", "%s=%d 低于首轮下限 %d" % (key, floors[key], floor))
@@ -585,12 +682,12 @@ def main(argv=None):
 
     if not args.quiet or rep.errors:
         print("题库目录：%s" % data_dir)
-        print("文件数：%d（口语 %d / 听力 %d / 阅读 %d / 写作 %d）"
+        print("文件数：%d（口语 %d / 听力 %d / 阅读 %d / 写作 %d / 陪练 %d）"
               % (len(sets), len(by_module.get("speaking", [])), li, re_,
-                 len(by_module.get("writing", []))))
+                 len(by_module.get("writing", [])), sb))
         print("首轮下限：Part1 话题 %d(≥12) · Part2 题卡 %d(≥6) · 听力 set %d(≥2) · 阅读 set %d(≥2) · "
-              "写作 Task1 %d(≥3) Task2 %d(≥3)"
-              % (p1, p2, li, re_, w1, w2))
+              "写作 Task1 %d(≥3) Task2 %d(≥3) · 陪练话题 %d(≥6)"
+              % (p1, p2, li, re_, w1, w2, sb))
     for line in rep.warnings:
         print(line)
     for line in rep.errors:

@@ -23,6 +23,7 @@ from app.api import (
     review,
     settings,
     speaking,
+    sparring,
     vocab,
     writing,
 )
@@ -41,6 +42,8 @@ api_router.include_router(backup.router)
 api_router.include_router(drafts.router)
 api_router.include_router(media.router)
 api_router.include_router(speaking.router)
+# 1 对 1 口语陪练（契约 §16）：与口语同屏，但话题、会话、评分各走各的路由前缀。
+api_router.include_router(sparring.router)
 api_router.include_router(listening.router)
 api_router.include_router(reading.router)
 api_router.include_router(writing.router)

@@ -27,6 +27,10 @@ from app.db import migrations
 SCHEMA_PATH = Path(__file__).resolve().parent / "schema.sql"
 
 MODULES = ("speaking", "listening", "reading", "writing")
+# 题库里的第五个模块：「1 对 1 口语陪练」话题（契约 §16.1）。
+# 刻意**不进 `MODULES`**：`MODULES` 是「四科读数」的语义（content_counts / progress / 计划引擎
+# 都按它遍历），多塞一项会让既有统计与界面文案跟着失真。需要使用下划线开头的独立集合。
+SET_MODULES = (*MODULES, "sparring")
 # 客观题两科：只有它们有 `attempt_items` 逐题对错，因此也只有它们能算「分科正确率」。
 OBJECTIVE_MODULES = ("listening", "reading")
 
@@ -37,7 +41,7 @@ NEW_MARKER_TABLE = "attempts"
 # 新库的结构版本（契约 §14.2：唯一真源）。库内真相是 `PRAGMA user_version`。
 # 改动结构 = 在这里抬高一格 **并且** 往 app/db/migrations.py 追加同号的步骤；
 # 只改常量不加步骤会被 validate_chain 拒绝启动（那等于假装升级完成）。
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 PRIVATE_SETTING_KEYS = frozenset({"ai_key"})
 
@@ -586,6 +590,7 @@ def list_sets(module: str, **filters: Any) -> list[dict[str, Any]]:
 
 
 def set_counts_by_module() -> dict[str, int]:
+    """四科题库量（契约 §16.1：陪练话题**不进**这组读数，它不是考试四科之一）。"""
     conn = connect()
     try:
         rows = conn.execute("SELECT module, COUNT(*) AS n FROM sets GROUP BY module").fetchall()
@@ -593,7 +598,8 @@ def set_counts_by_module() -> dict[str, int]:
         conn.close()
     counts = {module: 0 for module in MODULES}
     for r in rows:
-        counts[r["module"]] = r["n"]
+        if r["module"] in counts:
+            counts[r["module"]] = r["n"]
     return counts
 
 
@@ -1674,8 +1680,110 @@ def add_speaking_turn(
 
 
 # ---------------------------------------------------------------------------
-# 测试/维护辅助
+# sparring_sessions（1 对 1 陪练，契约 §16.3）
 # ---------------------------------------------------------------------------
+
+SPARRING_STATES = ("created", "in_progress", "awaiting_assess", "assessed", "closed")
+
+
+def save_sparring_session(
+    *,
+    session_id: str,
+    topic_id: str,
+    level: Optional[str],
+    state: str,
+    turn_index: int,
+    max_turns: int,
+    messages: list[dict[str, Any]],
+    used_presets: list[str],
+    result_attempt_id: Optional[str] = None,
+) -> dict[str, Any]:
+    """写一整条会话（消息序列整体覆盖：陪练的真相就是那条不断变长的对话）。
+
+    整体覆盖而不是增量 append，是因为「用户重录同一轮」必须能把尾部两条一起换掉；
+    分两条 update 的话，中途失败会留下「我的问题在库里、陪练官的反问没在」的半轮。
+    """
+    if state not in SPARRING_STATES:
+        raise ValueError(f"未知陪练会话状态: {state}")
+    now = utc_now_iso()
+    payload = json.dumps(messages, ensure_ascii=False)
+    used = json.dumps(used_presets, ensure_ascii=False)
+    with tx() as conn:
+        conn.execute(
+            "INSERT INTO sparring_sessions (id, topic_id, level, state, turn_index, max_turns, "
+            "messages_json, used_presets_json, created_at, updated_at, result_attempt_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(id) DO UPDATE SET state = excluded.state, turn_index = excluded.turn_index, "
+            "max_turns = excluded.max_turns, messages_json = excluded.messages_json, "
+            "used_presets_json = excluded.used_presets_json, updated_at = excluded.updated_at, "
+            "result_attempt_id = COALESCE(excluded.result_attempt_id, sparring_sessions.result_attempt_id)",
+            (
+                session_id,
+                topic_id,
+                level,
+                state,
+                int(turn_index),
+                int(max_turns),
+                payload,
+                used,
+                now,
+                now,
+                result_attempt_id,
+            ),
+        )
+    return get_sparring_session(session_id) or {}
+
+
+def get_sparring_session(session_id: str) -> Optional[dict[str, Any]]:
+    conn = connect()
+    try:
+        row = conn.execute("SELECT * FROM sparring_sessions WHERE id = ?", (session_id,)).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        return None
+    return _sparring_row(row)
+
+
+def list_sparring_sessions(*, topic_id: Optional[str] = None, limit: int = 50) -> list[dict[str, Any]]:
+    conn = connect()
+    try:
+        if topic_id:
+            rows = conn.execute(
+                "SELECT * FROM sparring_sessions WHERE topic_id = ? ORDER BY created_at DESC LIMIT ?",
+                (topic_id, max(1, int(limit))),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM sparring_sessions ORDER BY created_at DESC LIMIT ?", (max(1, int(limit)),)
+            ).fetchall()
+    finally:
+        conn.close()
+    return [_sparring_row(row) for row in rows]
+
+
+def _sparring_row(row: sqlite3.Row) -> dict[str, Any]:
+    """行 → 服务层结构。JSON 列坏掉时给空序列而不是抛：一条坏会话不该把整屏打白。"""
+    messages = _load_json(row["messages_json"], [])
+    presets = _load_json(row["used_presets_json"], [])
+    return {
+        "id": row["id"],
+        "topic_id": row["topic_id"],
+        "level": row["level"],
+        "state": row["state"],
+        "turn_index": int(row["turn_index"] or 0),
+        "max_turns": int(row["max_turns"] or 0),
+        "messages": messages if isinstance(messages, list) else [],
+        "used_presets": presets if isinstance(presets, list) else [],
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+        "result_attempt_id": row["result_attempt_id"],
+    }
+
+
+# ---------------------------------------------------------------------------
+# 测试/维护辅助
+# -----------------------------------------------------------------------------------
 
 def table_names() -> list[str]:
     conn = connect()

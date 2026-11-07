@@ -1,0 +1,25 @@
+{
+  "id": "sb_campus_04",
+  "module": "sparring",
+  "kind": "practice",
+  "title_zh": "校园闲聊",
+  "topic": "campus",
+  "level": "a2",
+  "target_band": 5.5,
+  "source": "hand",
+  "generated_at": "2026-11-06T00:00:00Z",
+  "scenario_zh": "你在大学图书馆门口遇到一位同学。你们从课程聊到周末安排，再聊到毕业后想去哪座城市。",
+  "opening": "Hey, you're in my Tuesday seminar, aren't you? How are you finding the course so far?",
+  "preset_questions": [
+    "Which module are you taking this term?",
+    "Do you prefer morning lectures or afternoon ones?",
+    "How do you usually prepare for the weekly reading?",
+    "Are you staying in halls or renting somewhere nearby?",
+    "What do you normally do at the weekend around here?",
+    "Have you joined any societies yet?",
+    "Where would you like to work after you graduate?",
+    "Is there anything you'd change about the course if you could?"
+  ],
+  "max_turns": 10,
+  "partner_voice": "en-US-GuyNeural"
+}

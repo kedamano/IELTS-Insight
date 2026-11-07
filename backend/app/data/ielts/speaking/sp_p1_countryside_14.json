@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_countryside_14",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 6.5,
+  "title_zh": "乡村生活",
+  "topic": "countryside",
+  "source": "hand",
+  "generated_at": "2026-11-07T00:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "Have you ever spent a long holiday in the countryside?"
+    },
+    {
+      "id": "q2",
+      "question": "What do people in cities usually like about country life?"
+    },
+    {
+      "id": "q3",
+      "question": "Do you think young people will move back to villages in the future?"
+    }
+  ],
+  "fallback_questions": [
+    "What problems do small villages face these days?",
+    "Would you prefer to grow food yourself or buy it from a shop?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

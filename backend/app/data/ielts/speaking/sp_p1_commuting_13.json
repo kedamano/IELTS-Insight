@@ -1,0 +1,30 @@
+{
+  "id": "sp_p1_commuting_13",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 1,
+  "target_band": 5.5,
+  "title_zh": "通勤路上",
+  "topic": "commuting",
+  "source": "hand",
+  "generated_at": "2026-11-07T00:00:00Z",
+  "part1": [
+    {
+      "id": "q1",
+      "question": "How do you usually get to work or to school?"
+    },
+    {
+      "id": "q2",
+      "question": "Is the journey long or short for you?"
+    },
+    {
+      "id": "q3",
+      "question": "What do you like to do while you are travelling?"
+    }
+  ],
+  "fallback_questions": [
+    "Do you think traffic is worse now than when you were a child?",
+    "Would you like to live somewhere with a shorter commute?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

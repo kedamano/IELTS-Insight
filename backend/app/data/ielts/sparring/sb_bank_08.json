@@ -1,0 +1,25 @@
+{
+  "id": "sb_bank_08",
+  "module": "sparring",
+  "kind": "practice",
+  "title_zh": "银行开户",
+  "topic": "bank",
+  "level": "b1",
+  "target_band": 6.0,
+  "source": "hand",
+  "generated_at": "2026-11-07T00:00:00Z",
+  "scenario_zh": "你到银行柜台开一个储蓄账户。柜员会问你的身份材料、用途，再解释费用与网银设置。",
+  "opening": "Good morning. I can help you open an account today — before we start, do you have your ID and proof of address with you?",
+  "preset_questions": [
+    "Would you like a current account, or a savings account with a fixed term?",
+    "How often do you expect to move money in and out?",
+    "Do you want the debit card posted to your home address?",
+    "Have you used online banking before, or would you like a walkthrough?",
+    "Are you aware there's a small monthly fee unless you keep a minimum balance?",
+    "Would you like to set up any standing payments today?",
+    "Do you need a second card for anyone else on the account?",
+    "Is there anything about the fees you'd like me to go over again?"
+  ],
+  "max_turns": 10,
+  "partner_voice": "en-GB-SoniaNeural"
+}

@@ -27,7 +27,24 @@ DEGRADED_REASONS = {
     "invalid_model_output",
     "incomplete_dimensions",
     "offline_template",
+    # Wave 8：陪练预置问句用尽升为正式枚举值（契约 §0 + §16.3 规则 1）。
+    # 私有字符串会被 `AiResult.__post_init__` 误改成 network_error，也逃过所有统一翻译面。
+    "preset_exhausted",
 }
+
+
+def test_实现枚举与契约枚举一致():
+    """枚举漂移的守卫：`ai_client.DEGRADED_REASONS` 必须与契约 §0 的取值集合逐字相等。
+
+    上面那份测试常量是契约的镜像 —— 只比对「实现 ⊇ 测试集」会漏掉「实现私自加值」，
+    那正是 `preset_exhausted` 曾经走过的路（先当私有值用，再也没人收编它）。
+    """
+    from app.services import ai_client
+
+    assert set(ai_client.DEGRADED_REASONS) == DEGRADED_REASONS, (
+        f"实现 {set(ai_client.DEGRADED_REASONS)} 与契约 {DEGRADED_REASONS} 不一致 —— "
+        "改枚举先改 spec-contracts.md §0"
+    )
 
 
 @pytest.fixture

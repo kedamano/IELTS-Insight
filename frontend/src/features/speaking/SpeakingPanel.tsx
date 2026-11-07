@@ -10,7 +10,7 @@
  * 轮询到终态再出 §3-S 报告；Part 3 先取 `followups`，AI 不可用时用预置 `fallback_questions`。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Badge, Button, Card, Tile, Toast } from '../../components/ui';
+import { Badge, Button, Card, Tabs, Tile, Toast, type TabItem } from '../../components/ui';
 import { useApi } from '../../hooks/useApi';
 import { useBackendReady } from '../../hooks/useBackendReady';
 import { forgetJob, markJobViewed, trackJob, useGradingJobs, type TrackedJob } from '../../hooks/useGradingJobs';
@@ -38,6 +38,7 @@ import CueCard from './CueCard';
 import FollowupList from './FollowupList';
 import RecorderControls from './RecorderControls';
 import SetPicker from './SetPicker';
+import SparringPanel from './SparringPanel';
 import SpeakingPromptView from './SpeakingPromptView';
 import SpeakingResult from './SpeakingResult';
 import {
@@ -46,9 +47,38 @@ import {
   examinerVoiceOf,
   fallbackQuestionsOf,
   isLowConfidence,
+  rememberMode,
+  rememberedMode,
 } from './speakingSets';
 
 type Stage = 'picker' | 'session' | 'assessing' | 'result';
+
+/**
+ * 口语屏的两种模式（契约 §16.5 / FR-S7.6）：`bank` = 题库逐题练习，`sparring` = 1 对 1 陪练。
+ * 刻意**不新增导航项**：两者共用同一个 `SpeakingReport`、同一条评分队列、同一个说话的人。
+ */
+export type SpeakingMode = 'bank' | 'sparring';
+
+const MODE_TABS: readonly TabItem<SpeakingMode>[] = [
+  { id: 'bank', label: '题库练习' },
+  { id: 'sparring', label: '1 对 1 陪练' },
+];
+
+/**
+ * 模式切换（契约 §16.5）：放在口语屏最上方、所有阶段之前 —— 用户在「评分中」也应当能切到陪练，
+ * 那是 §10.6 明确的「提交后先做别的」。切换**不影响**评分队列（它挂在模块级 store 上）。
+ */
+function ModeTabs({ mode, onChange }: { mode: SpeakingMode; onChange: (next: SpeakingMode) => void }) {
+  return (
+    <Tabs<SpeakingMode>
+      ariaLabel="口语练习模式"
+      items={MODE_TABS}
+      value={mode}
+      onChange={onChange}
+      size="sm"
+    />
+  );
+}
 
 interface LiveTurn {
   promptId: string;
@@ -102,6 +132,13 @@ export function SpeakingPanel({
   const backend = useBackendReady();
   const isReady = ready ?? backend.ready;
 
+  // 刷新后要回到上次用的模式：否则 `SparringPanel` 不挂载，「接回上一场」的 effect
+  // 根本没机会跑（契约 §16.3 第 6 条，真浏览器实跑抓到过这个）。
+  const [mode, setModeState] = useState<SpeakingMode>(() => rememberedMode() ?? 'bank');
+  const setMode = useCallback((next: SpeakingMode) => {
+    setModeState(next);
+    rememberMode(next);
+  }, []);
   const [targetBand, setTargetBand] = useState<Band>(6.5);
   const [part, setPart] = useState<SpeakingPart>(initialPart);
   const [selectedSetId, setSelectedSetId] = useState<string | null>(initialSetId);
@@ -315,27 +352,42 @@ export function SpeakingPanel({
     setSpeakingStarted(false);
   };
 
+  if (mode === 'sparring') {
+    // 模式切换本身放在所有阶段之前（契约 §16.5）：用户在「评分中」也能切过来 ——
+    // 那正是 §10.6 承诺的「提交后先做别的」。切回来时本题库会话的本地状态仍然在。
+    return (
+      <div className="flex flex-col gap-3">
+        <ModeTabs mode={mode} onChange={setMode} />
+        <SparringPanel ready={isReady} onAttemptRecorded={onAttemptRecorded} />
+      </div>
+    );
+  }
+
   if (!isReady && stage === 'picker') {
     return (
-      <SetPicker
-        ready={false}
-        sets={[]}
-        loading={false}
-        error={backend.state === 'failed' ? backend.lastError : null}
-        targetBand={targetBand}
-        part={part}
-        onTargetBandChange={setTargetBand}
-        onPartChange={setPart}
-        onStart={(setId, chosen) => void begin(setId, chosen)}
-        readyMessage={backend.message}
-        onRetry={backend.retry}
-      />
+      <div className="flex flex-col gap-3">
+        <ModeTabs mode={mode} onChange={setMode} />
+        <SetPicker
+          ready={false}
+          sets={[]}
+          loading={false}
+          error={backend.state === 'failed' ? backend.lastError : null}
+          targetBand={targetBand}
+          part={part}
+          onTargetBandChange={setTargetBand}
+          onPartChange={setPart}
+          onStart={(setId, chosen) => void begin(setId, chosen)}
+          readyMessage={backend.message}
+          onRetry={backend.retry}
+        />
+      </div>
     );
   }
 
   if (stage === 'picker') {
     return (
       <div className="flex flex-col gap-3">
+        <ModeTabs mode={mode} onChange={setMode} />
         {error ? <Toast tone="danger" onDismiss={() => setError(null)}>{error}</Toast> : null}
         <GradingJobsCard jobs={myJobs} onView={openJobReport} onDismiss={dismissJob} onRefresh={grading.refresh} />
         <SetPicker
@@ -398,6 +450,7 @@ export function SpeakingPanel({
   if (stage === 'result' && report) {
     return (
       <div className="flex flex-col gap-3">
+        <ModeTabs mode={mode} onChange={setMode} />
         {error ? <Toast tone="danger" onDismiss={() => setError(null)}>{error}</Toast> : null}
         <SpeakingResult report={report} transcript={transcript} onPracticeAgain={backToPicker} />
       </div>

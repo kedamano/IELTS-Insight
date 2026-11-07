@@ -61,6 +61,12 @@ import {
   speakingAudioUrl,
   speakingSet,
   speakingSets,
+  sparringTopic,
+  sparringTopics,
+  startSparring,
+  getSparringSession,
+  postSparringTurn,
+  assessSparringAsync,
   startSpeaking,
   toReadableError,
   trashAttempts,
@@ -419,6 +425,132 @@ describe('口语端点', () => {
     expect(calls[0].url).toBe(`${API_BASE}/stt`);
     const file = (calls[0].init.body as FormData).get('audio') as File;
     expect(file.name).toBe('speech.webm');
+  });
+});
+
+// ============================================================
+// 2-b. 1 对 1 陪练（契约 §16，§1 #51–#57）
+// ============================================================
+
+describe('口语陪练端点', () => {
+  it('sparringTopics() 的 level 走查询串，不是在客户端自己筛（#51）', async () => {
+    mockOnce('get', '/sparring/topics?level=b1', {
+      items: [
+        {
+          id: 'sb_restaurant_01',
+          title_zh: '餐厅点单',
+          topic: 'restaurant',
+          scenario_zh: '点午餐',
+          level: 'a2',
+          target_band: 5.5,
+          turns: 10,
+          preset_count: 6,
+        },
+      ],
+    });
+    const items = await sparringTopics('b1');
+    expect(items).toHaveLength(1);
+    expect(items[0].preset_count).toBe(6);
+    expect(last().url).toContain('level=b1');
+  });
+
+  it('sparringTopic() GET 全文含开场白与预置追问（#52）', async () => {
+    mockOnce('get', '/sparring/topics/sb_restaurant_01', {
+      id: 'sb_restaurant_01',
+      module: 'sparring',
+      kind: 'practice',
+      target_band: 5.5,
+      title_zh: '餐厅点单',
+      topic: 'restaurant',
+      scenario_zh: '点午餐',
+      level: 'a2',
+      source: 'hand',
+      generated_at: '2026-11-06T00:00:00Z',
+      opening: 'Good afternoon, welcome in!',
+      preset_questions: ['How many people tonight?'],
+      max_turns: 10,
+      partner_voice: 'en-GB-SoniaNeural',
+      turns: 10,
+      preset_count: 6,
+    });
+    const doc = await sparringTopic('sb_restaurant_01');
+    expect(doc.opening).toContain('welcome in');
+    expect(doc.max_turns).toBe(10);
+    expect(last().url).toContain('/sparring/topics/sb_restaurant_01');
+  });
+
+  it('startSparring() POST {topic_id} 返回开场与轮次上限（#53）', async () => {
+    mockOnce('post', '/sparring/sessions', {
+      session_id: 'spa_1',
+      topic: { id: 'sb_restaurant_01' },
+      opening: 'Good afternoon...',
+      turn_index: 0,
+      max_turns: 10,
+      state: 'created',
+      audio_url: null,
+      messages: [],
+    });
+    const started = await startSparring({ topic_id: 'sb_restaurant_01' });
+    expect(started.session_id).toBe('spa_1');
+    expect(started.max_turns).toBe(10);
+    expect(last().json).toEqual({ topic_id: 'sb_restaurant_01' });
+  });
+
+  it('getSparringSession() 能把整段对话接回（#54）', async () => {
+    mockOnce('get', '/sparring/sessions/spa_1', {
+      session_id: 'spa_1',
+      topic_id: 'sb_restaurant_01',
+      max_turns: 10,
+      turn_index: 1,
+      remaining: 9,
+      state: 'in_progress',
+      messages: [
+        { seq: 0, role: 'partner', text: 'Welcome!', source: 'opening', audio_url: null },
+        { seq: 1, role: 'user', text: 'A table for two.', confidence: 0.9, duration_sec: 3 },
+      ],
+      result: null,
+    });
+    const view = await getSparringSession('spa_1');
+    expect(view.messages).toHaveLength(2);
+    expect(view.remaining).toBe(9);
+  });
+
+  it('postSparringTurn() 走 multipart，文本路径带 duration_sec（#55 / AC-S3b 同口径）', async () => {
+    mockOnce('post', '/sparring/sessions/spa_1/turn', {
+      seq: 1,
+      transcript: 'A table for two.',
+      confidence: null,
+      partner: { seq: 2, role: 'partner', text: 'Would you like a drink?', source: 'fallback', audio_url: null },
+      turn_index: 1,
+      remaining: 9,
+      state: 'in_progress',
+      source: 'fallback',
+      degraded_reason: 'offline_template',
+    });
+    const result = await postSparringTurn('spa_1', { text: 'A table for two.', durationSec: 3 });
+    expect(result.partner.source).toBe('fallback');
+    expect(last().form?.get('text')).toBe('A table for two.');
+    expect(last().form?.get('duration_sec')).toBe('3');
+  });
+
+  it('assessSparringAsync() 只发 POST 不等待报告（#57 / §10.6）', async () => {
+    mockOnce('post', '/sparring/sessions/spa_1/assess/async', {
+      job_id: 'job_sp_1',
+      module: 'speaking',
+      task_ref: 'spa_1',
+      status: 'queued',
+      attempt_id: null,
+      report: null,
+      error: null,
+      degraded_reason: null,
+      created_at: '2026-11-06T00:00:00Z',
+      started_at: null,
+      finished_at: null,
+    });
+    const job = await assessSparringAsync('spa_1');
+    expect(job.job_id).toBe('job_sp_1');
+    expect(job.status).toBe('queued');
+    expect(last().json).toBeNull();
   });
 });
 
@@ -972,6 +1104,9 @@ describe('契约 §7 导出面', () => {
     'health', 'getSettings', 'patchSettings', 'setAiKey', 'clearAiKey',
     'speakingSets', 'speakingSet', 'startSpeaking', 'getSpeakingSession', 'postSpeakingTurn',
     'assessSpeaking', 'followups',
+    // 契约 §16（1 对 1 陪练，§1 #51–#57）
+    'sparringTopics', 'sparringTopic', 'startSparring', 'getSparringSession', 'postSparringTurn',
+    'assessSparring', 'assessSparringAsync',
     'listeningSets', 'listeningSet', 'listeningAudioUrl', 'postListeningAttempt',
     'readingSets', 'readingSet', 'postReadingAttempt',
     'writingTasks', 'postWritingAttempt', 'writingAttempt',

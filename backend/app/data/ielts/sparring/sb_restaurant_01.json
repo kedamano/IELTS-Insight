@@ -1,0 +1,25 @@
+{
+  "id": "sb_restaurant_01",
+  "module": "sparring",
+  "kind": "practice",
+  "title_zh": "餐厅点单",
+  "topic": "restaurant",
+  "level": "a2",
+  "target_band": 5.5,
+  "source": "hand",
+  "generated_at": "2026-11-06T00:00:00Z",
+  "scenario_zh": "你在伦敦一家小餐馆点午餐。服务员会先问几位、推荐今日菜色，再确认饮品与忌口。",
+  "opening": "Good afternoon, welcome in! Do you have a booking, or would you like me to find you a table?",
+  "preset_questions": [
+    "How many people will be joining you today?",
+    "Would you like to sit by the window or near the back?",
+    "Can I start you off with something to drink?",
+    "Today's special is a slow-cooked lamb — would you like to hear more about it?",
+    "Do you have any allergies or dietary requirements I should know about?",
+    "Would you prefer the soup as a starter, or shall we go straight to the main?",
+    "How would you like the steak cooked — rare, medium, or well done?",
+    "Shall I bring you the dessert menu now, or would you like a few minutes?"
+  ],
+  "max_turns": 10,
+  "partner_voice": "en-GB-SoniaNeural"
+}

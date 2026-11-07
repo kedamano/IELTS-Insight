@@ -95,10 +95,37 @@ def _add_drafts_table(conn: sqlite3.Connection) -> None:
     )
 
 
+def _add_sparring_sessions_table(conn: sqlite3.Connection) -> None:
+    """v4：1 对 1 口语陪练会话表（契约 §16.3）。
+
+    与 v3 同一条教训：`schema.sql` 对新库已经建好这张表，而新库的 `user_version` 从 0 起、
+    整条链都要跑一遍，所以这里必须是 `CREATE TABLE IF NOT EXISTS`，否则新库首次升级就撞表。
+    """
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS sparring_sessions(
+          id TEXT PRIMARY KEY,
+          topic_id TEXT,
+          level TEXT,
+          state TEXT,
+          turn_index INTEGER DEFAULT 0,
+          max_turns INTEGER,
+          messages_json TEXT NOT NULL DEFAULT '[]',
+          used_presets_json TEXT NOT NULL DEFAULT '[]',
+          created_at TEXT,
+          updated_at TEXT,
+          result_attempt_id TEXT
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_sparring_topic ON sparring_sessions(topic_id)")
+
+
 MIGRATIONS: list[Step] = [
     Step(1, "基线：schema.sql 的当前结构", _baseline),
     Step(2, "练习记录软删：attempts.deleted_at + 索引", _add_attempt_deleted_at),
     Step(3, "草稿副本：drafts 表", _add_drafts_table),
+    Step(4, "1 对 1 口语陪练：sparring_sessions 表 + 索引", _add_sparring_sessions_table),
 ]
 
 

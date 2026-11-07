@@ -21,7 +21,7 @@ export type QuestionFieldProps = {
 };
 
 const inputClass =
-  'h-9 w-full rounded-card border border-rule bg-paper px-2 text-sm text-ink outline-none focus:border-accent';
+  'h-9 w-full rounded-card border border-rule bg-paper px-2 text-sm text-ink focus:border-accent';
 
 function wordCountText(question: ListeningQuestionPublic, value: string) {
   const limit = wordLimitHint(question);

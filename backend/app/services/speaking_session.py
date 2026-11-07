@@ -18,7 +18,7 @@ from urllib.parse import quote
 from app.db import store
 from app.prompts import FOLLOWUP_MAX_TOKENS, TEMPERATURE
 from app.prompts import speaking as speaking_prompts
-from app.services import ai_client, speaking_grader
+from app.services import ai_client, faultlog, speaking_grader
 
 STATES = ("created", "in_progress", "awaiting_assess", "assessed", "closed")
 PARTS = (1, 2, 3)
@@ -262,10 +262,19 @@ def transcribe_audio(data: bytes, input_format: str = "webm") -> dict[str, Any]:
     try:
         result = stt_service.transcribe(data, input_format)
     except ValueError as exc:
-        raise SpeakingSessionError(400, f"音频无法识别：{exc}", "audio_unintelligible") from exc
-    except Exception as exc:  # noqa: BLE001 - 模型/解码失败必须可见（CONSTITUTION §3）
+        # 原文只进日志（契约 §15.5 第 2 条）：撤下界面里的英文原文不等于没人能查
+        faultlog.warn("STT", f"转写解码失败: {type(exc).__name__}: {exc}")
         raise SpeakingSessionError(
-            503, f"语音转写不可用（{type(exc).__name__}），可改用键盘输入文本", "stt_failed"
+            400,
+            "这段录音听不清，可能没录到声音或格式不对，请重录一次或改用键盘输入",
+            "audio_unintelligible",
+        ) from exc
+    except Exception as exc:  # noqa: BLE001 - 模型/解码失败必须可见（CONSTITUTION §3）
+        faultlog.error("STT", f"语音转写不可用: {type(exc).__name__}: {exc}")
+        raise SpeakingSessionError(
+            503,
+            "本机语音转写暂时不可用（可能没装 whisper 或模型没加载），可改用键盘输入文本",
+            "stt_failed",
         ) from exc
     if not isinstance(result, dict):
         raise SpeakingSessionError(503, "语音转写返回异常，可改用键盘输入文本", "stt_failed")

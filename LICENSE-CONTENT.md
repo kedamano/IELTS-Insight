@@ -7,7 +7,7 @@
 
 **范围**
 
-- `backend/app/data/ielts/**` —— 36 套题（speaking 18 / listening 4 / reading 4 / writing 10）的 JSON，含篇章、题干、选项、音频文本、图表数据、范文与中文解析。
+- `backend/app/data/ielts/**` —— 52 套题（speaking 22 / listening 4 / reading 4 / writing 12 / sparring 10）的 JSON，含篇章、题干、选项、音频文本、图表数据、范文与中文解析。
 - `docs/assets/screenshots/**` —— README 里的 5 张界面截图。
 
 **你可以**
@@ -35,11 +35,22 @@
 | edge-tts | 听力音频合成 | LGPL-3.0 |
 | PyInstaller | 后端冻结打包 | GPL-2.0 附带 booting exception（冻结产物不受 GPL 约束） |
 | openai-whisper / torch | 口语录音转写 | MIT / BSD-3-Clause |
+| ECDICT（skywind3000/ECDICT） | `dictionary.json` 的词表与释义来源（见 §3 与 docs/specs/dictionary-provenance.md） | MIT |
 | 任意 OpenAI 兼容端点 | 可选的 AI 批改 | 由使用者自备凭据，与本仓库许可无关 |
 
-## 3. 一处尚未查清、所以不假装已解决
+## 3. `dictionary.json` —— 来源已查清：整理自 ECDICT（MIT）
 
-`backend/app/data/dictionary.json`（392 词条，IPA 音标 + 中文释义 + 难度分级）的**来源没有在本仓库留档**，无法确认是自写还是从公开词典整理而来。因此本文件**不声明对它的任何版权主张**，也不把它纳入上面的 CC BY-NC 范围。若你复用到发布包里，请先自行核对该词典数据的原始许可。
+`backend/app/data/dictionary.json`（392 词条，IPA 音标 + 中文释义 + 难度分级）此前标注为「来源未留档」。
+Wave 8 做了逐条交叉核对，**结论：词表 99.7%（391/392）出现在 ECDICT 中，中文释义全部能在
+ECDICT 的 `translation`/`definition` 字段里找到逐字或同义改写对应，音标是人工从 ECDICT 的
+键盘式注音规范化成 IPA 的**。核对判据、复跑命令与逐项数字见
+[docs/specs/dictionary-provenance.md](docs/specs/dictionary-provenance.md)，重建脚本在
+`backend/tools/rebuild_dictionary.py`。
+
+- 上游：**ECDICT**（github.com/skywind3000/ECDICT），**MIT 许可** —— 允许再分发与商用，保留版权声明即可。
+- 因此本文件第 1 节的 CC BY-NC 范围**不覆盖** `dictionary.json`：它的许可由 ECDICT 的 MIT 决定，
+  复用时请一并保留 ECDICT 的 MIT 署名；本仓库对「音标规范化 + 难度分档」这层加工不另主张权利。
+- 一处脏数据如实记录：`fitlife` 不在 ECDICT、内容全空，是采集时混入的词条。
 
 ## 4. 想商用怎么办
 

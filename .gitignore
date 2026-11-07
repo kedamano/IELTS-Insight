@@ -68,3 +68,9 @@ tauri-*.log
 # ===== SSH 密钥（切勿提交）=====
 id_ed25519
 id_ed25519.pub
+
+# ===== 本机实跑 / 诊断临时目录（不入库：含临时库、驱动脚本与截图）=====
+.tmp/
+
+# ===== onedir 便携布局产物（build.ps1 -Onedir 组装，不入库）=====
+dist-portable/

@@ -123,8 +123,17 @@ async def stt(audio: UploadFile = File(...)):
     try:
         result = transcribe(data, fmt)
     except ValueError as exc:
-        raise bad_request(str(exc), code="audio_unintelligible") from exc
-    except Exception as exc:
-        raise dependency_unavailable(f"转写失败：{exc}", code="stt_failed") from exc
+        # 界面只给固定中文句子，原文进日志（契约 §15.5）
+        faultlog.warn("STT", f"转写解码失败: {type(exc).__name__}: {exc}")
+        raise bad_request(
+            "这段录音听不清，可能没录到声音或格式不对，请重录一次或改用键盘输入",
+            code="audio_unintelligible",
+        ) from exc
+    except Exception as exc:  # noqa: BLE001
+        faultlog.error("STT", f"语音转写不可用: {type(exc).__name__}: {exc}")
+        raise dependency_unavailable(
+            "本机语音转写暂时不可用（可能没装 whisper 或模型没加载），可改用键盘输入文本",
+            code="stt_failed",
+        ) from exc
 
     return ok(result)

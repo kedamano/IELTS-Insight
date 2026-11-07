@@ -1,0 +1,25 @@
+{
+  "id": "sb_meeting_10",
+  "module": "sparring",
+  "kind": "practice",
+  "title_zh": "主持会议",
+  "topic": "meeting",
+  "level": "b2",
+  "target_band": 7.0,
+  "source": "hand",
+  "generated_at": "2026-11-07T00:00:00Z",
+  "scenario_zh": "你在主持一次项目例会，同事就进度延误发表意见。你要追问原因、比较方案，并推动一个决定。",
+  "opening": "Thanks for joining. Before we look at the schedule, could you tell me what you think is actually holding the launch back?",
+  "preset_questions": [
+    "You mentioned the handover — who exactly was waiting on whom?",
+    "If we cut one feature, would that buy back enough time for the rest?",
+    "How confident are you that the estimate you've just given will hold?",
+    "What would you say to someone who argues the delay is mostly communication?",
+    "Which of those two risks worries you more, and why?",
+    "Should we decide now, or do you need another day to check with the team?",
+    "How would you explain this decision to someone who wasn't in the room?",
+    "Is there anything we haven't discussed that might still derail this?"
+  ],
+  "max_turns": 10,
+  "partner_voice": "en-GB-SoniaNeural"
+}

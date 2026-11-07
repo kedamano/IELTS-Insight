@@ -18,6 +18,8 @@ export type RecorderErrorCode =
   | 'overconstrained'
   | 'security'
   | 'aborted'
+  /** 录音已经开始之后才坏（设备被抢走/拔出、编码器出错、停止时抛异常）——契约 §15.6 */
+  | 'recorder_failed'
   | 'unknown';
 
 /** 每种失败都给「发生了什么 + 现在能做什么」（AC-S3 可理解中文）。 */
@@ -29,6 +31,8 @@ export const RECORDER_ERROR_TEXT: Record<RecorderErrorCode, string> = {
   overconstrained: '所选录音设备当前不可用：请在「设置 → 录音输入设备」重新选择设备，或使用默认设备。',
   security: '安全策略阻止了麦克风访问（需 HTTPS 或本地来源）。请从应用内打开，不要用 file:// 直接访问页面。',
   aborted: '录音请求被取消：请重新开始录音。',
+  recorder_failed:
+    '录音中断：这一段没能完整保存（麦克风被其它程序抢走、设备被拔出，或编码器出错）。请重新录音，或改用键盘输入文本。',
   unknown: '录音启动失败，请检查麦克风后重试。',
 };
 
@@ -98,6 +102,11 @@ export interface RecorderStopResult {
   durationMs: number;
   sizeBytes: number;
   mimeType: string;
+  /**
+   * 这一段是不是残缺的（契约 §15.6）：出错时照样 resolve、但 `failed` 为真，
+   * 调用方必须看一眼它才允许提交 —— Part 2 到点自动提交也走这条路。
+   */
+  failed: boolean;
 }
 
 export interface UseRecorderOptions {
@@ -138,7 +147,7 @@ export interface UseRecorderResult {
   stoppedByLimit: boolean;
   lastResult: RecorderStopResult | null;
   start: () => Promise<void>;
-  /** 永远 resolve；未在录音时返回空 blob + 0 时长。 */
+  /** 永远 resolve；未在录音时返回空 blob + 0 时长。出错的那一段 `failed === true`（契约 §15.6）。 */
   stop: () => Promise<RecorderStopResult>;
   /** 丢弃本次录音（不落 lastResult）。 */
   cancel: () => void;
@@ -210,6 +219,8 @@ export function useRecorder(options: UseRecorderOptions = {}): UseRecorderResult
   const scratchRef = useRef<Uint8Array | null>(null);
   const recordingRef = useRef(false);
   const resultRef = useRef<RecorderStopResult | null>(null);
+  /** 本次录音是否已经坏过（契约 §15.6）：坏过的这一段永远不许当成完整录音提交 */
+  const recorderFailedRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -299,22 +310,47 @@ export function useRecorder(options: UseRecorderOptions = {}): UseRecorderResult
     [levelIntervalMs, trackLevel],
   );
 
+  /**
+   * 录制中途坏掉（设备被抢走/拔出、编码器出错）：当场可见，并归还麦克风（契约 §15.6）。
+   * 以前这里什么都没挂 —— 残缺的 chunk 会一路活到用户点「停止」，然后被拼成一次「完整的」录音。
+   */
+  const handleMidwayFailure = useCallback(() => {
+    if (recorderFailedRef.current) return;
+    recorderFailedRef.current = true;
+    recordingRef.current = false;
+    stopTickers();
+    recorderRef.current = null;
+    chunksRef.current = [];
+    resultRef.current = null;
+    teardown();
+    reportError('recorder_failed');
+  }, [reportError]);
+
   const stop = useCallback((): Promise<RecorderStopResult> => {
     return new Promise((resolve) => {
+      const emptyResult = (): RecorderStopResult => {
+        const mime = preferredMime ?? 'audio/webm';
+        return (
+          resultRef.current ?? {
+            blob: new Blob([], { type: mime }),
+            durationMs: 0,
+            sizeBytes: 0,
+            mimeType: mime,
+            failed: recorderFailedRef.current,
+          }
+        );
+      };
       const recorder = recorderRef.current;
       if (!recorder || !recordingRef.current) {
         // 没在录音：不抛错，返回上一次结果或空结果（调用方可以安全 await）
-        const empty: RecorderStopResult =
-          resultRef.current ??
-          { blob: new Blob([], { type: preferredMime ?? 'audio/webm' }), durationMs: 0, sizeBytes: 0, mimeType: preferredMime ?? 'audio/webm' };
-        resolve(empty);
+        resolve(emptyResult());
         return;
       }
       recordingRef.current = false;
       stopTickers();
 
       let settled = false;
-      const finish = () => {
+      const finish = (failed: boolean) => {
         if (settled) return;
         settled = true;
         const mime = recorder.mimeType || snapshot.mimeType || preferredMime || 'audio/webm';
@@ -324,10 +360,23 @@ export function useRecorder(options: UseRecorderOptions = {}): UseRecorderResult
           durationMs: Math.round(elapsedRef.current),
           sizeBytes: blob.size,
           mimeType: mime,
+          failed,
         };
-        resultRef.current = result;
         recorderRef.current = null;
         teardown();
+        if (failed) {
+          // 残缺的那一段不落 lastResult：落了界面就给「提交录音」按钮，
+          // 用户交出去一段自己不知道被截断的音频，报告屏还按完整作答给它打分。
+          chunksRef.current = [];
+          resultRef.current = null;
+          if (mountedRef.current) {
+            setSnapshot((prev) => ({ ...prev, recording: false, starting: false, level: 0, mimeType: result.mimeType }));
+          }
+          reportError('recorder_failed');
+          resolve(result);
+          return;
+        }
+        resultRef.current = result;
         if (mountedRef.current) {
           setLastResult(result);
           setSnapshot((prev) => ({ ...prev, recording: false, starting: false, level: 0, mimeType: result.mimeType }));
@@ -336,17 +385,18 @@ export function useRecorder(options: UseRecorderOptions = {}): UseRecorderResult
       };
 
       recorder.ondataavailable = null;
-      recorder.onstop = finish;
-      recorder.onerror = () => finish();
+      recorder.onstop = () => finish(recorderFailedRef.current);
+      recorder.onerror = () => finish(true);
       try {
         recorder.stop();
       } catch {
-        finish();
+        // 抛异常 == 这段没保存完，不是「录完了」
+        finish(true);
       }
-      // 某些实现不触发 onstop：兜底 1.5s 后照样 resolve
-      setTimeout(finish, 1500);
+      // 某些实现不触发 onstop：兜底 1.5s 后照样 resolve（§15.6 第 6 条：这条维持原判，不算失败）
+      setTimeout(() => finish(false), 1500);
     });
-  }, [preferredMime, snapshot.mimeType]);
+  }, [preferredMime, reportError, snapshot.mimeType]);
 
   const stopRef = useRef(stop);
   stopRef.current = stop;
@@ -360,6 +410,7 @@ export function useRecorder(options: UseRecorderOptions = {}): UseRecorderResult
 
     chunksRef.current = [];
     resultRef.current = null;
+    recorderFailedRef.current = false;
     elapsedRef.current = 0;
     apply({ error: null, errorCode: null, warning: null, stoppedByLimit: false, starting: true, elapsedMs: 0, level: 0 });
 
@@ -417,6 +468,9 @@ export function useRecorder(options: UseRecorderOptions = {}): UseRecorderResult
     recorder.ondataavailable = (event) => {
       if (event.data && event.data.size > 0) chunksRef.current.push(event.data);
     };
+    // 契约 §15.6：中途坏掉必须当场可见。以前这里不挂 onerror，残缺的 chunk 会一路活到点「停止」，
+    // 然后被拼成一次看起来完整的录音。
+    recorder.onerror = handleMidwayFailure;
     try {
       recorder.start(1000);
     } catch {
@@ -448,7 +502,7 @@ export function useRecorder(options: UseRecorderOptions = {}): UseRecorderResult
         });
       }
     }, 100);
-  }, [apply, autoGainControl, beginLevel, echoCancellation, noiseSuppression, preferredMime, reportError]);
+  }, [apply, autoGainControl, beginLevel, echoCancellation, handleMidwayFailure, noiseSuppression, preferredMime, reportError]);
 
   const cancel = useCallback(() => {
     recordingRef.current = false;

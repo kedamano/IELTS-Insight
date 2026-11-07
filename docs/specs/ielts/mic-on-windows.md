@@ -81,17 +81,19 @@ ACL 校验报错。当前四科功能也不需要从 JS 侧读写文件系统或
 | 约束不匹配（指定 deviceId 失效） | `OverconstrainedError` | 「所选录音设备不可用。请在设置里重新选择输入设备，或改用文本输入继续练习。」 |
 | 非安全上下文 | `navigator.mediaDevices` 为 undefined | 「当前环境不支持录音（非安全上下文）。请通过桌面应用窗口打开，或改用文本输入继续练习。」 |
 
-## 6. ⚠️ 验证状态（诚实声明）
+## 6. ✅ 验证状态（2026-11-07 实测闭合）
 
-- 我**未在运行时实测**过打包后的 WebView2 窗口能否真的拿到麦克风流：本机是无 GUI 会话的命令行环境，
-  无法启动图形窗口并点录音。上面第 1、2 节是基于**读源码得到的静态结论**（wry 只放行 clipboard、默认 browser
-  args 不含麦克风开关），逻辑上成立，但：
-  - `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` 与 wry 程序内参数的“叠加而非替换”这一行为，
-    需要在真实打包 exe 上验证（Wave 3 实跑：口语 Part 2 点录音 → 能采到声音并转写 = 通过）。
-  - 若 Wave 3 实测发现仍 `NotAllowedError`，回退到第 3.1 节“自定义 PermissionRequested 处理器”方案，
-    那是唯一 100% 受控的路径。
-- **可能成为 launch blocker**：如果自动放行开关不生效，打包版录音会全线失败（开发版浏览器无此问题）。
-  Wave 3 集成时这是**第一优先**要实测的点。
+- **已实测通过**：用户在打包产物（onedir 便携布局，`%LOCALAPPDATA%\IELTSInsight\portable\`）的
+  GUI 窗口里实际录音成功（反馈原话「可以录音」）。第 2 节的
+  `--use-fake-ui-for-media-stream` 方案成立：自动放行权限 + 采集真实麦克风，未出现 `NotAllowedError`。
+  窗口渲染与 sidecar 启动的实拍见 `docs/assets/screenshots/portable-window.png` 与
+  `spec-contracts.md` §11.4。
+- 第 1、2 节的静态结论（wry 只放行 clipboard、默认 browser args 不含麦克风开关）与实测一致，
+  不需要回退到第 3.1 节的自定义 `PermissionRequested` 处理器。
+- 仍未单独走一遍的：**NSIS 安装版**的录音（机制与便携版相同——同一个 `main.rs`、同一份
+  exe 与 sidecar 布局，差异只在安装位置与 WebView2 数据目录位置）。便携版已通，安装版无新增风险点。
+- 历史背景（保留）：本文交付时本机是无 GUI 会话的命令行环境，无法启动图形窗口点录音，
+  所以当时只能给静态结论并标注「可能成为 launch blocker」。该风险现已排除。
 
 ## 7. 相关文件
 

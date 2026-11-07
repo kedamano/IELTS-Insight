@@ -161,8 +161,26 @@ CREATE TABLE IF NOT EXISTS drafts(
   updated_at TEXT NOT NULL
 );
 
+-- 1 对 1 口语陪练会话（契约 §16.3）：消息序列存 JSON，一轮一条 partner/user 记录。
+-- 与 speaking_sessions 分开的理由不是洁癖：那张表的语义是「按题序逐题作答」，
+-- 而陪练没有题序，只有一条不断变长的对话；塞进同一张表会让 `current_index` 变成没人能懂的数。
+CREATE TABLE IF NOT EXISTS sparring_sessions(
+  id TEXT PRIMARY KEY,
+  topic_id TEXT,
+  level TEXT,
+  state TEXT,
+  turn_index INTEGER DEFAULT 0,
+  max_turns INTEGER,
+  messages_json TEXT NOT NULL DEFAULT '[]',
+  used_presets_json TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT,
+  updated_at TEXT,
+  result_attempt_id TEXT
+);
+
 -- 索引（非契约内容，纯查询性能；命名以 idx_ 前缀区分）
 CREATE INDEX IF NOT EXISTS idx_attempts_module_created ON attempts(module, created_at);
+CREATE INDEX IF NOT EXISTS idx_sparring_topic ON sparring_sessions(topic_id);
 -- 注意：`attempts(deleted_at)` 的索引**不在这里**，写在 app/db/migrations.py 的步骤 2。
 -- 原因不是风格：schema.sql 跑在增量迁移**之前**，老库此时表已存在（IF NOT EXISTS 跳过）
 -- 而 `deleted_at` 还没加上，这条 CREATE INDEX 会直接 `no such column` —— 升级路径当场断掉。

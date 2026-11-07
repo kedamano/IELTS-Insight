@@ -78,6 +78,8 @@ export type DegradedReason =
   | 'invalid_model_output'
   | 'incomplete_dimensions'
   | 'offline_template'
+  /** Wave 8 收编进 §0 枚举（契约 §16.3 规则 1）：陪练预置问句用尽。 */
+  | 'preset_exhausted'
   | null;
 
 export const DEGRADED_REASON_LABEL_ZH: Record<Exclude<DegradedReason, null>, string> = {
@@ -87,6 +89,7 @@ export const DEGRADED_REASON_LABEL_ZH: Record<Exclude<DegradedReason, null>, str
   invalid_model_output: 'AI 返回格式无效',
   incomplete_dimensions: 'AI 返回维度不全',
   offline_template: '离线模板',
+  preset_exhausted: '预置追问已用尽',
 };
 
 /** 展示用：`近似分` / `离线模板` / `离线近似`（CONSTITUTION §3、AC-G3）。 */
@@ -431,6 +434,140 @@ export interface SpeakingReport extends AiMeta {
   upgrade_vocabulary: UpgradeVocabularyItem[];
   metrics: SpeakingMetrics;
   pronunciation_detail: PronunciationDetail;
+  /** 契约 §16.4：1 对 1 陪练的整场报告多这一块；题库练习的报告里没有。 */
+  sparring?: SparringReportMeta;
+}
+
+// ============================================================
+// 2-SB. 1 对 1 口语陪练（契约 §16、FR-S7 / AC-S7.x）
+// ============================================================
+
+/** 陪练难度档（契约 §16.1）。 */
+export type SparringLevel = 'a2' | 'b1' | 'b2';
+
+export const SPARRING_LEVELS: readonly SparringLevel[] = ['a2', 'b1', 'b2'];
+
+export const SPARRING_LEVEL_LABEL: Record<SparringLevel, string> = {
+  a2: 'A2 · 基础日常',
+  b1: 'B1 · 能展开说明',
+  b2: 'B2 · 抽象与假设',
+};
+
+/** §1 #51 列表项。 */
+export interface SparringTopicMeta {
+  id: string;
+  title_zh: string;
+  topic: string;
+  /** 中文场景说明：界面上要写清「这是什么场合」。 */
+  scenario_zh: string;
+  level: SparringLevel;
+  target_band: Band;
+  /** 轮次上限（已按 8–12 夹紧）。 */
+  turns: number;
+  /** 该话题预置追问条数（离线整场都靠它）。 */
+  preset_count: number;
+}
+
+/** §1 #52 全文（含开场白与预置追问）。 */
+export interface SparringTopic extends SparringTopicMeta {
+  module: 'sparring';
+  kind?: string;
+  source?: string;
+  generated_at?: string;
+  opening: string;
+  preset_questions: string[];
+  max_turns: number;
+  partner_voice?: string;
+}
+
+/** 陪练官这条消息从哪来：开场白 / AI 实时生成 / 预置回落。 */
+export type SparringPartnerSource = 'opening' | 'ai' | 'fallback';
+
+export interface SparringMessage {
+  seq: number;
+  role: 'partner' | 'user';
+  text: string;
+  /** 仅 `role=partner`。 */
+  source?: SparringPartnerSource;
+  /** 仅 `role=partner`；离线为 null（界面须回落到「无音频，读文本」）。 */
+  audio_url?: string | null;
+  /** 仅 `role=user`：转写置信度（文本兜底为 null）。 */
+  confidence?: number | null;
+  duration_sec?: number | null;
+}
+
+export type SparringState = 'created' | 'in_progress' | 'awaiting_assess' | 'assessed' | 'closed';
+
+/** §1 #56 报告里的陪练块。 */
+export interface SparringReportMeta {
+  topic_id: string;
+  turns: number;
+  mode: 'sparring';
+}
+
+/** §1 #53。 */
+export interface SparringSessionStart {
+  session_id: string;
+  topic: SparringTopic;
+  opening: string;
+  turn_index: number;
+  max_turns: number;
+  state: SparringState;
+  audio_url?: string | null;
+  messages: SparringMessage[];
+}
+
+/** §1 #54（刷新/重开接回）。 */
+export interface SparringSession {
+  session_id: string;
+  topic_id: string;
+  level?: SparringLevel | string | null;
+  max_turns: number;
+  turn_index: number;
+  remaining: number;
+  state: SparringState;
+  messages: SparringMessage[];
+  result?: SpeakingReport | null;
+}
+
+/** §1 #55。 */
+export interface SparringTurnResult {
+  seq: number;
+  transcript: string;
+  confidence: number | null;
+  partner: SparringMessage;
+  turn_index: number;
+  remaining: number;
+  state: SparringState;
+  /** 追问的来源（与 `partner.source` 同值，便于一次读取）。 */
+  source: SparringPartnerSource;
+  degraded_reason: DegradedReason | string | null;
+  /** AC-S3 同口径：置信度 < 0.5 时后端给的可读提示。 */
+  hint_zh?: string;
+}
+
+export interface StartSparringBody {
+  topic_id: string;
+  level?: SparringLevel;
+}
+
+/**
+ * 陪练追问的降级原因 → 中文（契约 §16.3 规则 1）。
+ *
+ * `preset_exhausted` Wave 8 起是 §0 正式枚举值，不再是私有字符串 —— 这个函数从此
+ * 只是「同一枚举在陪练语境下的第二套措辞」（预置追问比通用标签更具体），
+ * 而不是第二份数据。未知值原样带出，不猜翻译（与 `errorTypes.ts` 同一口径）。
+ */
+export function sparringDegradedLabel(reason: DegradedReason | string | null | undefined): string {
+  if (!reason) return 'AI 实时追问';
+  if (reason === 'preset_exhausted') return '预置追问已用尽';
+  if (reason === 'offline_template') return '预置追问（离线）';
+  if (reason === 'no_api_key') return '预置追问（未配置 AI）';
+  if (reason === 'invalid_model_output') return '预置追问（AI 输出无效）';
+  if (reason === 'timeout') return '预置追问（AI 超时）';
+  if (reason === 'network_error') return '预置追问（网络不可用）';
+  if (reason === 'incomplete_dimensions') return '预置追问（AI 返回不全）';
+  return `预置追问（${reason}）`;
 }
 
 // ============================================================

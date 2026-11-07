@@ -54,6 +54,13 @@ import type {
   SpeakingSetMeta,
   SpeakingTurnInput,
   SpeakingTurnResult,
+  SparringLevel,
+  SparringSession,
+  SparringSessionStart,
+  SparringTopic,
+  SparringTopicMeta,
+  SparringTurnResult,
+  StartSparringBody,
   SnapshotRow,
   StartSpeakingBody,
   TtsVoice,
@@ -401,6 +408,58 @@ export function assessSpeakingAsync(id: string, opts?: ApiRequestOptions): Promi
 /** #12 `POST /speaking/followups`（失败时后端回落预置追问，AC-S6）。 */
 export function followups(body: FollowupsBody, opts?: ApiRequestOptions): Promise<FollowupsResult> {
   return fetchJson<FollowupsResult>(apiUrl('/speaking/followups'), postJson(body), opts);
+}
+
+// ============================================================
+// 2-b. 1 对 1 口语陪练（契约 §16：§1 #51–#57）
+// ============================================================
+
+/** #51 `GET /sparring/topics?level=`。 */
+export function sparringTopics(level?: SparringLevel | null, opts?: ApiRequestOptions): Promise<SparringTopicMeta[]> {
+  return fetchItems<SparringTopicMeta>(apiUrl(`/sparring/topics${qs({ level })}`), {}, opts);
+}
+
+/** #52 `GET /sparring/topics/{id}`（全文，含开场白与预置追问）。 */
+export function sparringTopic(id: string, opts?: ApiRequestOptions): Promise<SparringTopic> {
+  return fetchJson<SparringTopic>(apiUrl(`/sparring/topics/${enc(id)}`), {}, opts);
+}
+
+/** #53 `POST /sparring/sessions`。 */
+export function startSparring(body: StartSparringBody, opts?: ApiRequestOptions): Promise<SparringSessionStart> {
+  return fetchJson<SparringSessionStart>(apiUrl('/sparring/sessions'), postJson(body), opts);
+}
+
+/** #54 `GET /sparring/sessions/{id}`（刷新/重开接回整段对话）。 */
+export function getSparringSession(id: string, opts?: ApiRequestOptions): Promise<SparringSession> {
+  return fetchJson<SparringSession>(apiUrl(`/sparring/sessions/${enc(id)}`), {}, opts);
+}
+
+/** #55 `POST /sparring/sessions/{id}/turn`（multipart：`audio` 或 `text` + `duration_sec`）。 */
+export function postSparringTurn(
+  id: string,
+  form: FormData | SpeakingTurnInput,
+  opts?: ApiRequestOptions,
+): Promise<SparringTurnResult> {
+  const body = form instanceof FormData ? form : buildSpeakingTurnForm(form);
+  return fetchJson<SparringTurnResult>(
+    apiUrl(`/sparring/sessions/${enc(id)}/turn`),
+    { method: 'POST', body },
+    opts,
+  );
+}
+
+/** #56 `POST /sparring/sessions/{id}/assess`（同步；脚本与调试用）。 */
+export function assessSparring(id: string, opts?: ApiRequestOptions): Promise<SpeakingReport> {
+  return fetchJson<SpeakingReport>(apiUrl(`/sparring/sessions/${enc(id)}/assess`), { method: 'POST' }, opts);
+}
+
+/** #57 `POST /sparring/sessions/{id}/assess/async`：排队评分，立即拿到 job_id（§10.6）。 */
+export function assessSparringAsync(id: string, opts?: ApiRequestOptions): Promise<SpeakingGradingJob> {
+  return fetchJson<SpeakingGradingJob>(
+    apiUrl(`/sparring/sessions/${enc(id)}/assess/async`),
+    { method: 'POST' },
+    opts,
+  );
 }
 
 /** 契约 §1 说明：`POST /stt` 前端主流程不再直接调用，仅保留兜底复用。 */
@@ -787,6 +846,13 @@ export const api = {
   assessSpeakingAsync,
   followups,
   postStt,
+  sparringTopics,
+  sparringTopic,
+  startSparring,
+  getSparringSession,
+  postSparringTurn,
+  assessSparring,
+  assessSparringAsync,
   listeningSets,
   listeningSet,
   listeningAudioUrl,

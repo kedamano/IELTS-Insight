@@ -1,17 +1,20 @@
 {
   "schema": "ielts-manifest/1",
-  "generated_at": "2026-10-18T02:12:50Z",
+  "generated_at": "2026-11-07T03:54:34Z",
   "note": "索引文件，位于模块子目录之外；sets_loader 只加载 <module>/*.json，不要把本文件当 set。",
   "counts": {
-    "speaking": 18,
+    "speaking": 22,
     "listening": 4,
     "reading": 4,
-    "writing": 10
+    "writing": 12
   },
+  "sparring_count": 10,
   "sets": {
     "speaking": [
       "sp_p1_art_10",
+      "sp_p1_commuting_13",
       "sp_p1_cooking_04",
+      "sp_p1_countryside_14",
       "sp_p1_friends_08",
       "sp_p1_hometown_02",
       "sp_p1_news_12",
@@ -23,10 +26,12 @@
       "sp_p1_weather_03",
       "sp_p1_work_study_01",
       "sp_p2_book_01",
+      "sp_p2_childhood_game_07",
       "sp_p2_family_skill_02",
       "sp_p2_help_stranger_04",
       "sp_p2_keepsake_05",
       "sp_p2_quiet_place_03",
+      "sp_p2_skill_taught_08",
       "sp_p2_useful_app_06"
     ],
     "listening": [
@@ -47,11 +52,25 @@
       "wr_t1_enrolment_04",
       "wr_t1_migration_05",
       "wr_t1_visitors_02",
+      "wr_t1_waste_06",
+      "wr_t2_ai_homework_06",
       "wr_t2_carcity_02",
       "wr_t2_gapyear_03",
       "wr_t2_history_05",
       "wr_t2_remotework_01",
       "wr_t2_water_04"
+    ],
+    "sparring": [
+      "sb_bank_08",
+      "sb_campus_04",
+      "sb_clinic_05",
+      "sb_delivery_07",
+      "sb_directions_09",
+      "sb_interview_03",
+      "sb_meeting_10",
+      "sb_renting_02",
+      "sb_restaurant_01",
+      "sb_travel_06"
     ]
   }
 }

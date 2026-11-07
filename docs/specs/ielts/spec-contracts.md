@@ -13,7 +13,7 @@
   ```json
   { "ai_used": true, "degraded_reason": null, "model": "glm-4.6", "approximate": false }
   ```
-  `degraded_reason` 枚举：`no_api_key` / `network_error` / `timeout` / `invalid_model_output` / `incomplete_dimensions` / `offline_template`。
+  `degraded_reason` 枚举：`no_api_key` / `network_error` / `timeout` / `invalid_model_output` / `incomplete_dimensions` / `offline_template` / `preset_exhausted`（Wave 8 收编：陪练预置问句用尽 —— 它不是 AI 失败，也不是用户关网，但它是**降级**，必须留在跨模块枚举里，见 §16.3 规则 1）。
 
 ## 1. 端点总表
 
@@ -75,6 +75,13 @@
 | 48 | `PUT /drafts/{key}` | `{value, saved_at?}` | `{key, updated_at, size}`（§14.5） | Wave 7 |
 | 49 | `GET /drafts/{key}` | – | `{key, value, updated_at}`；无草稿 404 | Wave 7 |
 | 50 | `DELETE /drafts/{key}` | – | `{cleared: true}`（幂等） | Wave 7 |
+| 51 | `GET /sparring/topics` | `level=` 可选 | `{items: SparringTopicMeta[]}`（§16.2） | 新（Wave 8） |
+| 52 | `GET /sparring/topics/{topic_id}` | – | `SparringTopic`（§16.2） | 新（Wave 8） |
+| 53 | `POST /sparring/sessions` | `{topic_id, level?}` | `SparringSessionStart`（§16.3） | 新（Wave 8） |
+| 54 | `GET /sparring/sessions/{session_id}` | – | `SparringSession`（§16.3） | 新（Wave 8） |
+| 55 | `POST /sparring/sessions/{session_id}/turn` | multipart `audio` 或 form `text` + `duration_sec` | `SparringTurnResult`（§16.3） | 新（Wave 8） |
+| 56 | `POST /sparring/sessions/{session_id}/assess` | – | `SpeakingReport` + `sparring` 块（§16.4）；与 #11 同形状 | 新（Wave 8） |
+| 57 | `POST /sparring/sessions/{session_id}/assess/async` | – | `JobView`（§10.6） | 新（Wave 8） |
 
 **删除**：`/payment/order`、`/payment/verify`、`/scenes*`、`/sentence-parse/{scene_id}/{seq}`、`/stt`（并入口语 turn，但仍保留 `POST /stt` 供内部复用——决策：保留 `POST /stt`，前端不再直接调）、`/score`（被 `/speaking/.../assess` 取代；`score_service` 内部函数保留供发音近似分计算）、`/learning-stats`、`/achievements`、`/wrong-records*`（由 `/review/errors` 取代）、`/wordbook*`（由 `/vocab*` 取代）。
 
@@ -464,6 +471,7 @@ hero 与 cool 面上的次要文字样机用 `opacity:.62`（白字 3.24:1、亮
 | 概览 | `overview.weakest` 最弱一科 band + 与目标差距 | `progress.summary.current` / `target_band` | warm |
 | | `overview.delta` `delta_vs_previous` **绝对值最大**的一科（涨跌都算，并列按 `MODULES` 顺序取先出现的） | 同一份 summary | plain |
 | | `overview.plan` 今日计划 `完成/总数` | `plan.today.items` | plain |
+| | `overview.grading` 排队中 / 待查看的批改任务数（见 §8.3 末「第二处可见」） | 全局 `useGradingJobs` store | plain |
 | 错题本 | `review.open` 未掌握 / `review.resolved` 已掌握 | 当前筛选结果 | warm / plain |
 | | `review.stubborn` `seen_count > 1` 的顽固条目 | 同上 | plain |
 | | `review.modules` 涉及的科目数 | 分组后的组数 | plain |
@@ -492,6 +500,67 @@ hero 与 cool 面上的次要文字样机用 `opacity:.62`（白字 3.24:1、亮
 `progress.summary` 给出，本屏只有一次 `GET /settings`，前端不许自己推算日期差）。
 阅读屏同理**不做 `reading.words`**：`PassageView.tsx` 篇章卡头已经有 `{set.word_count} 词` 的 Badge，
 条上第 4 块让给「段落数」（正文只按 `[A]` 分段显示，段落总数原本没有任何地方读）。
+
+**概览的 `overview.grading`：排队中的批改不许只有左轨一处可见（Wave 7 D 档）**
+
+异步批改是这一屏唯一一件「提交之后人可以走开」的事：作文交上去 → 用户切到概览/别的屏 →
+结果在几十秒后自己落回来。在此之前，这件事在全站的**唯一**读数是左轨底部那颗 `GradingRailBadge`
+（`App.tsx` 挂在 `mt-auto` 那一坨里，离导航项最远，且最多列 3 行）。左轨那颗是**导航**
+（点一行 `setView(job.module)` 落到对应模块），不是读数；读数要有一处落在用户视线落点（主区顶部）。
+所以本屏加第 4 块磁贴，规矩如下：
+
+1. **同源，不是第二份数据**。值取自 App 已经在订阅的那个 `useGradingJobs` store（props 类型就是它的
+   `GradingJobsState`），由 `App` 传进 `Dashboard`，与左轨那颗读的是同一次 `emit`，**不许**在
+   `Dashboard` 里再 `useGradingJobs()` 一次、更不许为它加请求（规则 2）。规则 4 删的是「刷新时机不同的
+   两份同源数字」，这里两处同帧变化，所以不适用 —— 左轨那颗**不得删**，删了就把唯一的可点入口一起删掉了。
+2. **三面读数是同一块砖**：`pendingCount > 0` 时 label「正在批改」值为 `pendingCount`；
+   没有排队但有**未查看的失败任务**时同一块换成 label「批改失败」值为失败数（与左轨那颗同一套措辞）；
+   再退一步才是 label「待查看」值为未查看的成功数。
+   两条都是必须的：① 批改完成的那一刻若只让「正在批改」整块消失，用户读到的是「任务没了」，
+   而不是「结果出来了」—— 磁贴必须自己接力，否则第二处可见性在最需要它的那一秒断档；
+   ② **不许把失败也写成「待查看」**。store 的 `doneCount` 是「终态且未查看」，`failed` 与 `succeeded`
+   混在一起（LLM 超时是日常，不是边角），照抄 `doneCount` 会让一块写着「待查看 · 去打开报告」的砖
+   盖住一次失败。所以这块砖吃的是 `GradingJobsState`（含 `jobs`），由 Dashboard 自己按 `status` 分面，
+   而不是只吃两个现成的计数。
+3. 三面全为 0 → **整块不渲染**（规则 3：没有排队、没有欠账时不该有砖头占位）。
+4. 面一律 `plain`。本屏的 `warm` 名额继续给 `overview.weakest`；一块会在用户眼前自己跳变的砖
+   去抢琥珀面，等于让报警色每几十秒换一次主人。
+5. hint 必须说清**去哪里看结果**（「完成后去写作 / 口语屏看报告」这一类），不许写成一句安慰话。
+   磁贴按 §8.3 与 `Tile.tsx` 的分工**不可点**（点它没有下一步，可点的仍然是左轨那颗），
+   所以 hint 就是这块砖唯一的行动指引。
+6. 判据：`Dashboard.test.tsx` 四面各一例（排队中 / 批改失败 / 待查看 / 都为 0 时整块不渲染），
+   外加「同一块砖的 label 会随 pending→终态接力，而不是消失」；
+   `App.gradingTile.test.tsx` 钉外壳接线（App 把自己那份 store 传下来，不是 Dashboard 再订阅一次）。
+
+### 8.4 键盘焦点环：唯一真源在 `index.css`，组件内不许把它关掉（Wave 7 D 档）
+
+起因不是「读到 `outline-none` 觉得不好」，是真浏览器 Tab 巡检量出来的：设置屏一圈 94 个停靠点
+（`select` 28 / `input[date]` 21 / `input[number]` 20 / `input[text]` 19 / `input[password]` 6），
+**每一个**都命中 `:focus-visible` 而 `outline-style` 算出来是 `none` —— 也就是说这台应用里
+最需要看清「我改到第几个字段」的那一屏，键盘用户完全看不见自己在哪。记录见 §15.9。
+
+1. **焦点环只有一处定义**：`src/index.css` 的 `@layer base` 里那条
+   `:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid var(--accent) }`。
+   组件里**不许**再各画一套环（`focus:ring-*` / `focus:shadow-*` / 自定义 `outline-*`），
+   也不许改它的宽度与颜色 —— 换色是 §8 令牌层的事，环本身是全局唯一的一条规则。
+2. **`outline-none` 在这套层叠里是真的「隐形」，不是「交给组件自己画」**。
+   Tailwind v4 的 utility 落在 `@layer utilities`，排在 `@layer base` 之后，而那条全局规则用 `:where()`
+   写就是故意把特异性降为 0 —— 所以任何一个 `outline-none` 都必然赢，环就没了。
+   推论：看到 `focus:border-accent` 之类「换个边框色当焦点提示」**不算**满足本条，
+   1px 边框变色在 15px 正文旁边不构成可发现的焦点指示（WCAG 2.4.7 要的是看得见的焦点指示，
+   不是「理论上颜色变了」）。要么保留全局环，要么显式补一条 ≥2px 的环。
+3. **唯一的豁免形态是非控件容器**：`role="dialog"` 的面板这类 `tabIndex={-1}`、只为了让关闭后焦点能还回去
+   的容器，可以 `outline-none`（给整块弹窗描一圈 2px 靛蓝是噪声，不是提示）。豁免靠**清单**不靠注释：
+   `focusRing.test.ts` 里的 `容器豁免` 数组是唯一入口，往里加文件等于声明「这个文件里的
+   `outline-none` 都画在容器上」，评审时看得见。控件文件（`features/**` 的表单字段）不许进清单。
+4. **不许正值 `tabindex`**。九屏实测 0 处，本条是防回归：一个 `tabindex="1"` 就能把整屏顺序打乱，
+   而这类改动在截图里完全看不出来。需要程序化聚焦用 `tabIndex={-1}` + `.focus()`（`Modal.tsx` 就是这么做的）。
+5. 判据：`frontend/src/focusRing.test.ts` 扫 `src/**/*.tsx` 源码，命中 `outline-none` 且不在豁免清单 → 红。
+   行为侧的证据不塞进单测（jsdom 不算层叠，`getComputedStyle` 拿到的永远是 `init` 值，
+   绿了不代表环在），由真浏览器 Tab 巡检取，落在 §15.9。
+6. **已知代价，本轮不修，也不许当作已完成**：错题本走满一圈 **211 站**、生词本 **62 站**
+   （每条目两颗按钮 × 全量列表）。焦点环修好之后，键盘用户仍然要按两百多次才走完错题本。
+   真正的解法是分页或虚拟列表 + 列表内方向键导航，那是另一条契约的活，别在这一条里顺手加。
 
 ## 10. Wave 1 定稿决议（对 §1–§9 的补丁；与本节冲突以本节为准）
 
@@ -532,7 +601,9 @@ Wave 1 交付时 agent 提出的契约含糊点，逐条定稿。**Wave 2 所有
 ### 10.4 Wave 1 已知遗留（不许当作已完成）
 - ~~`frontend/src/test/mocks/handlers.ts` 与 `api.test.ts` 仍带旧 `scenes`/`is_free` fixture~~ → **Wave 2 已完成**（T1b：handlers 按 §1+§10 重写为按组命名导出 + `resetMockState()`，msw 生命周期唯一归属 `test/setup.ts`；`api.test.ts` 65 项）。
 - `api/content.py`（#40/#41 `/content/generate`、`/content/jobs/{id}`）文件已存在但**故意未注册**，属 P3，可后置。
-- 麦克风在打包后的 WebView2 里能否真的授权**未经验证**（`docs/specs/ielts/mic-on-windows.md`），Wave 3 必须实测；口语屏必须有文本兜底输入（AC-S3b）以保证该风险不阻塞主流程。
+- ~~麦克风在打包后的 WebView2 里能否真的授权**未经验证**~~ → **2026-11-07 实测通过**：用户在打包产物
+  （onedir 便携布局）的 GUI 窗口里实际录音成功，`--use-fake-ui-for-media-stream` 方案成立
+  （`mic-on-windows.md` §6）；口语屏文本兜底输入（AC-S3b）继续保留，不是靠它兜着这个风险。
 
 ### 10.5 Wave 2 契约补丁（回答 T1b 提出的 4 处 §1 无法自洽项；以实现真源为准）
 1. **#15 听力音频 503**：真源 `api/listening.py:112-115` 返回 `{detail, code:"tts_unavailable", transcript_available:true}`。**裁定**：`transcript_available` 仅作调试可观测字段，**不进入前端契约**（`ApiError` 只暴露 `detail`+`code`）。AC-L1b 的客户端规则改为：收到 503 时展示该 set 的 `audio_text`（§10 已规定 set 详情保留 `audio_text`）+ 可见降级提示；不得依据 503 体内字段分支。
@@ -596,8 +667,10 @@ Wave 1 交付时 agent 提出的契约含糊点，逐条定稿。**Wave 2 所有
 
 - `tauri.conf.json`：`productName: "IELTS Insight"`、`identifier: "com.ielts.insight"`、`version: "2.0.0"`、
   window.title `"IELTS Insight"`；`bundle.externalBin: ["binaries/backend"]`、`targets: ["nsis"]`；
-  CSP `connect-src 'self' http://127.0.0.1:8765 https://<AI host>`（AI host 由构建期注入或写 `https://*` 并在 README 说明收紧方式）；
-  `media-src 'self' blob:; img-src 'self' blob: data:; font-src 'self' data:`。
+  CSP `connect-src 'self' http://127.0.0.1:8765 http://ipc.localhost ipc:`（**Wave 8 收紧**：
+  原 `https://*` 是为「放行任意 AI 兼容端点」加的，但 AI 调用实际发生在**后端进程**，
+  webview CSP 根本不约束后端出网 —— 那条通配只放开了「网页里任何脚本往外发请求」这个纯风险面，
+  前端自己的 fetch 全部只打 127.0.0.1:8765。换 AI host 不需要动 CSP）。
 - `capabilities/main.json` 增加 `opener`/`fs` 最小集 + 确保麦克风在 WebView2 下可用（Tauri 无 mic capability，需在 `main.rs` 用 `WebView2` 权限或 `windows` feature 允许 media；不可用则文档化 `msedgewebview2 --enable-media` 方案并在 AC 里要求给出可操作错误提示）。
 - `Cargo.toml` name → `ielts-insight`；`index.html` title → `IELTS Insight`。
 - 构建：`scripts/build.ps1`（PyInstaller → 复制到 `src-tauri/binaries/backend-x86_64-pc-windows-msvc.exe` → `npm run tauri build`）；
@@ -634,6 +707,62 @@ Wave 1 交付时 agent 提出的契约含糊点，逐条定稿。**Wave 2 所有
   断网下 `tts_ok:false` 属可见降级，不是崩溃。
 - **仍未实测（诚实声明）**：NSIS 安装器**未在本机执行安装**（会写用户系统，需用户点头）；GUI 窗口内的 WebView2 麦克风采集、
   以及 `excludes` 掉的 tkinter/PIL/matplotlib 在运行期是否真不被引用，均未验证。
+
+### 11.3 Wave 8 冻结包复验 + onedir 便携布局（2026-11-07 实跑）
+
+**onefile 冻结 EXE 复验（陪练随包）**：`dist/backend.exe` 用临时库 + `IELTS_ONLINE=0` 实跑 →
+`/health` 200（`content_counts` 四科齐全，sparring **不在**这组读数里 —— §16.1 的口径在冻结产物上成立）；
+`GET /sparring/topics` 回 **10** 个话题（`_MEIPASS/app/data/ielts/sparring/**` 随包）；
+`POST /sparring/sessions` → `turn`（文本兜底，`source=fallback`）→ `assess` 200，
+`band.overall=4.5`、`ai_used=false`、`degraded_reason=offline_template`、`sparring.mode=sparring`；
+`GET /attempts?module=speaking` 落 1 条 `part=sparring / task_ref=sb_restaurant_01`，详情 payload 带 sparring 块。
+迁移 v4 在冻结产物里生效（`sparring_sessions` 表建成，会话可写）。
+
+**excludes 在产物上逐个核对（补 §11.2 那条「均未验证」）**：`backend/tools/check_frozen_excludes.py`
+读 PyInstaller 的 Analysis TOC，只认「带路径的已收集条目」——tkinter / PIL / matplotlib / PyQt5 /
+IPython / pytest 全部 0 条被收集（excludes 生效）；sparring 目录、dictionary.json、schema.sql
+均在 datas 里。判据坑：第一版按裸名字计数，tkinter/PIL/matplotlib 各命中 1 次差点误报成
+「excludes 失效」—— 那 1 次命中的是 spec 里 `excludes=[...]` 参数自身被序列化进 TOC。
+
+**onedir 便携布局（`scripts/build.ps1 -Onedir`）**：
+- 首启实测 **2.6 秒**到 `/health` 可用（onefile 是 20–30s），`_internal/app/data/ielts/sparring/` 在位。
+- **抓到的命名坑（已修）**：Tauri sidecar 的**运行时名字**是 `backend.exe`（与外壳同目录），
+  `-<target-triple>` 后缀只是 externalBin 的构建期源文件名 —— `tauri build` 把
+  `binaries/backend-x86_64-pc-windows-msvc.exe` 复制进 `target/release/` 时就叫 `backend.exe`
+  （产物目录里那个 331MB 的 `backend.exe` 就是静态证据）。便携目录第一版拷成 triple 全名，
+  外壳当场失败，`shelllog` 的 stdout 副本抓到：
+  `WARNING | [Shell] 启动后端 sidecar 失败: 系统找不到指定的文件。 (os error 2)`。
+- **便携 GUI 窗口本身未验**：本会话启动的外壳子进程继承了 harness 的文件沙箱令牌，
+  spawn/写日志被拦（外壳进程活着但无窗口、无子进程、无日志行），属于**诊断环境限制**，
+  不是产品缺陷 —— 命名修复的证据链是「shelllog 错误消息 + target/release 的 backend.exe 实名」，
+  窗口冒烟留给用户在真实桌面双击 `dist-portable\ielts-insight.exe` 完成。
+- `build.ps1` 的 BOM 被编辑器剥过一次（契约 §11.2 那条老坑**又复发**）：已恢复并写进文件头警告。
+
+### 11.4 用户双击 dist-portable「窗口打不开」的根因（2026-11-07 实拍定位）
+
+用户反馈 `dist-portable\ielts-insight.exe` 双击没反应。对照实验把范围收干净：
+
+| 跑的产物 | 结果 |
+| --- | --- |
+| `frontend\src-tauri\target\release\ielts-insight.exe`（官方产物，同机同用户） | **窗口正常**（`Tauri Window vis=True`，sidecar 起来，迁移 v0→v4） |
+| `dist-portable\` 原样拷到 `%TEMP%` 干净目录 | **窗口正常** |
+| `dist-portable\`（留在工作区里） | 进程活着、28 线程、302 句柄、**永不创建窗口**（连隐藏窗口都没有，只有 tao 的事件泵窗口），一条 `[Shell]` 日志都不写 |
+
+**根因**：`dist-portable\` 建在被 harness 沙箱接管过的工作区里，从仓库根继承了
+`Everyone:(I)(CI)(DENY)(DC)`（拒绝创建子目录）。WebView2 初始化要在 exe 旁建
+`<exe>.WebView2` 用户数据目录 —— 建不出来就**卡在环境创建那一步**：setup 闭包还没跑到，
+所以三条启动结论一条都没落盘，`shelllog` 也帮不上忙。这是「产物被构建环境的权限污染」，
+不是应用逻辑缺陷；`ielts-insight.exe` 与 `target\release` 那份是**同一个文件**。
+
+**处置**：
+1. 便携产物组装到工作区外 —— `%LOCALAPPDATA%\IELTSInsight\portable\`，实测窗口正常打开、
+   界面完整渲染（截图 [docs/assets/screenshots/portable-window.png](../assets/screenshots/portable-window.png)）、`/api/sparring/topics` 回 10 个话题。
+2. `build.ps1 -Onedir` 组装完探测一次目录 ACL，命中 `DENY + (DC)` 就打印警告并给出
+   「拷到工作区外再双击」的可操作指引 —— 不静默交付一个双击打不开的目录。
+3. 诊断过程中我用 `/inheritance:r` 清 `dist-portable` 权限时，把 harness 沙箱自己的授权
+   （`S-1-4-*`）一并剥掉了，导致该目录对我的 pwsh 变成 `Access is denied`（对用户 `lcl13`
+   是完全控制，所以**用户双击不受影响**）。教训写在这：清理沙箱接管过的目录权限时
+   **不要整条断继承**，只针对具体 ACE 增删。
 
 ## 12. 外部服务实测（Wave 3，真实网络 + 真实端点，非 mock）
 
@@ -1269,7 +1398,72 @@ CONSTITUTION §1 承诺不出门，而这里的代价是用户**以为自己已�
 
 实跑记录见 §15.9。
 
-### 15.9 Wave 7 B 档实跑记录
+### 15.5 用户可见的错误文案要说人话，也要留得下线索（C 档第一项）
+
+CONSTITUTION §3 早就写了「界面文案中文、不含文件路径/SQL 片段/异常 repr」，但转写这条路一直在漏：
+`speaking_session.transcribe_audio()` 把 whisper 的英文原文拼进 `detail`
+（`音频无法识别：Cannot decode audio (webm): ...`、`语音转写不可用（RuntimeError）`），
+`api/media.py` 的 `/stt` 更直接 `str(exc)` 透传。修它必须成对做，只做一半比现状更糟：
+
+1. **`detail` 里不许出现英文异常原文、异常类名、文件名或路径**，只许是固定的中文句子 + 机器码
+   （`code` 不变，前端靠它分流）。转写这一条固定为：解码/听不清 ⇒ 400 `audio_unintelligible`
+   「这段录音听不清，可能没录到声音或格式不对，请重录一次或改用键盘输入」；
+   模型/依赖失败 ⇒ 503 `stt_failed`「本机语音转写暂时不可用（可能没装 whisper 或模型没加载），可改用键盘输入文本」。
+2. **把原文从界面撤下来的同一处，必须把它写进 `logs/app.log`**（§15.3）。
+   理由不是合规洁癖：撤掉之后界面上只剩一句通用中文，若日志里也没有，
+   「为什么我这段录不上」就彻底没人能查 —— 那等于把可见性从「说了不该说的」换成「什么都不说」。
+   日志行允许带类名与原文（那是给人排查的地方），但仍须走 §15.3 的凭据脱敏。
+3. **判据要机器可执行，不许靠人记**：`app/api/` 与 `app/services/speaking_session.py`
+   里构造用户可见错误的那几个调用（`bad_request` / `dependency_unavailable` / `ApiError` /
+   `SpeakingSessionError`）不许出现 `str(exc)`、`{exc}`、`{type(exc).__name__}`。
+   扫描范围**故意不含** `services/sets_loader.py`：它的 `report["errors"]` 带文件名和异常文本，
+   但那是题库导入 CLI 的产物，没有任何端点把它发给界面 —— 判据把非用户可见的东西算进来，
+   第一次亮红就会被人加进白名单，之后再也拦不住真泄漏。
+   配套的行为用例必须**真的让底层抛一次英文异常**，断言响应里既没有那段英文、也没有类名。
+
+### 15.6 录音出错不许按「录完了」处理（C 档第二项）
+
+`useRecorder` 有三条路径把失败当成成功：
+
+- **`start()` 里根本没挂 `onerror`**：录制中途编码器报错、麦克风被会议软件抢走或被拔线，
+  hook 完全不知道，直到用户点停止才把当时手上的残缺 chunk 拼成「录音 0:12 · 34 KB」交出去。
+  这条最常见，也最难归因 —— 界面从头到尾没说过一个字。
+- `recorder.onerror = () => finish()`：停止过程中报错，照样走完成路径。
+- `recorder.stop()` 抛异常时的 `catch { finish() }`。
+
+三条都落到同一个 `finish()`：拼 blob、写 `lastResult`、正常 resolve。于是界面上出现「提交录音」按钮，
+用户提交一段自己不知道被截断的录音，报告屏把这当成一次完整作答给分 —— 这比一句错误提示更难发现，
+因为它看起来是成功的。
+
+1. 这三条路径必须走**失败语义**：`error` / `errorCode` 给出固定的中文句子（同 §15.5，不许拼异常原文
+   或英文类名），`lastResult` **不落**（因此不出现「提交录音」），`RecorderStopResult.failed === true`。
+   为什么是 resolve 一个带标记的值、而不是 reject：调用方一律 `await stop()`，Part 2 到点自动提交
+   （`onLimit`）也在这条链上；抛错会让「麦克风被占用」和「代码写坏了」在界面上长成同一种样子。
+   值里带标记，才逼着每个调用方看一眼 `failed` 才可能提交。
+2. 到点自动提交这条路必须尊重 `failed`：`RecorderControls.handleLimit` 不许提交 `failed === true`
+   的录音。否则第 1 条只是把按钮藏起来，自动提交照样把截断的音频发出去。
+3. 失败时**释放麦克风和 resolve 承诺一样不许少做**：`teardown()` 与 resolve 仍要发生，
+   否则用户点了停止后界面卡在「录音中」，比丢一段录音更糟。
+4. 判据（`frontend/src/hooks/useRecorder.test.tsx`）四例：① 录制中途 `onerror` 立即把失败显示出来
+   （`errorCode === 'recorder_failed'`、麦克风 track 全停、`lastResult` 为 `null`）；
+   ② 停止时 `onerror` 触发：promise 照常 resolve 且 `failed === true`，`lastResult` 不落；
+   ③ `recorder.stop()` 抛异常时同样的失败语义；④ 正常停止时 `failed === false` 且 `lastResult` 落进
+   —— 第四条是防止把修复做成「一律判失败」。另加一例界面侧（`SpeakingPanel.test.tsx`）：
+   中途坏掉时屏幕上当场出现「录音中断」，「停止」按钮消失且**不给「提交录音」按钮**。
+   这条用例跑过反向探针（把 `recorder.onerror = handleMidwayFailure` 临时摘掉 → 用例转红 → 还原），
+   所以它钉的是接线，不是一句永远为真的断言。
+5. **开麦等待的那段窗口也不许显示成「未录音」**：`useRecorder` 早就暴露了 `starting`，
+   而 `RecorderControls` 没接 —— 于是「慢」在界面上长成「没反应」，用户再点一下就是第二次
+   `getUserMedia`，第一份轨道没人关（Windows 的麦克风指示灯会一直亮）。
+   要求：`starting` 期间按钮文案是「正在开启麦克风…」且 `disabled`。
+   判据：`SpeakingPanel.test.tsx` 用一条**挂住不返回**的 `getUserMedia` 钉住这个读数与禁用态，
+   再放行、断言进入录音中。
+6. **已知不覆盖的**：`setTimeout(finish, 1500)` 那条兜底维持原样（注释写明某些实现确实不触发
+   `onstop`）。把它也算作失败会让这类环境下所有录音一律判废，代价大于收益；本条只管已经明说自己
+   失败了的那三条路径。第 5 条堵的是**入口**（不让连点），`useRecorder.start()` 内部没有
+   `startingRef` 守卫，直接调用 hook 的其它写法仍能重入 —— 记在这里，不装作已经根治。
+
+### 15.9 实跑记录（B 档与后续条目；新条目一律追加在本节末尾）
 
 - **B1 实拍（真浏览器，注入的是浏览器拿到的字节，不是仓库文件）**：用 CDP `Fetch` 把 vite dev
   对 `/src/features/shared/ReviewBook.tsx` 的响应换成「一渲染就抛」的 ESM 源码，进「错题本」即触发。
@@ -1426,4 +1620,328 @@ CONSTITUTION §1 承诺不出门，而这里的代价是用户**以为自己已�
   `child.kill()` 到底带不带得走真正在监听的那个进程，也还没有在真安装包上验过。
   这两件都要等 C 档的安装包冒烟一起补 —— 界面侧（`EngineNotice` 5 条组件用例 + 2 条外壳接线用例 + 两种
   `port_source` 的浏览器实拍）本轮已闭合。
+- **§15.5 跑的是接口层，不是真 whisper**：`backend/tests/test_stt_error_text.py` 7 例 ——
+  让底层**真抛**一次 `Cannot decode audio (webm): <_io.BytesIO object> Error` 与
+  `Transcription failed: OSError`，`POST /api/stt` 与 `speaking_session.transcribe_audio()` 两条路各自断言
+  响应体里没有那段英文、没有类名，只有固定中文 + 原 `code`；同一处断原文**必须**出现在 `faultlog`
+  记录里（撤下界面 ≠ 没人能查，§15.5 第 2 条）。
+  判据用 AST 而不是 grep：`_拼进了异常对象()` 要剪掉 `exc.detail` / `exc.code` 这类结构化字段，
+  第一版写成 `"exc" in ast.unparse(node)`，把 `api/speaking.py:32` 的
+  `ApiError(exc.status_code, exc.detail, exc.code)` 误判成泄漏 —— **判据一有误报，就会被加进白名单，
+  之后拦不住真的**（与 §14.6 那条「判据宁窄勿宽」同源）。
+  界面侧只验到「detail 原样进 Toast」（既有 `SpeakingPanel.test.tsx` 的「413 显示后端 detail」用例钉着这条路），
+  两句新文案的排版当时**没有实拍** —— 本节末尾「§15.5 + §15.6 真浏览器实拍」一条补上了。
+- **§15.6 的实现细节里有一条会咬人的**：`setTimeout(finish, 1500)` 会把 `1500` 当**第一个实参**传进去。
+  `finish` 一旦改成 `finish(failed)`，那行兜底就等于「超时一律判失败」，真机上不触发 `onstop` 的那些
+  WebView 会把所有录音判废。已改成 `setTimeout(() => finish(false), 1500)` 并写进 §15.6 第 6 条。
+  另一条是测试自己踩的：`let settled: RecorderStopResult | null = null` 在 `act()` 闭包里赋值，
+  `tsc -b` 把它收窄成 `never`（7 处报错）而 **vitest 450 条全绿** —— 与 B4 那次同类，
+  改成 `clickStop()` 助手 + 非空断言才两边都过。
+- **§15.6 第 5 条是被偶发红灯逼出来的**：新加的口语录制用例在全量跑里红了三次（`× 2`：一次停在
+  「找不到『停止』按钮」，一次停在「找不到『录音中断』文案」），单文件跑与连跑 10 次全绿。
+  插桩（临时在 `handleMidwayFailure` 里打 `{already, mounted}` 与点完之后的 DOM 文本）确认过健康路径
+  确实是「处理器跑了 → 按钮回到未录音 → 文案出现」，**根因没有定性**；能定性的只有两件事：
+  ① 那段 `starting`（等 `getUserMedia` 返回）窗口里界面上本来什么读数都没有，用例只能盯一个「按钮还没变身」
+  的间接信号，红了也读不出是慢还是坏 —— 这正是 §15.6 第 5 条要补的读数，补完之后同一用例的失败信息
+  会直接说「正在开启麦克风…」；② 用例侧把跨用例累积的 `fakeRecorderInstances` 改成每个用例清空，
+  并把「拿不到实例就静默 no-op」的 `?.` 改成显式抛错 —— 静默 no-op 是**假红**的温床。
+  如实写明：**没有**证明这两处改动消除了红灯（插桩本身改了时序，属于 Heisenbug 的典型形态），
+  只记录了「改动后连跑 10 次全绿」这个证据强度。这类红灯的历史版本见 §13 最后一条与
+  `src/test/setup.ts` 里 `asyncUtilTimeout: 4000` 的注释。
+- **§15.5 + §15.6 真浏览器实拍（Chrome 假麦克风，图 `D:\tmp\ielts-demo\c-live\{a-recorded,b-midway-error,c-stt-failed}.png`，  驱动 `drive-c-rec.mjs`）**：链路是**真**的 —— `--use-fake-device-for-media-stream` 给一路持续蜂鸣的音频轨，
+  录制走浏览器原生 `MediaRecorder`，上传走真后端。后端是隔离的 `:8773` + 副本库 `app-c.db`
+  （启动横幅确认 `DB=D:\tmp\ielts-demo\app-c.db`），vite 用 `VITE_API_BASE` 指过去，
+  **用户那台 `:8765` 与 `:5173` 全程没碰**。
+  三张各钉一件事：① 录 3 秒 → 徽标「录音 0:03 · 40 KB」+「提交录音」可用（证明这不是永远失败的假环境）；
+  ② 录制中在页面里把 `MediaRecorder.prototype.stop` 换成「先派发 `error` 事件、再抛 `InvalidStateError`」
+  —— 这就是真机设备被抢走时浏览器的两步动作，一次同时压过 §15.6 的两条分支 —— 现场断言
+  「录音中断」告警条在、`停止` 与 `提交录音` 都不在、按钮回到「开始录音」、整页无 `*Error` 类名；
+  ③ 真提交一路录音，后端把 `WHISPER_MODEL` 指到不存在的模型名（`load_model` 抛 `RuntimeError`，
+  等价于「用户机上没装/没下模型」这个最常见的真实情形），界面拿到的是固定中文那一句，
+  原文 `RuntimeError: Model ... not found; available models = [...]` **只出现在服务日志的
+  `[STT] 语音转写不可用:` 一行**（§15.5 第 2 条的正反两半在同一次实拍里都取到了证据）。
+  实拍顺手核实了两件契约没写死的行为，都算好的：失败后**录音仍在**（徽标还在、可重录可重试，
+  不是一报错就把用户的 3 秒清空），以及 503 那次 `speaking_turns` 计数**没有增加** —— 转写失败不落半条作答。
+  两个坑记一下：① 页面 :5174 的 Origin 不在出厂 CORS 名单里，实拍要给 scratch 后端显式 `DEBUG=1`
+  （§12 那条「本地联调要通配请显式 DEBUG」正是为此留的口子，且 DEBUG 只影响 CORS，不影响错误文案，
+  实拍到的句子仍是出厂那套）；② 现场脚本里用 `/录音中/` 正则判「界面还卡在录音中」是**假阳性** ——
+  「录音中断」这句话本身就含「录音中」四个字，判据得看按钮而不是看整页文本。
+- **§8.3「第二处可见」三面实拍（真提交 + 真轮询，图 `D:\tmp\ielts-demo\d-live\{d1-pending,d2-unread,d3-failed}.png`，
+  驱动 `drive-d-tile.mjs d | f`）**：队列不是注入出来的 —— 写作屏真提交一篇 275 词作文 → `jobs` 表真有一行 →
+  前端真轮询。慢的部分是仓库外的 `fake-llm.py`（`127.0.0.1:8899`，睡 12 秒再回一段解析不了的内容），
+  为的是把「批改中」窗口拉长到拍得着；它回完之后评分器自己降级成离线模板，任务转终态，
+  **同一块砖自己接力成「待查看」，这一步没有任何注入**（d1 → d2 期间没有刷新、没有改 store）。
+  三面读数是现场从 DOM 取的，不是看代码推的：`正在批改 1 项`、`待查看 1 项`、`批改失败 1 项`。
+  第 2 条②（不许把失败写成待查看）拍的是 §10.6 那个真场景 —— 后端重启过、localStorage 里那条任务在后端已经没了：
+  塞一条 `status: running` 的陈旧任务 → 刷新让 store 接回来 → 轮询 404 → store 判 `failed` → 砖显示「批改失败」。
+  **同一个 `doneCount` 值（1）在成功与失败两种情况下会渲染出两句不同的话**，这就是当初照抄 `doneCount`
+  会让一块写着「去打开报告」的砖盖住一次失败的具体形状。第 4 条（plain、暖面槽留给 `overview.weakest`）
+  有现场数字兜着：三张图里 `data-surface="warm"` 计数都是 **1**、`[data-metric]` 都是 **4**、栅格 class 一致 ——
+  新砖既没抢暖面，也没把 4 列挤成 3 列。
+  顺手核实的一条契约没写死的行为：失败那条在 localStorage 里**仍在**（要等用户点「知道了」才消失），
+  所以左轨 badge 与这块砖不会在一次失败后同时清空、让用户找不到刚才到底怎么了。
+  两个坑：① `waitText` 帮不上忙 —— 「概览关键指标」是 `aria-label`，不在 `document.body.innerText` 里，
+  等它必然超时，只能自己轮询 `[data-metric="overview.grading"]` 出现；② 拍之前**必须先清** `ielts.grading-jobs`，
+  否则 store 会把上一轮留下的终态任务接回来，拍到的「待查看」是别人的尾巴而不是本轮那次提交。
+  隔离方式与上一条相同（`:8773` + 副本库 + `:5174` vite + `DEBUG=1` 放行 CORS，
+  用户那台 `:8765`/`:5173` 全程没碰，四个 scratch 进程按 pid 回收后端口已确认释放）。
+- **§8.4 九屏 Tab 巡检（真浏览器，图 `D:\tmp\ielts-demo\d2-live\{focus-overview-light,focus-settings-light,focus-settings-dark}.png`，
+  驱动 `drive-d-focus.mjs` + `drive-d-contrast.mjs`，逐站原始读数 `d2-live\tab-walk.json` 与 `tab-walk-BEFORE.json`）**：
+  修之前量到的是 —— **设置屏一圈 94 个停靠点全部 `:focus-visible` 命中而 `outline-style: none`**
+  （`select` 28 / `input[date]` 21 / `input[number]` 20 / `input[text]` 19 / `input[password]` 6），
+  也就是这台应用里最该看清「我改到第几个字段」的一屏，键盘用户完全看不见自己在哪；
+  其余八屏的按钮一直是好的，坏的全在表单控件上。修法就是删掉 5 处 `outline-none`
+  （`settings/fields.tsx` 两处、`settings/AudioDeviceField.tsx`、`listening/QuestionField.tsx`、`writing/WritingPanel.tsx`），
+  把环交还给 `index.css` 那条全局规则。修后九屏复测：**每屏「键盘下环不可见」= 0，且每屏都能走满一圈回到起点**。
+  环不只是「在」，还量了对比：稳定态环色恒等于 `--accent`（浅色 `#4b3ae0`、深色 `#a99cff`），
+  2px + `outline-offset: 2px`，**对相邻背景的对比 6.42–8.01:1**（WCAG 2.4.11 门槛 3:1），
+  两主题九屏各取一站，无一例外。
+  判据 `focusRing.test.ts` 5 条已跑反向探针（临时塞一个带 `outline-none` 的文件 → 红，删掉 → 绿），
+  不是对着空 glob 全绿。
+  **这一条巡检挖出的坑比它的结论多，五条都得留下**：
+  ① `document.body.blur()` 是 no-op，Chrome 的「顺序焦点导航起点」仍停在上一屏最后聚焦的那个元素上 ——
+  第一版因此每屏都没从头走（报告屏只数到 5 站），停靠数全是错的；改成给起点元素打
+  `data-focus-walk-start` 标记、按元素身份判「回到起点」。
+  ② 用 `tag+label+region` 签名判回到起点会**撞名**（设置屏有六个空 label 的日期框），
+  一圈走不完就一路重复十几圈，量出「概览 248 站」而真值是 19 站。
+  ③ **`transition-colors` 的过渡清单里含 `outline-color`** —— 落点瞬间取 computed style
+  拿到的是中间帧（实测 `rgb(103,89,229)`、`rgb(162,153,239)`），据此算出的对比度报告整份是假的
+  （最低 1.88:1，看起来像一处真缺陷）；等 600ms 过渡走完再量才是 `#4b3ae0` / 7.05:1。
+  **量焦点环必须等过渡结束**，这一条比结论更容易复发。
+  ④ chrome profile 的 localStorage 会记住上一轮点过的主题，「先量默认、再切深色」的结果是两遍都量成深色；
+  现在每个主题都显式点一次并核对 `documentElement.dataset.theme`。
+  ⑤ 程序化 `.focus()` 之后按钮不命中 `:focus-visible`（`fv=false`），所以巡检第 0 站必然「没有环」，
+  这是浏览器的设计不是缺陷 —— 报告里单独记成「起点伪影」，否则每轮巡检都白报一条。
+  两个流程事实如实写明：a) 判据最初用 `node:fs` 读源码，**vitest 45 文件全绿而 `npx tsc -b` 红 7 处**
+  （`tsconfig.json` 把 `types` 收成 `["vitest/globals"]`，`node:fs` 不在里面），与 B4 那次同类；
+  换成 vite 自带的 `import.meta.glob(..., { query: '?raw' })` 后零配置通过。
+  b) 改动后**第一次**全量出现 1 红（`waitFor`/MutationObserver 超时，当时没抓到用例名），
+  随后 4 次全量 45 文件 / 460 条连绿；根因未定性，形态与上面 §15.6 那条已记录的偶发红灯同类，
+  **没有**证明它不再出现。
+  已知代价（写进 §8.4 第 6 条，本轮不修）：错题本走满一圈 **211 站**、生词本 **62 站**。
 
+- **README 七张实拍重拍（Wave 7 D 档收尾，§8.3 / §14.5 的界面自证）**：隔离栈三进程各起一份 ——
+  后端 `:8773` 指向**新播种**的 `readme3/app.db`、vite `:5174`、Chrome `:9223` 用**全新 profile**；
+  一次会话拍完七张，尺寸 2100×1350 与旧图逐张对齐，驱动 `drive-readme-shoot.mjs`（仓库外）。
+  核对结论：**旧图确实过期，而且过期方式比"少一条磁贴"更难看** ——
+  概览屏三块关键指标磁贴整条缺失（e4a1031 晚于拍摄 53 分钟），阅读屏既没有磁贴条也没有草稿徽标：
+  旧驱动点答案写的是 `textContent.trim() === 'TRUE'`，而按钮实际文案是「TRUE 原文支持」，
+  一次都没点上，于是那张图停在 `已作答 0/13` —— **而 README 正文当时正在声称图里有 `已恢复上次草稿`**。
+  本轮把这条断言变成真的：答三题 → 退出 → 重进同一套，`已恢复上次草稿` 与 `已定位到段落 B` 同框。
+  种子回改一处并写明理由：`seed.py` 目标分 6.5 → 7.5、考试日 +55 → +50 天。6.5 下四科（7.0/7.5）
+  全部达标，「差距大的科排得多、达标科保底 0.25」这条卖点在截图里根本看不到，今日计划五条清一色
+  「保持手感」；改后概览同时出现「听力已达目标 7.5，保持手感」与「阅读当前 7.0，距目标 7.5 还差 0.5」，
+  概览磁贴也从「最弱一科 7.0 高于目标 0.5」变成语义正确的「距目标 0.5」（暖面配"未达标"才不误导）。
+  五个度量陷阱：① 阅读第 1 题的「定位」按钮按设计**禁用**（关键词命中不唯一），驱动点第一颗按钮
+  等于点了个禁用项，画面里没有高亮 —— 判据要按 `!disabled` 选；② `locate()` 会 `scrollIntoView`
+  把顶部工具条推出视口，草稿徽标随之消失，必须在 2 秒高亮窗口（`HIGHLIGHT_MS`）内把 `main` 滚回 0
+  才能两个读数同框；③ 四张练习屏（口语/听力/阅读/写作）的磁贴条**只在作答态渲染**，选题页读到空数组
+  不是回归；④ 写作批改结果页也没有磁贴条（它在编辑器视图），别把 `tiles: ''` 记成缺陷；
+  ⑤ 换种子后 Chrome 旧 profile 的 `localStorage` 会带上一轮的主题与辅助栏开合，实拍前
+  `localStorage.clear()` + 重新 navigate，并断言 `documentElement.dataset.theme` 而不是只点按钮。
+  文档同步：界面一览三行、阅读段落、异步批改第 3 条（补上概览磁贴这"第三处可见"）、
+  核心能力「概览 / 设置」两行（设置补 数据与备份 / 回收站）。
+
+## 16. 1 对 1 口语陪练（Wave 8；FR-S7 / AC-S7.x）
+
+起因不是「再做一个练习模式」，而是现有口语屏的结构性缺口：Part 1/3 的题目是**预置**的，
+追问读题库、不用听你刚说了什么。真实考试里 Part 3 的难点恰恰是「考官顺着你的话追」。
+陪练把这一维补齐：**多轮自由对话 + 每轮追问基于你的上一句 + 整场四维评分**。
+
+三条不可协商的口径：
+
+1. **不新增导航项**。IA 仍是九屏（§0），陪练是口语屏内的第二种模式（标签切换）。
+   理由：它和「题库练习」共用同一个 `SpeakingReport`、同一条评分队列、同一个说话的人。
+2. **离线必须能一整场走完**。追问回落到话题预置问句（`source: "fallback"`），评分回落到
+   本地近似（`ai_used=false` + `approximate=true`），界面逐条标注（CONSTITUTION §3、FR-G3）。
+3. **不抄真题**。话题、开场白、预置追问全部本项目自写；`source` 记为 `hand`（CONSTITUTION §2）。
+
+### 16.1 内容文件（`backend/app/data/ielts/sparring/*.json`）
+
+与四科 set **同目录树、独立模块名**，`sets` 表的 `module` 列取 `sparring`。
+`content_counts`（`/health` 与 `sets_meta`）**只统计四科**（`store.MODULES`），
+陪练话题不进这组读数 —— 那是「四科题库量」的语义，多塞一项会让既有断言与界面文案同时失真；
+陪练话题的条数由 `GET /sparring/topics` 自己回答。装载器因此需要一条独立的目录白名单
+（`sets_loader._DIR_MODULES` 加 `sparring`，而 `store.MODULES` 不动），这是本文件里唯一允许两处不同的地方。
+
+```json
+{ "id": "sb_restaurant_01", "module": "sparring", "kind": "practice",
+  "title_zh": "餐厅点单", "topic": "restaurant", "level": "a2",
+  "target_band": 6.0, "source": "hand", "generated_at": "…",
+  "scenario_zh": "你在伦敦一家小餐馆点午餐，服务员会先问你几位、再推荐菜。",
+  "opening": "Good afternoon! Welcome in — do you have a reservation, or shall we find you a table?",
+  "preset_questions": ["What would you like to drink to start with?",
+                       "Do you have any allergies I should know about?",
+                       "Would you like to see the dessert menu?", "…"],
+  "max_turns": 10, "partner_voice": "en-GB-SoniaNeural" }
+```
+
+- `level ∈ {a2, b1, b2}`；`max_turns ∈ [8, 12]`；`preset_questions` 长度 **≥6**（AC-S7.1），
+  且每条都是**一句完整英文问句**（陪练官要念它，问号缺失等于断句）。
+- `id` 规则：`sb_<topic>_<nn>`（与 §10.1 的 `<module_abbr>_…` 同族，`module_abbr = sb`）。
+- 校验落 `services/sets_loader.py` 的 `_check_sparring()`，不写死在测试里（内容只增不减）。
+
+### 16.2 话题（#51 / #52）
+
+```json
+{ "items": [ { "id": "sb_restaurant_01", "title_zh": "餐厅点单", "topic": "restaurant",
+               "scenario_zh": "…", "level": "a2", "target_band": 6.0,
+               "turns": 10, "preset_count": 6 } ] }
+```
+`GET /sparring/topics/{id}` 回**全文**（含 `opening` 与 `preset_questions`），未知 id → 404。
+`level` 非法 → 400 `validation_failed`，`detail` 为中文。
+
+### 16.3 会话（#53–#55）
+
+`SparringSessionStart`：
+```json
+{ "session_id": "spa_…", "topic": <SparringTopic 全文>, "opening": "…",
+  "turn_index": 0, "max_turns": 10, "state": "created", "audio_url": "…|null" }
+```
+
+`SparringSession`（#54，刷新/重开接回）：
+```json
+{ "session_id": "spa_…", "topic_id": "sb_restaurant_01", "max_turns": 10,
+  "turn_index": 2, "remaining": 8, "state": "in_progress|awaiting_assess|assessed|closed",
+  "messages": [ {"seq":0,"role":"partner","text":"…","source":"opening","audio_url":"…|null"},
+                {"seq":1,"role":"user","text":"…","confidence":0.88,"duration_sec":7.2},
+                {"seq":2,"role":"partner","text":"…","source":"ai|fallback","audio_url":"…|null"} ],
+  "result": null }
+```
+
+`SparringTurnResult`（#55）：
+```json
+{ "seq": 1, "transcript": "…", "confidence": 0.88,
+  "partner": {"seq": 2, "text": "…", "source": "ai|fallback", "audio_url": "…|null"},
+  "turn_index": 2, "remaining": 8, "state": "in_progress", "degraded_reason": null }
+```
+
+规则：
+1. **每轮必有追问，且不许重复**（这是本节最容易被做假的一条）。
+   - 会话里的 `used_presets` 列（名字按迁移 v4 的历史保留）存的是**已经问出去的全部问题**：
+     AI 追问与预置回落都进，不只是「消耗掉的预置句」。只记 fallback 的后果很具体 ——
+     模型第 3 轮把预置清单第 1 句原样问一遍，界面显示「AI 追问」，而用户读到的是一句重复。
+   - 去重比对用**归一化后的整句**（小写、压空白、去首尾问号），比对范围是**全部已问过**，
+     不是仅相邻上一句：3 轮后念回第 1 轮，用户一样觉得「它卡住了」。
+   - `ai_used=false`（断网/无 key/非法输出/重复）时 `partner.text` 取该话题 `preset_questions`
+     里**尚未出现过**的一条；全部用过则回一句固定的英文收尾问句，`degraded_reason` 记
+     `preset_exhausted`（Wave 8 收编：它是 §0 的**正式枚举值**，不再是私有字符串 ——
+     私有值会被 `AiResult.__post_init__` 误改成 network_error，并逃过所有统一翻译面）。
+     那句固定收尾句**不进** `used_presets`：它不是一个「话题问题」，记进去会让下一轮的
+     用尽判定失真。
+2. **提示词纪律（§3-P 同源）**：陪练官的 system prompt 只允许输出 JSON `{"reply": "…"}`，
+   一句英文、≤40 词、必须针对用户上一句的具体内容（题面里会带上最近 3 轮原文）；
+   调用沿 `ai_client.complete_json` 的唯一入口，`temperature` 走该入口的 0.3 上限
+   （**不为对话单独开口子**：出站参数的唯一真源比「对话更自然」重要，见该模块 docstring）、
+   `max_tokens = 1500`。解析失败重试 1 次，仍失败 → `source: "fallback"` + `degraded_reason`（沿用 §0 枚举）。
+3. **上限与幂等**：`turn_index` 到 `max_turns` 后 `state="awaiting_assess"`、`remaining=0`、
+   再作答返回 409 `conflict`（`detail` 中文）。重复提交同一段文本不额外扣轮次（同一 `seq` 复用）。
+4. **音频**：`audio` 走 `stt_service.transcribe`（与 #10 完全同一条路，懒加载、5MB/400 口径一致）；
+   文本兜底 `text`（AC-S3b 同源）。`confidence < 0.5` 时 `turn` 响应带 `hint_zh`。
+5. **追问音频**：`audio_url` 与 §10.2 同口径 —— 离线为 `null`（前端显示「无音频，读文本」）。
+6. **会话要能在刷新后接回**（§16.5 第 2 条）：建会话成功即把 `session_id` 写进
+   `localStorage`（键 `ielts.sparring-session`，与 §10.6 的 `ielts.grading-jobs` 并列）；
+   `SparringPanel` 挂载时若读到它，就调 `GET /sparring/sessions/{id}` 把整段对话拉回来并进
+   会话态。**评分开始即清掉这个键** —— 已交付的会话再「继续」只会重现一份已评分的对话。
+   读到但后端 404（换过库 / 被清理）时静默丢弃并停在选题页，不弹红（那不是用户的错，
+   而且他此刻多半只是重开了应用）。
+
+7. **上面那条有两个前置条件，缺一个就全盘失效**（Wave 8 真浏览器实拍用失败换来的）：
+   - **外壳的 `view` 要记住**（`ielts.view`，白名单 `ViewId`）。`App` 的视图状态是内存
+     state，刷新后默认回 `overview` —— 那时 `SpeakingPanel`/`SparringPanel` 根本没挂载，
+     「自动接回」的 effect 没人执行，`GET` 一条都发不出去。实拍断言过：刷新后后端日志里
+     没有任何 `GET /sparring/sessions/{id}`。
+   - **口语屏的 `mode` 要记住**（`ielts.speaking-mode`，`bank | sparring`）。同理：
+     `mode` 退回 `bank` 时陪练面板不在树上。
+   这三条（view / mode / sessionId）是**同一个承诺的三段**，只做最后一段等于没做。
+   两者都用白名单校验，读到脏值退回默认（不给任意字符串留口子）；写失败静默降级。
+
+### 16.4 评分（#56 / #57）
+
+报告 = §3-S `SpeakingReport`（四维 + evidence + improvements + model_answer + upgrade_vocabulary
++ metrics + pronunciation_detail）**加一块**：
+```json
+{ "sparring": { "topic_id": "sb_restaurant_01", "turns": 8, "mode": "sparring" } }
+```
+- `attempts` 落 `module="speaking"`、`part="sparring"`、`task_ref=<topic_id>`（AC-G2 的唯一事实表）；
+  `attempt_items` 每条 `question_type="sparring_turn"`，`your_answer` 为该轮转写。
+- 评分输入 = `opening + 各轮 (partner 问句, user 回答)` 拼成的对话记录；prompt 里显式声明
+  「这是一段自由对话，不是题库背诵，FC/LR/GRA 按对话表现评分，Pron 无音频时低置信」。
+- `ai_used=false` 时仍是**完整**报告（本地近似 + 可见降级），绝不 500、绝不静默成功。
+- 异步端点复用 §10.6 全套规则（去重键 `sparring:<session_id>`、`succeeded` 后 5s 复用、
+  `failed` 永不复用、启动 reap）。成功时 `report.sparring` 与 `attempt_id` 同时到位。
+
+### 16.5 前端契约（`features/speaking/*`；不新增导航项）
+
+`api.ts` 追加（全部走 `fetchJson`，禁裸 fetch）：
+```ts
+sparringTopics(level?, opts?), sparringTopic(id, opts?), startSparring(body),
+getSparringSession(id), postSparringTurn(id, form), assessSparringAsync(id)
+```
+`types/ielts.ts` 追加 `SparringTopicMeta / SparringTopic / SparringMessage /
+SparringSessionStart / SparringSession / SparringTurnResult`；`SpeakingReport` 加可选
+`sparring?: { topic_id: string; turns: number; mode: 'sparring' }`（题库练习的报告里没有这块）。
+
+界面（`SparringPanel.tsx` + `SparringMessageList.tsx` + `sparringSets.ts`）：
+- 口语屏顶部 `Tabs`：`题库练习` / `1 对 1 陪练`；切模式**不丢**当前评分任务（§10.6 队列是模块级的）。
+- 对话流按 `role` 分列，陪练官一侧带「朗读」按钮（`audio_url` 为 null 时按钮禁用并写明原因），
+  我的一侧显示转写与置信度徽标。
+- **回听自己上一轮**（Wave 8）：音频字节**不落库**（§5 的 `speaking_turns` 没有音频列，
+  宪法也不为它加列），由 `SparringPanel` 在**本会话内存**里按 `seq` 留一份 `Blob`，
+  「我」那一侧出现「回听我的录音」。没有录音（文本兜底 / 刷新接回）时按钮**不出现** ——
+  那是「没有」，不是「坏了」，禁用一个本来就没有的东西只会让人以为是缺陷。
+  刷新后回听消失是可接受的：转写文本才是事实源。
+- 磁贴条（§8.3 同族）：`sparring.turns` 已答/上限、`sparring.remaining` 剩余轮次；
+  暖面槽给「离线追问」状态（`fallback` 计数 > 0 时才渲染，规则 3）。
+- 评分走异步路径（§10.6）：提交后进 `assessing` 骨架态，可离开；左轨角标与选题横幅照旧。
+- **不做**「暂停/继续录音」（一段一段答，跟考试一致）、**不做**多话题混谈。
+
+### 16.6 Wave 8 真浏览器实跑记录（结论只写在这里，条款只写要求）
+
+**栈（全部隔离，用户自己的 `:8765` / `:5173` 与真实库全程未碰）**：后端 `127.0.0.1:8799`
+指向 `.tmp/live-sparring/app.db`（`IELTS_ONLINE=0`、`DEBUG=1`）；vite `:5181` 用
+`VITE_API_BASE` 指过去；Chrome **全新 profile** + CDP（`--use-fake-ui-for-media-stream`）。
+驱动 `.tmp/live-sparring/drive.mjs`（仓库外）。**19 项断言全过**，截图 `live-report.png`，
+逐条结果 `results.json`。
+
+**实拍抓到 3 个真缺陷，全部已修并补回归**（这三条事先都不知道，是「跑一遍」换来的）：
+
+1. **STT 成功路径必然 `NameError` → 每次转写都变成 503。**
+   `stt_service.transcribe()` 最后一步用 `math.exp(avg_logprob)` 算置信度（AC-S3），
+   而模块只 `import io / os / threading`。**所有失败路径**（空音频/解码失败/太短/模型不可用）
+   都正常，唯一**成功**的那一步必抛 `NameError`，被上层 `except Exception` 归成 `stt_failed`。
+   既有用例只覆盖失败路径，所以长期全绿。
+   修法：补 `import math`；新增 `tests/test_stt_transcribe_success.py` **真的调一次
+   `transcribe()`**（只把 `decode_audio` 打桩成 1 秒静音，后处理全走产品代码），
+   反向探针（删掉 `import math`）转红验证过。
+   教训：**异常分支覆盖再全，也替代不了跑一次正常分支**。「判据只测坏天气，不测晴天」。
+   （同族提醒：`§15.5/§15.6` 那一轮也是靠实拍才发现「撤下英文原文」的同时得把它写进日志。）
+2. **刷新后外壳回 `overview`，陪练「自动接回」的 effect 根本没机会跑。**
+   实拍证据不是推测：刷新后后端日志里**一条 `GET /sparring/sessions/{id}` 都没有**。
+   `App` 的 `view` 是内存 state，`SparringPanel` 不在树上，凭据存得再对也没人读。
+   修法：`App` 记 `ielts.view`（白名单 `ViewId`，脏值回落 `overview`），
+   新增 `App.viewMemory.test.tsx` 4 例。
+3. **即便 `view` 记住了，口语屏 `mode` 退回 `bank`，陪练面板仍然不在树上。**
+   这是同一个承诺的**第二段**。修法：记 `ielts.speaking-mode`（`bank | sparring`）。
+   §16.3 第 6 条的「三段」（view / mode / sessionId）只做最后一段等于没做 —— 因此写成条款 7。
+
+**实拍同时确认 OK 的行为**（这些不是「没测」，是逐一断言过的）：
+开场白真的来自题库（校园闲聊的问候语，不是硬编码）；磁贴 `0/10 → 1/10` 与 `剩余 10 → 9`
+随作答前进；离线追问带「预置追问」徽标且暖面只在有回落时出现；键盘文本兜底能走完整场；
+评分走异步队列并落到报告页；报告四维 `FC 4.0 / LR 4.5 / GRA 5.0 / P 5.0`、总分 4.5，
+顶部「已降级：离线模板」如实可见；转写正文正是输入的两句；
+学习库真落一条 `part=sparring / task_ref=sb_campus_04 / band 4.5`。
+
+**驱动侧的四个坑（都影响结论可信度，记下来免得下一个人重踩）**：
+1. **`Runtime.evaluate` 不检查 `exceptionDetails`**：求值抛错时只拿到 `undefined`，
+   后续断言全变成「找不到元素」——**把驱动自己写错伪装成产品缺陷**。本次因此白跑三轮。
+   已改成求值抛错即抛异常（判据：宁可驱动炸掉，也不要它安静地报「功能缺失」）。
+2. `Page.reload` 之后必须重新 `Runtime.enable` 再求值，否则读到的是旧页面（上下文已换掉）。
+3. 反复重跑复用调试端口会连到**上一轮残留的 Chrome**（截出来停在「阅读」屏，白高兴一场）；
+   每次换 `CDP_PORT` + 全新 profile 才干净。
+4. **删除后端正在用的临时库会让实例半崩**（`/api/attempts` 返回非 envelope，
+   驱动报 `Cannot read properties of undefined (reading 'items')`）。要重置就换新目录或先停实例。
+
+**仍未做的（如实）**：打包 sidecar（PyInstaller 冻结包）里 `sparring_sessions` 表与
+`app/data/ielts/sparring/**` 是否随包分发 —— `backend.spec` 的 `datas = [("app/data", "app/data")]`
+理论上会带上，但**本轮没有实跑冻结包验证**；`git commit`。

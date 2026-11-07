@@ -326,7 +326,13 @@ def test_新库有drafts表且版本顶到SCHEMA_VERSION(own_db):
     migrate.ensure_schema()
     assert _draft_rows(_db(own_db)) == []
     assert _version(_db(own_db)) == store.SCHEMA_VERSION
-    assert store.SCHEMA_VERSION == 3, "草稿表是迁移 v3；抬高常量必须配得上一步"
+    # 这条断言原来的写法是 `store.SCHEMA_VERSION == 3`，把「草稿表是 v3」钉成了常量本身。
+    # 那是循环论证：多一次结构变更就得改这句，而它真正要守的是「常量必须有一条同名步骤」。
+    # 改为对着迁移表核（与 test_schema_version._plan 同一口径）。
+    from app.db import migrations
+
+    assert any("草稿" in step.name for step in migrations.MIGRATIONS), "抬高常量却把草稿步骤弄丢了"
+    assert migrations.validate_chain(store.SCHEMA_VERSION)[-1].version == store.SCHEMA_VERSION
 
 
 def test_老库升级后长出drafts表且数据不动(own_db):
@@ -375,11 +381,13 @@ def test_迁移步骤3重复执行不报错(own_db):
 
 
 def test_迁移表连续且最后一步是草稿(own_db):
+    """迁移链必须连续；草稿那一步在链上（不再钉「它一定是最后一步」——后面还会加步骤）。"""
     from app.db import migrations, store
 
     steps = migrations.validate_chain(store.SCHEMA_VERSION)
-    assert [s.version for s in steps] == [1, 2, 3]
-    assert "草稿" in steps[-1].name
+    assert [s.version for s in steps] == list(range(1, len(steps) + 1))
+    draft = next(s for s in steps if "草稿" in s.name)
+    assert draft.version == 3, "草稿表必须是第 3 步（已上线的步骤号不许挪）"
 
 
 def test_升级后端点立刻可用(local_client, own_db):

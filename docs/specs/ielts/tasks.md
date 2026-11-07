@@ -114,3 +114,109 @@
 - `scripts/build.ps1` 退出码 0，产出 NSIS 安装包；冻结 sidecar 用临时库实跑通过（`/health` + 新 set 判分），详见 `spec-contracts.md` §11.2。
 - 真浏览器点击发现并修掉的缺陷记录在 `spec-contracts.md` §13（逐句重听时间轴、UTC 日期、设置页两处提示），均已补测试。
 - **未做（需用户点头）**：安装器实装、GUI 窗口运行、`git commit`。T4–T7 的产出由主控在 agent 中止后接管完成，故本板任务以 TaskList 状态为准。
+
+---
+
+## Wave 8：1 对 1 口语陪练（FR-S7 / 契约 §16）
+
+**为什么排在口语而不是新开一屏**：现有口语屏的追问来自题库，听不到考生刚说的话，
+而 Part 3 最难的一维就是「顺着你的话追」。补的是口语屏内的第二种模式，不是第十个导航项。
+
+| 项 | 落点 |
+| --- | --- |
+| 规格 | `spec-product.md` FR-S7 / AC-S7.1–S7.6 |
+| 契约 | `spec-contracts.md` §16（端点 #51–#57、内容 schema、会话/评分形状、前端面） |
+| 内容 | `backend/app/data/ielts/sparring/*.json` 6 个原创话题（A2×2 / B1×2 / B2×2） |
+| 后端 | `services/sparring.py`（会话推进 + 追问回落 + 评分）、`api/sparring.py`、`prompts/speaking.py` 的陪练模板、`store.py` 的 `sparring_sessions` CRUD、迁移 v4 |
+| 前端 | `features/speaking/SparringPanel.tsx` + `SparringTopicPicker` + `SparringMessageList` + `sparringSets.ts`；口语屏顶部 `Tabs` 切模式 |
+| 测试 | 后端 `tests/test_api_sparring.py` 23 例；前端 `SparringPanel.test.tsx` 11 例 + `api.test.ts` 6 例 |
+
+**执行结果（2026-11-06）**：
+- 后端 `pytest -m "not integration"`：**498 passed**（新增 23）。
+- 前端 `tsc -b` 无错误；`npm test`：**46 文件 / 477 用例通过**（新增 17）。
+- 内容校验：`python tools/validate_ielts_data.py` 通过（42 个 set，其中陪练 6，0 错误 0 警告）；
+  校验脚本已扩到第五个目录，并守住「预置追问必须是完整问句」这条离线兜底的前提。
+
+**本轮顺带改掉的既有口径（不是新增功能）**：
+- `test_drafts_api.py` 里 `store.SCHEMA_VERSION == 3` 是循环论证（多一次结构变更就得改这句），
+  改成对着迁移表核「常量必须有一条同名步骤」，`test_迁移表连续且最后一步是草稿` 同步改成
+  「草稿必须是第 3 步（已上线的步骤号不许挪）」。
+- `RecorderControls` 新增 `textLabel` / `textPlaceholder` 两个可选 prop：陪练是**多轮**对话，
+  而那个组件内部有「只能提交一次」的闸门；统一文案还会让两个模式在界面上长得一模一样。
+
+**未做（如实）**：真浏览器点完一整场陪练（本轮只有 jsdom + 契约测试，没有实拍截图）；
+打包 sidecar 里 `sparring_sessions` 表与内容目录是否随包分发（`backend.spec` 的
+`datas = [("app/data", "app/data")]` 会带上，但没实跑验证）；`git commit`。
+
+**Wave 8 第二轮（2026-11-06，收上一轮复盘里的 4 条）**：
+- **去重范围太窄（真实缺陷）**：原来只比「与相邻上一句完全相同」，且 `used_presets` 只累积
+  **fallback** 的追问。后果是模型第 3 轮可以把预置清单第 1 句原样再问一遍，界面显示「AI 追问」，
+  用户只读到一句重复。改为：AI 与预置都进「已问过」集合，去重比对**全部已问过**的归一化整句。
+  新增 3 条后端用例（念回更早问题 → `invalid_model_output`；AI 问过的句子进集合；预置用尽 → 固定收尾句）。
+- **刷新丢会话**：`SparringPanel` 原来只在内存里存 `session_id`，webview 一刷新那场对话就找不回来。
+  按契约 §16.3 第 6 条落 `localStorage`（`ielts.sparring-session`），挂载自动 `GET` 接回；
+  404 静默丢弃；提交评分后清凭据。新增 3 条前端用例（接回 / 404 静默 / 评分后清）。
+- **陪练评分口径未区分**：`speaking_grader` 原来题库与陪练共用同一段 `BAND_RULES`，
+  模型会拿「没覆盖题卡三个提示点」扣 FC —— 而陪练里根本没有题卡。加
+  `SPARRING_SCORING_RULES`，只在 `part="sparring"` 时追加。新增 1 条用例（正反两向都断言）。
+- **顺手修**：`sparringHandlers.ts` 的 `SparringTopic` fixture 缺 `turns`/`preset_count`
+  （`tsc` 报错，vitest 绿 —— 又一例「jsdom 不做类型检查」）；测试用例间共享 `localStorage` 导致
+  后一个用例被前一个的 `session_id` 拖去 resume，`beforeEach` 里清掉。
+
+质量门（第二轮）：后端 **502 passed**（+4）；前端 **46 文件 / 480 用例**（+3）；`tsc -b` 无错误。
+
+**Wave 8 第三轮（2026-11-06，真浏览器整场实跑 D 档）**：
+本项目的 DoD 第 5 项要求「在真实环境跑过一次」，本轮补上。栈全隔离（后端 `:8799` 临时库 +
+vite `:5181` + Chrome 全新 profile + CDP），驱动 `drive.mjs` 在仓库外，**19 项断言全过**。
+
+实拍**抓到 3 个真缺陷**（都不是测试能抓到的形态，全已修 + 补回归）：
+1. **`stt_service` 用 `math.exp` 却没 `import math`** → 所有失败路径正常、**唯一成功的那一步
+   必抛 `NameError`**，被归成 503「本机语音转写暂时不可用」。用户录音转写长期是坏的，
+   而单测全绿（只覆盖失败分支）。修 + 新增 `test_stt_transcribe_success.py`（真的跑一次成功转写，
+   反向探针验证过）。
+2. **刷新后外壳回 `overview`** → 陪练「自动接回」的 effect 根本没挂载（后端日志实证：
+   刷新后零条 `GET /sparring/sessions/{id}`）。修：记 `ielts.view`。
+3. **口语屏 `mode` 退回 `bank`** → 同一承诺的第二段同样失效。修：记 `ielts.speaking-mode`。
+
+质量门（第三轮）：后端 **505 passed**（+3）；前端 **47 文件 / 484 用例**（+4）；`tsc -b` 无错误。
+实跑细节（含驱动侧四个坑与「为什么单测没抓到」）写进 `spec-contracts.md` §16.6。
+
+---
+
+## Wave 8 第四轮（2026-11-07）：用户遗留清单逐项修复
+
+用户把复盘清单原样贴回并说「这些都帮我修复下」。逐项：
+
+| # | 项 | 落点 | 状态 |
+| --- | --- | --- | --- |
+| ① | `preset_exhausted` 升为正式枚举 | 契约 §0 + `ai_client.REASON_PRESET_EXHAUSTED` + `types/ielts.ts` 的 `DegradedReason`/`DEGRADED_REASON_LABEL_ZH` + `test_ai_client.py` 枚举逐字相等守卫（防「实现私自加值」漂移） | ✅ |
+| ② | CSP 收紧 | `tauri.conf.json` 去掉 `https://*`（AI 出网在后端进程，webview CSP 从来管不着它，通配只白放开网页侧出站面）；契约 §11 + README 同步 | ✅ |
+| ③ | 回听自己上一轮 | `SparringPanel` 会话内存 `playback: seq→Blob`，`SparringMessageList` 的「回听我的录音」；音频**不落库**（宪法不为此加列），刷新后按钮不出现=「没有」而非「坏了」；契约 §16.5 + `SparringMessageList.test.tsx` 4 例 | ✅ |
+| ④ | 陪练话题 6→10 | 新增外卖/银行/问路/主持会议（a2×3 / b1×3 / b2×2… 覆盖三档），`validate_ielts_data.py` 纳入下限与 `sb_` id 规则，manifest 收录 sparring | ✅ |
+| ⑤ | 冻结包实跑 | `dist/backend.exe` 临时库实跑：10 话题随包、迁移 v4 建表、turn→assess→attempts 全链路 200；`tools/check_frozen_excludes.py` 逐个核对 excludes（判据坑：裸名字会误报，见 §11.3） | ✅ |
+| ⑥ | 扩题库 | speaking +4（Part1 14 / Part2 8）、writing +2（Task1 6 / Task2 6），校验通过 52 set | ✅ |
+| ⑦ | dictionary.json 来源 | `tools/rebuild_dictionary.py --check` 实测：词表 391/392 在 ECDICT（MIT），释义 170/231 逐字命中、61 条同义改写、音标为人工 IPA 规范化；`docs/specs/dictionary-provenance.md` + LICENSE-CONTENT §3 改写 | ✅ |
+| ⑧ | onedir 布局 | `backend.spec` 认 `IELTS_PYI_LAYOUT`；`build.ps1 -Onedir` 产 `dist-portable\`，实测首启 **2.6s**；抓到并修掉 sidecar 运行时命名坑（`backend.exe` 而非 triple 全名，外壳 shelllog 实证）；build.ps1 的 BOM 又丢过一次、已恢复并在文件头写警告 | ✅（GUI 窗口冒烟留给用户双击） |
+
+质量门（第四轮实测）：后端 **506 passed**（新增枚举守卫 1 例）；前端 **48 文件 / 488 用例**
+（新增 `SparringMessageList.test.tsx` 4 例）；`tsc -b` 无错误；
+内容校验 52 set 0 错误；`check_frozen_excludes.py` 全绿。
+
+**仍未做（需用户点头）**：NSIS 安装器实装（会写用户系统）；`git commit`。
+**已闭合**：打包版 GUI 麦克风——用户 2026-11-07 在便携布局里实测录音成功，
+`--use-fake-ui-for-media-stream` 方案在真实窗口下成立（mic-on-windows.md 的悬案）。
+
+---
+
+## Wave 8 第五轮（2026-11-07）：用户报「dist-portable 双击打不开窗口」
+
+对照实验定位根因（同一份 exe，三种位置两种结果）：留在工作区的 `dist-portable` 卡死
+（进程活着、永不建窗口、`[Shell]` 一条不写）；`target\release` 与 `%TEMP%` 副本都正常。
+**根因是目录权限**：便携目录从被 harness 沙箱接管过的工作区继承了
+`Everyone:(I)(CI)(DENY)(DC)`，WebView2 在 exe 旁建不出用户数据目录，卡在环境创建。
+处置：便携产物组装到 `%LOCALAPPDATA%\IELTSInsight\portable\`（实测窗口正常、渲染完整、
+10 话题随包，截图 `docs/assets/screenshots/portable-window.png`）；`build.ps1 -Onedir`
+加 ACL 探测警告；根因与实验写进契约 §11.4。
+
+诊断中自己踩的坑也记在 §11.4：`icacls /inheritance:r` 会把 harness 沙箱自己的授权一并剥掉
+（之后我的工具对该目录 Access denied，用户账户不受影响）——清权限只针对具体 ACE 增删。

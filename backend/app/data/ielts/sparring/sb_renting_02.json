@@ -1,0 +1,25 @@
+{
+  "id": "sb_renting_02",
+  "module": "sparring",
+  "kind": "practice",
+  "title_zh": "租房看房",
+  "topic": "renting",
+  "level": "b1",
+  "target_band": 6.0,
+  "source": "hand",
+  "generated_at": "2026-11-06T00:00:00Z",
+  "scenario_zh": "你约了中介看一间一居室公寓。中介会介绍位置、租金与押金，你要问清通勤、账单和入住时间。",
+  "opening": "Hi, thanks for coming round — this is the one-bedroom I mentioned on the phone. What would you like to know first?",
+  "preset_questions": [
+    "How long would you be looking to stay in the flat?",
+    "Is the monthly rent inclusive of bills, or are those separate?",
+    "How far is the nearest Tube station on foot?",
+    "Would a six-week deposit be workable for you?",
+    "Have you rented in this city before?",
+    "When would you ideally want to move in?",
+    "Do you need somewhere with parking, or is public transport enough?",
+    "Is there anything about the flat you'd want changed before you sign?"
+  ],
+  "max_turns": 10,
+  "partner_voice": "en-GB-SoniaNeural"
+}

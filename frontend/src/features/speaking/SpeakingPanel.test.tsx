@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetGradingJobs } from '../../hooks/useGradingJobs';
 import { server } from '../../test/mocks/server';
 import type { SpeakingPrompt } from '../../types/ielts';
@@ -16,6 +16,9 @@ import { createSpeakingHandlers, part1Meta, part2Meta, speakingReport, turnResul
 
 const TEXT_LABEL = /直接输入答案文本/;
 
+/** 录制器实例池：只有拿到实例才能模拟「录到一半设备被拔走」（契约 §15.6 的界面侧证明）。 */
+const fakeRecorderInstances: { failMidway: () => void }[] = [];
+
 function fakeRecorder() {
   class FakeMediaRecorder {
     static isTypeSupported() {
@@ -26,6 +29,9 @@ function fakeRecorder() {
     ondataavailable: ((event: { data: Blob }) => void) | null = null;
     onstop: (() => void) | null = null;
     onerror: (() => void) | null = null;
+    constructor() {
+      fakeRecorderInstances.push(this);
+    }
     start() {
       this.state = 'recording';
       this.ondataavailable?.({ data: new Blob(['webm-bytes'], { type: 'audio/webm' }) });
@@ -33,6 +39,10 @@ function fakeRecorder() {
     stop() {
       this.state = 'inactive';
       this.onstop?.();
+    }
+    /** 真 MediaRecorder 的失败形态：派发 error，之后不再派发 stop */
+    failMidway() {
+      this.onerror?.();
     }
   }
   vi.stubGlobal('MediaRecorder', FakeMediaRecorder);
@@ -83,6 +93,12 @@ async function metric(name: string): Promise<HTMLElement> {
 beforeAll(() => {
   fakeRecorder();
   mockMic();
+});
+
+beforeEach(() => {
+  // 每个用例只看自己创建的实例：留着上一个用例的实例，`at(-1)` 会戳到别人家的录制器，
+  // 表现就是「用例红了但错误毫无信息」——本轮排查过一次，别再留给下一个人。
+  fakeRecorderInstances.length = 0;
 });
 
 afterEach(() => {
@@ -181,6 +197,56 @@ describe('SpeakingPanel', () => {
     await startPart1();
     await answerWithText('an answer');
     expect(await screen.findByRole('alert')).toHaveTextContent('音频过大（上限 5MB），请分段录制后重试');
+  });
+
+  it('开麦等待的窗口里按钮不许写着「开始录音」：显示进行中并挡住第二次点击（契约 §15.6 同族）', async () => {
+    const ctx = createSpeakingHandlers();
+    server.use(...ctx.handlers);
+    let release: (value: unknown) => void = () => {};
+    mockMic(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    render(<SpeakingPanel ready />);
+    await startPart1();
+
+    fireEvent.click(screen.getByRole('button', { name: '开始录音' }));
+    // 这段窗口以前显示的是「开始录音」（未录音），慢被显示成没反应，于是用户连点两下：
+    // 第二下会再开一次 getUserMedia，而第一份轨道没人关。
+    const pending = await screen.findByRole('button', { name: /正在开启麦克风/ });
+    expect(pending).toBeDisabled();
+
+    await act(async () => {
+      release({ getTracks: () => [] });
+    });
+    expect(await screen.findByRole('button', { name: '停止' })).toBeInTheDocument();
+    mockMic();
+  });
+
+  it('录制中途设备坏掉：当场说出原因，且不把残缺音频摆成可提交的录音（契约 §15.6）', async () => {
+    const ctx = createSpeakingHandlers();
+    server.use(...ctx.handlers);
+    render(<SpeakingPanel ready />);
+    await startPart1();
+
+    fireEvent.click(screen.getByRole('button', { name: '开始录音' }));
+    await screen.findByRole('button', { name: '停止' });
+    const recorder = fakeRecorderInstances[fakeRecorderInstances.length - 1];
+    if (!recorder) {
+      throw new Error('点了「开始录音」却没有拿到录制器实例：麦克风根本没开起来，往下模拟故障没有意义');
+    }
+
+    act(() => {
+      recorder.failMidway();
+    });
+
+    // 中文原因当场可见（修之前这里是彻底的静默：界面继续显示「录音中」）
+    expect(await screen.findByText(/录音中断/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '停止' })).toBeNull();
+    // 「假的成功」的形态就是那个提交按钮：残缺的一段绝不该能提交
+    expect(screen.queryByRole('button', { name: '提交录音' })).toBeNull();
   });
 
   it('置信度 < 0.5 时提示可重录或改用文本输入（AC-S3）', async () => {

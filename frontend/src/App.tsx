@@ -1,10 +1,10 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Badge, Button, Card, EngineNotice, ErrorBoundary, Icon, StorageNotice, cx, usesStaleEngine, type BadgeTone, type IconName } from './components/ui';
 import { useBackendReady } from './hooks/useBackendReady';
 import { useGradingJobs } from './hooks/useGradingJobs';
 import { useTheme } from './hooks/useTheme';
 import type { ThemeMode } from './types/ielts';
-import { Dashboard } from './features/report/Dashboard';
+import { Dashboard, type GradingTileSource } from './features/report/Dashboard';
 import { ReportPage } from './features/report/ReportPage';
 import { SpeakingPanel } from './features/speaking/SpeakingPanel';
 import { GradingRailBadge } from './features/shared/GradingJobs';
@@ -26,6 +26,49 @@ export type ViewId =
   | 'review'
   | 'report'
   | 'settings';
+
+/**
+ * 上次所在的那一屏（契约 §16.3 第 6 条的**前置条件**）。
+ *
+ * 陪练这类「长会话」模式要求刷新后能接回现场，但外壳的 `view` 是内存 state：
+ * 一刷新就退回 `overview`，`SparringPanel` 连同它的「自动接回」effect 一起被卸载 ——
+ * 会话凭据存得再对也没人读（真浏览器实拍抓到的正是这个：刷新后一条
+ * `GET /sparring/sessions/{id}` 都没发出去）。
+ *
+ * 只记 `ViewId` 这个白名单内的值：脏值落到 `overview`，不给任意字符串留口子。
+ */
+const VIEW_STORAGE_KEY = 'ielts.view';
+
+const VIEW_IDS: readonly ViewId[] = [
+  'overview',
+  'speaking',
+  'listening',
+  'reading',
+  'writing',
+  'vocab',
+  'review',
+  'report',
+  'settings',
+];
+
+function rememberedView(): ViewId {
+  if (typeof localStorage === 'undefined') return 'overview';
+  try {
+    const value = localStorage.getItem(VIEW_STORAGE_KEY);
+    return VIEW_IDS.includes(value as ViewId) ? (value as ViewId) : 'overview';
+  } catch {
+    return 'overview';
+  }
+}
+
+function rememberView(view: ViewId): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(VIEW_STORAGE_KEY, view);
+  } catch {
+    // 写不进去就退回「每次从概览开始」，不影响任何功能
+  }
+}
 
 type ViewMeta = {
   id: ViewId;
@@ -57,12 +100,18 @@ const THEME_OPTIONS: ReadonlyArray<{ value: ThemeMode; label: string; icon: Icon
 ];
 
 export default function App() {
-  const [view, setView] = useState<ViewId>('overview');
+  const [view, setViewState] = useState<ViewId>(() => rememberedView());
   const [helperOpen, setHelperOpen] = useState(true);
   const backend = useBackendReady();
   const grading = useGradingJobs();
   const theme = useTheme();
   const active = viewMeta(view);
+
+  /** 切屏即记账：刷新后回到同一屏（陪练会话接回依赖这一条）。 */
+  const setView = useCallback((next: ViewId) => {
+    setViewState(next);
+    rememberView(next);
+  }, []);
 
   // 首屏那次 GET /settings 大概率撞在未就绪的后端上，健康检查通过后与库里对齐一次（AC-G1）。
   useEffect(() => {
@@ -162,7 +211,7 @@ export default function App() {
             /* 契约 §15.1：一屏抛错不许全站白屏。外层 div 按 view 加 key，边界随之复位，
                所以坏屏切到别的导航项就能继续用，不必重启应用。 */
             <ErrorBoundary scope="view">
-              {renderView(view, setView, backend.health?.storage.state === 'readonly', backend.refreshHealth)}
+              {renderView(view, setView, backend.health?.storage.state === 'readonly', backend.refreshHealth, grading)}
             </ErrorBoundary>
           )}
         </div>
@@ -361,10 +410,11 @@ function renderView(
   setView: (next: ViewId) => void,
   storageReadonly = false,
   refreshHealth?: () => void,
+  grading?: GradingTileSource,
 ): ReactNode {
   switch (view) {
     case 'overview':
-      return <Dashboard />;
+      return <Dashboard grading={grading} />;
     case 'speaking':
       return <SpeakingPanel />;
     case 'listening':

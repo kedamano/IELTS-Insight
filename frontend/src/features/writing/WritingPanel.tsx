@@ -492,7 +492,7 @@ export function WritingPanel({
           >
             <textarea
               id="writing-response"
-              className="min-h-64 w-full rounded-card border border-rule bg-paper px-3 py-2 font-serif text-sm leading-relaxed text-ink outline-none focus:border-accent"
+              className="min-h-64 w-full rounded-card border border-rule bg-paper px-3 py-2 font-serif text-sm leading-relaxed text-ink focus:border-accent"
               placeholder={
                 task.task === 'task2'
                   ? 'Write your essay. State your position, develop two or three body paragraphs, then conclude.'

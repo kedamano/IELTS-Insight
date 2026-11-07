@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import io
+import math
 import os
 import threading
 from typing import Any, Optional

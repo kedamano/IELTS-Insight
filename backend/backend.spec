@@ -10,10 +10,17 @@
 - 产出 `backend.exe`；由 scripts/build.ps1 复制成 Tauri 需要的
   `binaries/backend-x86_64-pc-windows-msvc.exe`（文件名里的 target triple 交给脚本处理，
   不把架构写死进 spec）。
-- excludes 只列经 grep 确认【全仓零 import】的重型可选依赖，降低体积；未对打包后运行做实测。
+- excludes 只列经 grep 确认【全仓零 import】的重型可选依赖，降低体积；打包后运行已实测
+  （tools/check_frozen_excludes.py 核对 excludes 未随包、数据随包）。
+- 布局开关：环境变量 `IELTS_PYI_LAYOUT=onedir` 时产出 COLLECT 目录布局（首启不解包，
+  启动从 ~30s 降到 ~2s）；缺省仍是 onefile 单 exe。onedir 产物**只能**配便携目录分发
+  （Tauri externalBin 只收单文件，`_internal` 进不了 NSIS 的 sidecar 同级位置），
+  由 scripts/build.ps1 -Onedir 组装；NSIS 安装包路径不受这个开关影响。
 """
 import os
 from PyInstaller.utils.hooks import collect_all, collect_submodules
+
+LAYOUT = (os.environ.get("IELTS_PYI_LAYOUT") or "onefile").strip().lower()
 
 # ---- 随包数据（递归含 app/data/ielts/**、dictionary.json）----
 # app/db/schema.sql 必须单独列：建表 SQL 不是 .py，PyInstaller 不会随模块收集，
@@ -127,23 +134,47 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.datas,
-    [],
-    name="backend",
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    console=True,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-)
+if LAYOUT == "onedir":
+    # COLLECT 布局：exe + `_internal/`。首启不再解包（onefile 的 20–30s 白等就是这么来的）。
+    # 冻结后 `sys._MEIPASS` 指向 `_internal`，datas 落点与 onefile 一致，pyinstaller_entry
+    # 的 `_data_root()` 两种布局下都成立 —— 入口不需要分支。
+    # COLLECT 与 Analysis/PYZ/EXE 一样由 spec 运行时注入全局，不需要 import。
+    exe = EXE(
+        pyz,
+        a.scripts,
+        [],
+        exclude_binaries=True,
+        name="backend",
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=False,
+        upx=True,
+        console=True,
+        disable_windowed_traceback=False,
+        argv_emulation=False,
+        target_arch=None,
+        codesign_identity=None,
+        entitlements_file=None,
+    )
+    coll = COLLECT(exe, a.binaries, a.datas, [], strip=False, upx=True, name="backend")
+else:
+    exe = EXE(
+        pyz,
+        a.scripts,
+        a.binaries,
+        a.datas,
+        [],
+        name="backend",
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=False,
+        upx=True,
+        upx_exclude=[],
+        runtime_tmpdir=None,
+        console=True,
+        disable_windowed_traceback=False,
+        argv_emulation=False,
+        target_arch=None,
+        codesign_identity=None,
+        entitlements_file=None,
+    )

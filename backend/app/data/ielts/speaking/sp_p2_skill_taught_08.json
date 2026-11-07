@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_skill_taught_08",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 7.5,
+  "title_zh": "长辈教给你的技能",
+  "topic": "skill_taught",
+  "source": "hand",
+  "generated_at": "2026-11-07T00:00:00Z",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe a practical skill you were taught by an older family member.",
+      "bullets": [
+        "what the skill is and who taught you",
+        "how the teaching happened",
+        "explain how you use that skill now"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "Why do some skills pass down within families rather than through schools?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "Do you think hands-on skills are valued less than they used to be?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "How might the way we learn practical skills change over the next twenty years?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "Should every young person learn to cook and mend things themselves?",
+    "What is the most useful skill a person can learn as an adult?",
+    "Do online tutorials teach skills as well as a person can?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural"
+}

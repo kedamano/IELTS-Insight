@@ -1,0 +1,25 @@
+{
+  "id": "sb_clinic_05",
+  "module": "sparring",
+  "kind": "practice",
+  "title_zh": "就医问诊",
+  "topic": "clinic",
+  "level": "b1",
+  "target_band": 6.0,
+  "source": "hand",
+  "generated_at": "2026-11-06T00:00:00Z",
+  "scenario_zh": "你因为持续咳嗽去社区诊所。医生会问症状持续多久、有没有其他不适，再给用药与复诊建议。",
+  "opening": "Come in, sit down. So what's brought you in today?",
+  "preset_questions": [
+    "How long have you had that cough?",
+    "Is it worse at any particular time of day?",
+    "Have you had a fever or any trouble breathing?",
+    "Are you taking any medication at the moment?",
+    "Do you smoke, or have you smoked in the past?",
+    "Has anything like this happened to you before?",
+    "How much sleep are you getting at the moment?",
+    "Would you be able to come back in a week if it hasn't cleared up?"
+  ],
+  "max_turns": 10,
+  "partner_voice": "en-GB-SoniaNeural"
+}

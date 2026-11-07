@@ -1,0 +1,25 @@
+{
+  "id": "sb_directions_09",
+  "module": "sparring",
+  "kind": "practice",
+  "title_zh": "街头问路",
+  "topic": "directions",
+  "level": "a2",
+  "target_band": 5.5,
+  "source": "hand",
+  "generated_at": "2026-11-07T00:00:00Z",
+  "scenario_zh": "你在陌生街区找地铁站。路人会告诉你怎么走，你要确认方向、远近和是否要换乘。",
+  "opening": "Sorry, are you looking for something? You've been checking that map for a while.",
+  "preset_questions": [
+    "Do you want the quickest way, or the easiest one to follow?",
+    "Have you got a ticket already, or will you buy one at the station?",
+    "Do you know which line you need to take?",
+    "Would you like me to walk you to the corner so you can see it?",
+    "Is it about ten minutes on foot — is that far for you?",
+    "Do you want to avoid the escalator and use the stairs instead?",
+    "Shall I repeat the turns once more, slowly?",
+    "Is there anything else you're trying to find nearby?"
+  ],
+  "max_turns": 10,
+  "partner_voice": "en-US-GuyNeural"
+}

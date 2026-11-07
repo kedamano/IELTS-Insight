@@ -50,6 +50,10 @@ REASON_TIMEOUT = "timeout"
 REASON_INVALID_OUTPUT = "invalid_model_output"
 REASON_INCOMPLETE_DIMENSIONS = "incomplete_dimensions"
 REASON_OFFLINE_TEMPLATE = "offline_template"
+# Wave 8 收编（契约 §0）：陪练预置问句用尽。它既不是 AI 失败也不是用户关网，
+# 但它是降级 —— 留在跨模块枚举里，`AiResult.__post_init__` 才不会把它误改成 network_error，
+# 前端也才有一处统一的中文映射可查（而不是各屏各自翻译）。
+REASON_PRESET_EXHAUSTED = "preset_exhausted"
 
 DEGRADED_REASONS = frozenset(
     {
@@ -59,6 +63,7 @@ DEGRADED_REASONS = frozenset(
         REASON_INVALID_OUTPUT,
         REASON_INCOMPLETE_DIMENSIONS,
         REASON_OFFLINE_TEMPLATE,
+        REASON_PRESET_EXHAUSTED,
     }
 )
 

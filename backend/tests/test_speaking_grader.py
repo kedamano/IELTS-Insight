@@ -211,6 +211,27 @@ def test_3P_quote不在原文则丢弃并计数(grader):
         assert not item.get("quote") or item["quote"] in TRANSCRIPT, f"improvements.quote 也要校验：{item}"
 
 
+def test_陪练模式追加自由对话评分口径_题库模式不追加(grader):
+    """契约 §16.4：`part="sparring"` 时必须把「这是自由对话」的规则送进 system prompt。
+
+    不加这段的后果是可预期的：模型拿「有没有覆盖题卡三个提示点」扣 FC，
+    而陪练里根本没有题卡 → 一场正常对话被判成低分。
+    """
+    import json
+
+    mod, fake = grader
+    fake.queue(json.dumps(speaking_llm_payload()))
+    _grade(mod, part="sparring")
+    sparring_system = fake.last_call["messages"][0]["content"]
+    assert "自由对话" in sparring_system, "陪练评分必须显式声明这是自由对话"
+    assert "题卡" in sparring_system, "陪练评分要说明『不要按题卡提示点扣分』"
+
+    fake.queue(json.dumps(speaking_llm_payload()))
+    _grade(mod, part=2)
+    library_system = fake.last_call["messages"][0]["content"]
+    assert "自由对话" not in library_system, "题库练习的口径不许被陪练规则污染"
+
+
 def _clamp_half(value: float) -> float:
     """0.5 步长夹紧：向下取到最近 0.5（契约 §3-B 的"取较低档"口径）。"""
     clamped = max(0.0, min(9.0, float(value)))

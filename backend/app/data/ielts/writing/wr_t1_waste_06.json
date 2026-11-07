@@ -1,0 +1,53 @@
+{
+  "id": "wr_t1_waste_06",
+  "module": "writing",
+  "kind": "practice",
+  "task": "task1",
+  "target_band": 6.5,
+  "title_zh": "家庭垃圾构成比例（饼图）",
+  "topic": "environment",
+  "source": "hand",
+  "generated_at": "2026-11-07T00:00:00Z",
+  "time_recommend_sec": 1200,
+  "min_words": 150,
+  "prompt": "The pie charts below show the composition of household waste in one country in 2000 and 2020.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "chart": {
+    "type": "pie",
+    "unit": "per cent of total household waste",
+    "labels": [
+      "Food",
+      "Plastic packaging",
+      "Paper and card",
+      "Glass and metal",
+      "Textiles and other"
+    ],
+    "years": [
+      2000,
+      2020
+    ],
+    "series": [
+      {
+        "name": "2000",
+        "values": [
+          41,
+          12,
+          26,
+          14,
+          7
+        ]
+      },
+      {
+        "name": "2020",
+        "values": [
+          33,
+          28,
+          19,
+          11,
+          9
+        ]
+      }
+    ],
+    "source_note": "Data invented for practice; not an official statistic."
+  },
+  "band_descriptors_ref": "task1"
+}
