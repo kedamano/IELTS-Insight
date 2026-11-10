@@ -16,6 +16,7 @@ import datetime as _dt
 import hashlib
 import json
 import sqlite3
+import threading
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
@@ -55,24 +56,49 @@ _schema_ready = False
 _schema_failed: Optional[str] = None
 
 
-def connect() -> sqlite3.Connection:
-    """打开数据库连接（必要时先建表）。
+# 线程级连接复用：每个线程持有一条连接，跨请求复用。
+#
+# 为什么可以复用：本模块所有函数都是「connect() → 用完 → close()」的一次性形态，
+# 没有在连接上跨调用持有状态；事务由 `with conn:` 自己管提交/回滚，所以一条连接
+# 连续跑多个请求是安全的（SQLite 连接本身就是为「多次操作」设计的）。
+#
+# 为什么按线程：`job_queue` 的批改 worker 是独立常驻线程，FastAPI 的同步端点
+# 由 anyio 线程池执行 —— 跨线程共用一条 sqlite 连接会直接 ProgrammingError。
+# `threading.local()` 让每个线程各拿一条，互不干扰。
+_local = threading.local()
 
-    两条 PRAGMA 的分工：
-    - `foreign_keys` 是**连接级**开关，必须每次开（SQLite 默认关，关掉后
-      `attempt_items` 的 `ON DELETE CASCADE` 会静默失效）；
-    - `journal_mode=WAL` 是**数据库级**持久属性，设一次即写进文件头，
-      之后每个连接读到的都是 WAL（这里仍显式执行，是为了让新建连接
-      在库被别的进程占着时也拿到确定行为）。
 
-    WAL 的意义：读不阻塞写、写不阻塞读。本项目的实际冲突源是后台 AI 批改
-    线程长时间持写事务，而前端每个请求都在读——默认 rollback journal 下
-    这两者互斥，读请求会撞上 `database is locked`（timeout=10 白等）。
-    `synchronous=NORMAL` 配 WAL 是官方推荐组合：崩溃时最多丢最后一个事务，
-    不会损坏库（与 FULL 相比省掉每次提交的 fsync）。
+class _SharedConnection(sqlite3.Connection):
+    """带引用计数与归属路径的连接：`close()` 只归零计数，真正关闭由 `release()` 触发。
+
+    这是复用能安全落地的关键 —— 现有 39 处调用点都写的是 `conn.close()`，
+    如果复用后某处 close 直接把连接关掉，下一个请求就会拿到一条死连接。
+    把 close 改成「归还」语义，旧调用点无需逐一修改。
+
+    `db_path` 记下这条连接是为哪个库文件开的：`IELTS_DB_PATH` 在测试里会换
+    （每个用例一个 tmp 目录），常驻的批改 worker 线程也会跨用例存活 ——
+    路径变了必须丢弃重建，否则 worker 会一直读写旧库，新任务永远排队。
     """
-    ensure_schema()
-    conn = sqlite3.connect(_cfg.DB_PATH, timeout=10)
+
+    def __init__(self, *args: object, db_path: str = "", **kwargs: object) -> None:
+        super().__init__(*args, **kwargs)
+        self._refcount = 1
+        self.db_path = db_path
+
+    def close(self) -> None:  # noqa: D102 - 语义改为归还
+        self._refcount -= 1
+        if self._refcount <= 0:
+            super().close()
+
+    def retain(self) -> None:
+        self._refcount += 1
+
+
+def _open_raw() -> sqlite3.Connection:
+    """真正打开一条新连接（不复用）。"""
+    conn = sqlite3.connect(
+        _cfg.DB_PATH, timeout=10, factory=_SharedConnection, db_path=_cfg.DB_PATH
+    )
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     try:
@@ -83,6 +109,55 @@ def connect() -> sqlite3.Connection:
         pass
     conn.execute("PRAGMA synchronous = NORMAL")
     return conn
+
+
+def connect() -> sqlite3.Connection:
+    """打开数据库连接（必要时先建表）。
+
+    同一条连接在同一线程内复用；返回前 `retain()` 一次，与调用方的 `close()`
+    配对（见 `_SharedConnection`）。
+    """
+    ensure_schema()
+    conn = getattr(_local, "conn", None)
+    if conn is not None:
+        # 路径校验：`IELTS_DB_PATH` 变了（测试每用例一个 tmp 目录）就丢弃重建。
+        # 少了这一条，常驻的批改 worker 会一直读写旧库，新任务永远停在 queued。
+        same_path = getattr(conn, "db_path", None) == _cfg.DB_PATH
+        if not same_path:
+            _local.conn = None
+            try:
+                conn.close()
+            except sqlite3.Error:
+                pass
+        else:
+            try:
+                conn.execute("SELECT 1")
+                conn.retain()
+                return conn
+            except sqlite3.Error:
+                # 连接已死（库被删/被替换）：丢掉重建，不让调用方拿到坏连接
+                _local.conn = None
+                try:
+                    conn.close()
+                except sqlite3.Error:
+                    pass
+    conn = _open_raw()
+    # refcount=1 归「池」持有；retain 一次把调用方那份加上，
+    # 这样调用方 close() 之后连接仍归池所有（refcount=1），下次可直接复用。
+    conn.retain()
+    _local.conn = conn
+    return conn
+
+
+def release() -> None:
+    """真正关闭当前线程的连接（进程退出/测试清理用）。"""
+    conn = getattr(_local, "conn", None)
+    _local.conn = None
+    if conn is not None:
+        try:
+            conn.close()
+        except sqlite3.Error:
+            pass
 
 
 def ensure_schema() -> None:
