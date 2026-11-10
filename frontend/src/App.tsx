@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState, useTransition, type ReactNode } from 'react';
 import { Badge, Button, Card, EngineNotice, ErrorBoundary, Icon, StorageNotice, cx, usesStaleEngine, type BadgeTone, type IconName } from './components/ui';
 import { useBackendReady } from './hooks/useBackendReady';
 import { useGradingJobs } from './hooks/useGradingJobs';
@@ -116,13 +116,39 @@ export default function App() {
     rememberView(next);
   }, []);
 
+  /**
+   * 切屏走 `startTransition`：把「换一屏」标记为可中断的低优先级更新。
+   *
+   * 九屏现在是懒加载的，第一次点进某一屏要等 chunk 下载；不包 transition 时
+   * React 会把这次状态更新当成紧急更新，在 chunk 就绪前整棵子树都在等，
+   * 导航栏的 hover/按下反馈也跟着卡住。包上之后旧屏先留在原地（React 会在
+   * 后台把新屏准备好再一次性换过去），交互不被阻塞。
+   */
+  const [isPending, startTransition] = useTransition();
+  const navigate = useCallback(
+    (next: ViewId) => {
+      startTransition(() => {
+        setView(next);
+      });
+    },
+    [setView],
+  );
+
   // 首屏那次 GET /settings 大概率撞在未就绪的后端上，健康检查通过后与库里对齐一次（AC-G1）。
   useEffect(() => {
     if (backend.ready) void theme.refresh();
   }, [backend.ready, theme.refresh]);
 
   return (
-    <div className="flex h-screen w-screen overflow-x-auto bg-paper-sunken text-ink">
+    <div
+      className={cx(
+        'flex h-screen w-screen overflow-x-auto bg-paper-sunken text-ink',
+        // transition 期间只做一处几乎不可见的提示（右上角的等待态由 CSS 动画表达），
+        // 不弹遮罩、不阻塞点击 —— 这正是 startTransition 与 loading spinner 的区别。
+        isPending && 'transition-pending',
+      )}
+      aria-busy={isPending || undefined}
+    >
       {/* 左轨导航（216px） */}
       <nav
         aria-label="主导航"
@@ -151,7 +177,7 @@ export default function App() {
                     item={item}
                     selected={item.id === view}
                     disabled={!backend.ready}
-                    onSelect={setView}
+                    onSelect={navigate}
                   />
                 </li>
               ))}

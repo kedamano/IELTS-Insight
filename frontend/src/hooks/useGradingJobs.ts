@@ -14,6 +14,7 @@
 import { useCallback, useSyncExternalStore } from 'react';
 import { gradingJob, isApiError } from '../services/api';
 import { isJobSettled, type GradingJob, type GradingJobStatus, type ModuleReport } from '../types/ielts';
+import { subscribePageVisible } from './usePageVisible';
 
 export interface TrackedJob {
   job_id: string;
@@ -164,7 +165,10 @@ function fromApi(job: GradingJob, base: TrackedJob): TrackedJob {
 
 function ensureLoop(): void {
   const needed = jobs.some(isPending);
-  if (!needed) {
+  const visible = typeof document === 'undefined' ? true : document.visibilityState === 'visible';
+  // 隐藏时暂停：浏览器对后台标签页的定时器节流不可靠（且会冻结），
+  // 主动停表才是确定行为；回到前台时 onPageVisibilityChange 会立即补一次。
+  if (!needed || !visible) {
     if (timer !== null) {
       clearInterval(timer);
       timer = null;
@@ -172,6 +176,12 @@ function ensureLoop(): void {
     return;
   }
   if (timer === null) timer = setInterval(() => void tick(), POLL_INTERVAL_MS);
+}
+
+/** 标签页由隐到显：立即补一次轮询，用户不会看到过期状态。 */
+function onPageVisibilityChange(visible: boolean): void {
+  if (visible) void tick();
+  ensureLoop();
 }
 
 async function tick(): Promise<void> {
@@ -278,9 +288,17 @@ export function markJobViewed(jobId: string): void {
   recompute(jobs.map((job) => (job.job_id === jobId ? { ...job, viewed: true } : job)));
 }
 
+let visibilityUnsubscribe: (() => void) | null = null;
+
 function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   if (!restored) restore();
+  // 首次有订阅者时挂上可见性监听：后台标签页停表，回前台立刻补一次。
+  // 挂在 subscribe 而不是 useEffect 里，因为这个 store 是模块级的，
+  // 组件卸载后仍可能有定时器在跑（批改任务还没结束）。
+  if (visibilityUnsubscribe === null) {
+    visibilityUnsubscribe = subscribePageVisible(onPageVisibilityChange);
+  }
   ensureLoop();
   return () => {
     listeners.delete(listener);

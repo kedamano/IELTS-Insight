@@ -353,6 +353,13 @@
     animation: viewIn var(--motion-slow) var(--ease-out) both;
   }
 
+  /* startTransition 期间的极轻提示：只让主区内容淡一点点（opacity 0.92），
+   * 不遮罩、不阻塞点击。切屏本身很快，这个状态通常一闪而过，
+   * 存在的意义是「机器确实接到了指令」的可感知反馈。 */
+  .transition-pending main {
+    opacity: 0.92;
+  }
+
   /* 骨架屏：异步批改等待期间占位，避免内容跳动。
    * 不用 --rule/--paper-raised 凑：深色下那两者只差 1.2:1，闪光会看起来像一块死灰。 */
   .skeleton {

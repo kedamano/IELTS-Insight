@@ -56,11 +56,32 @@ _schema_failed: Optional[str] = None
 
 
 def connect() -> sqlite3.Connection:
-    """打开数据库连接（必要时先建表）。"""
+    """打开数据库连接（必要时先建表）。
+
+    两条 PRAGMA 的分工：
+    - `foreign_keys` 是**连接级**开关，必须每次开（SQLite 默认关，关掉后
+      `attempt_items` 的 `ON DELETE CASCADE` 会静默失效）；
+    - `journal_mode=WAL` 是**数据库级**持久属性，设一次即写进文件头，
+      之后每个连接读到的都是 WAL（这里仍显式执行，是为了让新建连接
+      在库被别的进程占着时也拿到确定行为）。
+
+    WAL 的意义：读不阻塞写、写不阻塞读。本项目的实际冲突源是后台 AI 批改
+    线程长时间持写事务，而前端每个请求都在读——默认 rollback journal 下
+    这两者互斥，读请求会撞上 `database is locked`（timeout=10 白等）。
+    `synchronous=NORMAL` 配 WAL 是官方推荐组合：崩溃时最多丢最后一个事务，
+    不会损坏库（与 FULL 相比省掉每次提交的 fsync）。
+    """
     ensure_schema()
     conn = sqlite3.connect(_cfg.DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    try:
+        conn.execute("PRAGMA journal_mode = WAL")
+    except sqlite3.Error:
+        # 只读降级 / 库被独占时可能设不动；这不影响正确性（退回 rollback journal），
+        # 所以不拦请求，留给 quick_check 那条路去报真正的结构问题。
+        pass
+    conn.execute("PRAGMA synchronous = NORMAL")
     return conn
 
 

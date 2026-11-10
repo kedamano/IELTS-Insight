@@ -30,7 +30,7 @@ from app.api.common import (
 )
 from app.config import settings
 from app.db import backup, migrate, migrations, store
-from app.services import faultlog, runtime, sets_loader
+from app.services import faultlog, runtime, sets_loader, tts_service
 
 REAP_REASON = "应用在批改完成前退出，请重新提交批改"
 
@@ -180,6 +180,16 @@ async def lifespan(_: FastAPI):
                 f"{sets_report['data_dir']}）。四科入口在内容产出前不可用；"
                 f"问题清单 {json.dumps(sets_report['errors'][:5], ensure_ascii=False)}",
             )
+
+        # TTS 缓存是纯派生产物，删了只是下次多花几秒合成 —— 可以无条件轮转。
+        # 放在这里而不是 generate 路径里：合成路径每句都要调，那里做清理会反复扫目录。
+        try:
+            removed = tts_service.cleanup_cache()
+            if removed:
+                faultlog.info("Startup", f"已清理过期/超量 TTS 缓存 {removed} 份")
+        except OSError as exc:
+            # 清不掉不影响功能（磁盘可能晚点满），只记一笔
+            faultlog.warn("Startup", f"TTS 缓存清理失败（{type(exc).__name__}），跳过本次清理")
 
         reaped = store.reap_interrupted_jobs(REAP_REASON)
         if reaped:
