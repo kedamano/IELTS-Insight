@@ -1,0 +1,32 @@
+# ESLint 配置（渐进式采用，先 warn 不 fail）
+# 安装：cd frontend && npm install -D eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
+env:
+  browser: true
+  es2022: true
+  node: true
+
+parser: '@typescript-eslint/parser'
+parserOptions:
+  ecmaVersion: latest
+  sourceType: module
+  project: ./tsconfig.json
+
+plugins:
+  - '@typescript-eslint'
+
+extends:
+  - eslint:recommended
+  - plugin:@typescript-eslint/recommended
+
+rules:
+  # 生产化相关
+  '@typescript-eslint/no-unused-vars': warn
+  '@typescript-eslint/no-explicit-any': warn
+  '@typescript-eslint/explicit-function-return-type': off
+  '@typescript-eslint/explicit-module-boundary-types': off
+  'no-console': warn
+  'no-debugger': error
+  'no-alert': error
+  'no-var': error
+  'prefer-const': warn
+  'no-unused-vars': off  # 交给 @typescript-eslint/no-unused-vars

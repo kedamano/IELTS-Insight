@@ -13,6 +13,7 @@ from __future__ import annotations
 import ipaddress
 import json
 import sqlite3
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -222,9 +223,50 @@ allow_origins = cors_allow_origins(settings.DEBUG)
 
 app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION, lifespan=lifespan)
 
+class RequestTimingMiddleware:
+    """记录每个 HTTP 请求的耗时与状态码（契约 §15.3 同源：故障日志）。
+
+    裸 ASGI 中间件而不是 `BaseHTTPMiddleware`：后者会把响应套一层流，音频/文件端点
+    经它转发是已知隐患，与 `StorageReadonlyGuard` 的取舍一致。
+
+    状态码取自 `http.response.start`。比守卫靠外，所以只读降级的 503 也会记一笔；
+    比 CORS 靠内，所以 CORS 预检（在 CORS 层就被拦下、不进本中间件）不计入耗时统计。
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        started = time.perf_counter()
+        status = 0
+
+        async def send_with_timing(message: Message) -> None:
+            nonlocal status
+            if message["type"] == "http.response.start":
+                status = message["status"]
+            await send(message)
+
+        try:
+            await self.app(scope, receive, send_with_timing)
+        finally:
+            elapsed_ms = int((time.perf_counter() - started) * 1000)
+            faultlog.info(
+                "Timing",
+                f"{scope['method']} {scope.get('path', '')} -> {status or '?'} in {elapsed_ms}ms",
+            )
+
+
 # 先注册守卫、后注册 CORS：`add_middleware` 是插到列表头部，后加的更靠外，
 # 于是 CORS 在守卫外面 —— 只读降级的 503 也带得到 CORS 头。
 app.add_middleware(StorageReadonlyGuard)
+
+# 耗时探针夹在守卫与 CORS 之间：它比守卫靠外，所以降级的 503 也会被记一笔；
+# 它比 CORS 靠内，所以 CORS 预检（没有走到守卫）不计入耗时统计。
+app.add_middleware(RequestTimingMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

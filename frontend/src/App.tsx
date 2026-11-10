@@ -1,19 +1,22 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Badge, Button, Card, EngineNotice, ErrorBoundary, Icon, StorageNotice, cx, usesStaleEngine, type BadgeTone, type IconName } from './components/ui';
 import { useBackendReady } from './hooks/useBackendReady';
 import { useGradingJobs } from './hooks/useGradingJobs';
 import { useTheme } from './hooks/useTheme';
 import type { ThemeMode } from './types/ielts';
 import { Dashboard, type GradingTileSource } from './features/report/Dashboard';
-import { ReportPage } from './features/report/ReportPage';
-import { SpeakingPanel } from './features/speaking/SpeakingPanel';
-import { GradingRailBadge } from './features/shared/GradingJobs';
-import { ListeningPanel } from './features/listening/ListeningPanel';
-import ReadingPanel from './features/reading/ReadingPanel';
-import { WritingPanel } from './features/writing/WritingPanel';
-import { VocabBook } from './features/shared/VocabBook';
-import { ReviewBook } from './features/shared/ReviewBook';
-import { SettingsPage } from './features/settings/SettingsPage';
+
+// 代码分割：首屏只加载概览，其余屏幕按需加载
+const SpeakingPanel = lazy(() => import('./features/speaking/SpeakingPanel').then(m => ({ default: m.SpeakingPanel })));
+const ListeningPanel = lazy(() => import('./features/listening/ListeningPanel').then(m => ({ default: m.ListeningPanel })));
+const ReadingPanel = lazy(() => import('./features/reading/ReadingPanel').then(m => ({ default: m.default })));
+const WritingPanel = lazy(() => import('./features/writing/WritingPanel').then(m => ({ default: m.WritingPanel })));
+const VocabBook = lazy(() => import('./features/shared/VocabBook').then(m => ({ default: m.VocabBook })));
+const ReviewBook = lazy(() => import('./features/shared/ReviewBook').then(m => ({ default: m.ReviewBook })));
+const ReportPage = lazy(() => import('./features/report/ReportPage').then(m => ({ default: m.ReportPage })));
+const SettingsPage = lazy(() => import('./features/settings/SettingsPage').then(m => ({ default: m.SettingsPage })));
+
+const GradingRailBadge = lazy(() => import('./features/shared/GradingJobs').then(m => ({ default: m.GradingRailBadge })));
 
 /** 左轨视图状态机（无路由库，§0 IA 的顺序即优先级） */
 export type ViewId =
@@ -157,7 +160,9 @@ export default function App() {
         ))}
 
         <div className="mt-auto flex flex-col gap-3 px-1">
-          <GradingRailBadge jobs={grading.jobs} onOpen={(job) => setView(job.module)} />
+          <Suspense fallback={null}>
+            <GradingRailBadge jobs={grading.jobs} onOpen={(job) => setView(job.module)} />
+          </Suspense>
           <ThemeSwitch />
           <div className="flex flex-col gap-2">
             <Badge
@@ -412,29 +417,37 @@ function renderView(
   refreshHealth?: () => void,
   grading?: GradingTileSource,
 ): ReactNode {
+  // 懒加载占位：切换屏幕时显示轻量骨架，避免白屏
+  const fallback = (
+    <div className="grid place-items-center py-20" aria-live="polite">
+      <span className="text-sm text-ink-muted">加载中…</span>
+    </div>
+  );
   switch (view) {
     case 'overview':
       return <Dashboard grading={grading} />;
     case 'speaking':
-      return <SpeakingPanel />;
+      return <Suspense fallback={fallback}><SpeakingPanel /></Suspense>;
     case 'listening':
-      return <ListeningPanel />;
+      return <Suspense fallback={fallback}><ListeningPanel /></Suspense>;
     case 'reading':
-      return <ReadingPanel />;
+      return <Suspense fallback={fallback}><ReadingPanel /></Suspense>;
     case 'writing':
-      return <WritingPanel />;
+      return <Suspense fallback={fallback}><WritingPanel /></Suspense>;
     case 'vocab':
-      return <VocabBook />;
+      return <Suspense fallback={fallback}><VocabBook /></Suspense>;
     case 'review':
-      return <ReviewBook />;
+      return <Suspense fallback={fallback}><ReviewBook /></Suspense>;
     case 'report':
       return (
-        <ReportPage
-          onOpenReviewBook={() => setView('review')}
-          onOpenVocabBook={() => setView('vocab')}
-        />
+        <Suspense fallback={fallback}>
+          <ReportPage
+            onOpenReviewBook={() => setView('review')}
+            onOpenVocabBook={() => setView('vocab')}
+          />
+        </Suspense>
       );
     case 'settings':
-      return <SettingsPage storageReadonly={storageReadonly} refreshHealth={refreshHealth} />;
+      return <Suspense fallback={fallback}><SettingsPage storageReadonly={storageReadonly} refreshHealth={refreshHealth} /></Suspense>;
   }
 }

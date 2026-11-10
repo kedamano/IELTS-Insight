@@ -1,0 +1,10 @@
+# Bandit 安全扫描配置
+# 运行：cd backend && bandit -r app/ -c .bandit
+[bandit]
+exclude_dirs = ['tests', 'venv', 'build', 'dist', '__pycache__']
+targets = ['app']
+skips = [
+    'B101',  # assert_used - 测试中大量使用 assert
+]
+severity = 'medium'
+confidence = 'medium'

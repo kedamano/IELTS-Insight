@@ -1,0 +1,48 @@
+# Pre-commit hooks for IELTS Insight
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # General file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.(patch|png|jpg|jpeg|gif|woff2|exe|db)$'
+      - id: end-of-file-fixer
+        exclude: '\.(patch|png|jpg|jpeg|gif|woff2|exe|db)$'
+      - id: check-yaml
+      - id: check-json
+        exclude: '(tsconfig\.json|package-lock\.json)$'
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+        exclude: '\.(bat|cmd|ps1)$'
+
+  # Python: formatting + linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^backend/
+      - id: ruff-format
+        files: ^backend/
+
+  # TypeScript / CSS: formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types_or: [javascript, typescript, tsx, css, html, json, yaml, markdown]
+        exclude: '(package-lock\.json|tsconfig\.tsbuildinfo)'
+
+  # Secret detection
+  - repo: https://github.com/Yikes/git-secrets
+    rev: v1.3.0
+    hooks:
+      - id: git-secrets
+        entry: git-secrets --scan
+        language: system
+        files: .

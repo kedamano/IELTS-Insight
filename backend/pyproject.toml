@@ -1,0 +1,28 @@
+# pytest coverage configuration
+# Run: cd backend && pytest --cov=app --cov-report=html --cov-report=term-missing
+[tool.coverage.run]
+source = ['app']
+omit = [
+    '*/tests/*',
+    '*/venv/*',
+    '*/build/*',
+    '*/dist/*',
+    'app/__init__.py',
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    'pragma: no cover',
+    'def __repr__',
+    'raise AssertionError',
+    'raise NotImplementedError',
+    'if __name__ == .__main__.:',
+    'if TYPE_CHECKING:',
+    'pass  # ',
+]
+show_missing = true
+skip_covered = false
+fail_under = 0
+
+[tool.coverage.html]
+directory = 'coverage/htmlcov'
