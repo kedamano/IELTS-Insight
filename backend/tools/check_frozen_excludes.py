@@ -16,7 +16,19 @@ import pathlib
 import re
 import sys
 
-EXCLUDED = ("tkinter", "PIL", "matplotlib", "PyQt5", "IPython", "pytest")
+EXCLUDED = (
+    "tkinter",
+    "PIL",
+    "matplotlib",
+    "PyQt5",
+    "IPython",
+    "pytest",
+    # torch 可选依赖，实测零 import。**llvmlite 不在此列** ——
+    # torch 运行时动态加载它做 JIT，排掉会让冻结包 STT 直接 503（实测踩过）。
+    "scipy",
+    "sklearn",
+    "transformers",
+)
 EXPECTED_DATA = ("app/data/ielts/sparring", "app/data/dictionary.json", "app/db/schema.sql")
 
 COLLECTED = re.compile(r"\(\s*['\"]([\w.]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]\w+['\"]\s*\)")

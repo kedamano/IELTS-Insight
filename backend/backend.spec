@@ -128,6 +128,16 @@ a = Analysis(
         "IPython",
         "notebook",
         "pytest",
+        # torch 的可选依赖（PyInstaller collect_all 会一并收）：
+        # 实测 _internal 里 scipy 72M + sklearn 13M + transformers 44M 共 129M，全仓零 import。
+        #
+        # ⚠️ **llvmlite 不能排**（曾经排过，冻结包实跑直接 503）：
+        # torch 在运行时动态 import llvmlite 做 JIT（`ModuleNotFoundError: No module named
+        # 'llvmlite'`），AST 静态扫 whisper 源码看不出来 —— torch 是动态加载的。
+        # 保留 llvmlite（115M），这是这个方案的边界。
+        "scipy",
+        "sklearn",
+        "transformers",
     ],
     noarchive=False,
     optimize=0,

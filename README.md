@@ -155,7 +155,7 @@ graph LR
 
 | 层 | 技术 | 为什么 |
 | --- | --- | --- |
-| 壳 | Tauri 2 + Rust | 桌面壳只有 11 MB（不塞一个 Chromium 进去）；安装包整体 348 MB，体积几乎全在 sidecar |
+| 壳 | Tauri 2 + Rust | 桌面壳只有 11 MB（不塞一个 Chromium 进去）；安装包整体约 350 MB，体积几乎全在 sidecar |
 | 前端 | React 19 + TypeScript + Vite 6 + Tailwind v4 + vitest/jsdom/msw | 无路由库（九屏用状态机），契约测试用 msw 打真端点形状 |
 | 引擎 | FastAPI + `sqlite3`（标准库）+ PyInstaller | 无 ORM、无外部数据库；冻结成单文件 EXE 就能带着走 |
 | 内容 | 原创题库 JSON + `edge-tts` | 音频本机合成缓存，避开真题版权与素材分发 |
@@ -204,8 +204,16 @@ powershell -ExecutionPolicy Bypass -File scripts\build.ps1
 ③ 复制成 sidecar 命名 `frontend\src-tauri\binaries\backend-x86_64-pc-windows-msvc.exe`
 ④ `npm run build` → `npm run tauri build`（NSIS）。
 
-产物：`frontend\src-tauri\target\release\bundle\nsis\IELTS Insight_2.0.0_x64-setup.exe`（348 MB，
-其中 `backend.exe` 单文件 347 MB —— `openai-whisper` 连带 `torch` 被 `collect_all` 收了进来）。
+产物：`frontend\src-tauri\target\release\bundle\nsis\IELTS Insight_2.0.0_x64-setup.exe`
+（约 350 MB，其中冻结 sidecar 的 `_internal/` 占大头 —— `openai-whisper` 连带 `torch` 被
+`collect_all` 收了进来；torch 是刚需，其余可选依赖已在 `backend.spec` 的 `excludes` 里排掉）。
+
+> 体积沿革：初版 899 MB（`dist-portable`）/ `backend.exe` 86.5 MB。排掉 scipy、sklearn、
+> transformers（三个 torch 可选依赖，全仓零 import）后降到 **720 MB / 58.1 MB**。
+>
+> ⚠️ **`llvmlite` 不能排**（115 MB 保留）：torch 运行时**动态** import 它做 JIT，
+> 排掉后冻结包 STT 直接 503（`ModuleNotFoundError: No module named 'llvmlite'`）。
+> AST 静态扫 whisper 源码看不出来——这是实测踩出来的边界。
 想砍体积的出路是把 STT 换成不依赖 `torch` 的实现（如 CTranslate2 系）或改 `--onedir`，两者都属于未擅自改的取舍。
 
 > ⚠️ **不要**直接 `cargo build --release`：不带 `custom-protocol` feature 会得到一个卡在 `ERR_CONNECTION_REFUSED` 的空窗口。始终用 `npm run tauri build`。

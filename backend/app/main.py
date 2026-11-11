@@ -233,6 +233,42 @@ allow_origins = cors_allow_origins(settings.DEBUG)
 
 app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION, lifespan=lifespan)
 
+class SecurityHeadersMiddleware:
+    """给**所有**响应补齐基础安全头（契约 §0 同源：错误响应已有的 nosniff 在这里统一）。
+
+    本机应用的风险面比公网小，但有三条是白捡的：
+    - `X-Content-Type-Options: nosniff`：挡 MIME 嗅探（原来只在错误响应上加）；
+    - `X-Frame-Options: DENY`：挡点击劫持（本机虽然不会被嵌 iframe，但成本为零）；
+    - `Referrer-Policy: no-referrer`：不出站时也不带 Referer。
+
+    刻意**不加** HSTS：那是给 HTTPS 站点用的，本机 http 上设了只会让浏览器强制跳转
+    到一个不存在的 https 端点，把应用锁死。
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_with_headers(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                headers = message.setdefault("headers", [])
+                existing = {k.lower() for k, _ in headers}
+                for name, value in (
+                    (b"x-content-type-options", b"nosniff"),
+                    (b"x-frame-options", b"DENY"),
+                    (b"referrer-policy", b"no-referrer"),
+                ):
+                    if name not in existing:
+                        headers.append((name, value))
+            await send(message)
+
+        await self.app(scope, receive, send_with_headers)
+
+
 class RequestTimingMiddleware:
     """记录每个 HTTP 请求的耗时与状态码（契约 §15.3 同源：故障日志）。
 
@@ -290,6 +326,10 @@ app.add_middleware(
 # 端口核实探针放最后一次 `add_middleware`：Starlette 插到列表头部，最后加的在最外层，
 # 于是降级的 503 与 CORS 预检也能触发核实（契约 §15.3 第 6 条）。
 app.add_middleware(BoundPortProbe)
+
+# 安全头放**最外层**（最后一次 add_middleware）：这样异常处理器产出的响应、
+# 只读降级的 503、CORS 预检全都带得到；send 里按名去重，不会与 common.py 的 nosniff 重复。
+app.add_middleware(SecurityHeadersMiddleware)
 
 register_exception_handlers(app)
 
