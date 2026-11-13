@@ -30,10 +30,10 @@ export const LISTENING_ACCENTS: readonly { id: Accent; label: string; voice: Tts
   { id: 'en-US', label: '美音（Guy）', voice: ACCENT_VOICE['en-US'] },
 ];
 
-/** §1 #13 的 `kind` 过滤；`mock_test` 为完整 4 section 预留（FR-L2）。 */
+/** §1 #13 的 `kind` 过滤；`mock_test` 为完整 4-section 模拟卷（FR-L2 / §2-L）。 */
 export const LISTENING_KINDS: readonly { id: SetKind; label: string; note: string }[] = [
   { id: 'practice', label: '短练（2 section × 10 题）', note: '自学用，题少反馈快' },
-  { id: 'mock_test', label: '模拟卷', note: '完整 section 结构，预留' },
+  { id: 'mock_test', label: '模拟卷（4 section × 40 题）', note: '完整 4-section 模拟卷，band 走官方 40 题表' },
 ];
 
 /** FR-L4 倍速区间 0.75×–1.25×。 */
@@ -215,6 +215,12 @@ export function instructionOf(set: ListeningSet | null | undefined): string {
 export function sectionOf(meta: ListeningSetMeta | ListeningSet): number | null {
   const value = (meta as { section?: unknown }).section;
   return typeof value === 'number' ? value : null;
+}
+
+/** mock_test 覆盖的 section（§2-L：恒为 [1,2,3,4]）；practice 可能缺省。 */
+export function sectionsCoveredOf(meta: ListeningSetMeta | ListeningSet): number[] | null {
+  const value = (meta as { sections_covered?: unknown }).sections_covered;
+  return Array.isArray(value) ? (value as number[]) : null;
 }
 
 export function durationSecOf(set: ListeningSet | null | undefined): number | null {

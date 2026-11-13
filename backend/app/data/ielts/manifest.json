@@ -1,10 +1,10 @@
 {
   "schema": "ielts-manifest/1",
-  "generated_at": "2026-11-07T03:54:34Z",
+  "generated_at": "2026-11-12T14:14:53Z",
   "note": "索引文件，位于模块子目录之外；sets_loader 只加载 <module>/*.json，不要把本文件当 set。",
   "counts": {
     "speaking": 22,
-    "listening": 4,
+    "listening": 5,
     "reading": 4,
     "writing": 12
   },
@@ -35,6 +35,7 @@
       "sp_p2_useful_app_06"
     ],
     "listening": [
+      "li_mock_campus_01",
       "li_s1_craftcourse_03",
       "li_s1_leisure_01",
       "li_s3_fieldtrip_02",

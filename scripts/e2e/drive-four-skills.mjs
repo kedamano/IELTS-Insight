@@ -16,7 +16,7 @@
  */
 import { chromium } from 'playwright-core';
 
-const APP = 'http://127.0.0.1:5183';
+const APP = 'http://127.0.0.1:5173';
 const CHROME_CDP = 'http://127.0.0.1:9222';
 
 const results = [];
@@ -31,6 +31,16 @@ const context = browser.contexts()[0] ?? (await browser.newContext());
 // 新开标签，避免动到用户已有的标签
 const page = await context.newPage();
 page.on('pageerror', (err) => record('页面无未捕获异常', false, String(err).slice(0, 120)));
+
+// chunk 监听必须在任何导航之前挂上，否则前面几屏已经把 chunk 加载完了，
+// 后面才启用 CDP 会一个都捕获不到（误报）。
+const chunks = [];
+const cdp = await context.newCDPSession(page);
+await cdp.send('Network.enable');
+cdp.on('Network.requestWillBeSent', (e) => {
+  const url = e.request.url;
+  if (url.includes('/assets/') && url.endsWith('.js')) chunks.push(url.split('/').pop() ?? '');
+});
 
 try {
   // ---- 0. 加载与外壳 ----
@@ -125,17 +135,35 @@ try {
   record('连续切屏不白屏', !whiteScreen);
 
   // ---- 10. 懒加载 chunk 确实按需请求（生产构建才有代码分割）----
-  const chunks: string[] = [];
-  const cdp = await context.newCDPSession(page);
-  await cdp.send('Network.enable');
-  cdp.on('Network.requestWillBeSent', (e) => {
-    const url = e.request.url;
-    if (url.includes('/assets/') && url.endsWith('.js')) chunks.push(url.split('/').pop() ?? '');
-  });
+  // 监听已在页面创建时挂上；这里只看结果（chunk 名与磁盘产物一致）。
   await page.click('nav[aria-label="主导航"] button:has-text("听力")');
   await page.waitForTimeout(1500);
   const listeningChunkLoaded = chunks.some((u) => /ListeningPanel/.test(u));
-  record('懒加载 chunk 按需请求（ListeningPanel）', listeningChunkLoaded, chunks.slice(0, 4).join(', ') || '未捕获到 chunk');
+  record('懒加载 chunk 按需请求（ListeningPanel）', listeningChunkLoaded, chunks.slice(0, 6).join(', ') || '未捕获到 chunk');
+
+  // ---- 11. mock_test 模拟卷闭环（§2-L / AC-L2a / AC-L2b）----
+  // 切到「模拟卷」标签 → 列表出现 40 题的 set → 进入 → 答题区渲染 40 题 → 提交 → band 走 40 题档
+  await page.click('nav[aria-label="主导航"] button:has-text("听力")');
+  await page.waitForTimeout(800);
+  // Tabs 的按钮文本是「模拟卷（4 section × 40 题）」，用正则匹配前缀
+  const mockTab = page.getByRole('tab').filter({ hasText: /模拟卷/ }).first();
+  await mockTab.click();
+  await page.waitForTimeout(1200);
+  const mockListText = await page.locator('main').innerText();
+  const hasMockSet = /40 题/.test(mockListText) && /Section/.test(mockListText);
+  record('模拟卷列表出现（40 题 / Section）', hasMockSet, mockListText.slice(0, 80).replace(/\n/g, ' '));
+
+  const mockRow = page.locator('li').filter({ hasText: /模拟卷/ }).first();
+  const startBtn = mockRow.getByRole('button', { name: /^开始/ });
+  if (await startBtn.count()) {
+    await startBtn.first().click();
+    await page.waitForTimeout(1200);
+    const practiceText = await page.locator('main').innerText();
+    const rendered40 = /已答 0 \/ 40/.test(practiceText) || /0\/40/.test(practiceText);
+    record('进入模拟卷渲染 40 题', rendered40, practiceText.slice(0, 80).replace(/\n/g, ' '));
+  } else {
+    record('进入模拟卷渲染 40 题', false, '未找到「开始」按钮');
+  }
 } catch (err) {
   record('E2E 主流程', false, String(err).slice(0, 200));
 } finally {

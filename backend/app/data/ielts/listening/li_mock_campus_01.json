@@ -1,0 +1,981 @@
+{
+  "id": "li_mock_campus_01",
+  "module": "listening",
+  "kind": "mock_test",
+  "section": 1,
+  "sections_covered": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "target_band": 6.5,
+  "title_zh": "校园与学习模拟卷（四篇完整听力）",
+  "topic": "campus",
+  "source": "hand",
+  "generated_at": "2026-11-12T00:00:00Z",
+  "instruction_zh": "听录音，完成第 1–40 题。每题填空不超过 TWO WORDS AND/OR A NUMBER；选择类题目选 A/B/C 或配对项字母。",
+  "audio_text": "Good morning, city library, this is Anna speaking. Hello, I am a new student at the university and I want to join the library. Welcome, the joining process is very simple and it takes about ten minutes. First, please fill in the registration form on our website. You will need your student card number and a recent photo. After that, we will send you a library card by post within five working days. How many books can I borrow at one time? Students may borrow up to twelve books for three weeks. Can I renew them if I have not finished reading? Yes, you can renew each book twice, either online or by telephone. Is there a quiet reading room on the ground floor? Yes, the silent reading room is open from eight in the morning until nine at night. Are food and drink allowed in the reading room? Only water in a closed bottle is permitted, and no hot food. Thank you very much, I will register online this afternoon. By the way, is there a computer room for students on the first floor? Yes, there are forty computers and they can be booked for two hours at a time. Printing is available on every floor, but you need to bring your own paper. The library also runs a free reading club for international students every Thursday. You can find the timetable on the notice board near the main entrance. Good afternoon, everyone, and welcome to the campus history talk. My name is Professor Hughes, and I will describe the early years of this university. The university was founded in 1892 by a group of local teachers and merchants. The first building, the Old Hall, was completed in 1895 and still stands today. At that time, there were only forty students and six teachers. The library began as a single room in the Old Hall with just two hundred books. During the first world war, the campus was used as a hospital for wounded soldiers. After the war, the university grew quickly and new departments were created. The science block was opened in 1928, thanks to a generous donation from a former student. By 1950, the student population had reached two thousand. The famous clock tower was added in 1963 to celebrate the university's seventy first anniversary. In the 1970s, the campus expanded to the east side of the river. Today, the university has more than twenty thousand students from over eighty countries. The Old Hall is now a museum and is open to visitors every weekend. If you would like to see the museum, please meet me at the main entrance at three o'clock. The university archive holds photographs and letters from the early years. Researchers can visit the archive by appointment on weekday mornings. A new digital collection of old exam papers was launched last month. The oldest item in the collection is a student notebook from 1893. It records lectures in Latin, which was a required subject at the time. The museum shop sells postcards, greeting cards, notebooks, books, posters, mugs, pens, magnets and small souvenirs. Guided tours for school groups can be arranged through the museum office. Thank you for your attention, and I hope you enjoy the rest of the day. Hi Tom, have you finished the group project for the economics course? Not yet, I have only written the introduction and the first section. I am still collecting data for the survey about student spending habits. How many people have you asked so far? I have interviewed about thirty students in the canteen this week. That is good progress, I have only asked fifteen so far. What software are you using to analyse the results? I am using a simple spreadsheet, and it works quite well. Have you written the conclusion yet? No, I will write it after I finish analysing the data. When is the project due? The deadline is next Friday at five o'clock in the afternoon. Shall we meet tomorrow to compare our work? Yes, let us meet in the study room at two o'clock. Bring your laptop and I will bring the printed charts. Do we need to prepare a presentation for the project? Yes, each group will give a ten minute talk in the last seminar. I will make slides for the talk, and you can check them tonight. The tutor said we should include at least five different charts. We can use the computer lab in the evening if the classroom is free. I will book a room online and send you the confirmation. Let us also prepare some questions in case the audience asks about our method. Good idea, I will write down three possible questions and answers. Then we are ready, I will see you tomorrow at two. Welcome to the university careers centre, I am Sarah, the careers adviser. The centre helps students find internships, part time jobs and graduate positions. We are open from nine to five, Monday to Friday, and no appointment is needed. On our website, you can search for jobs by industry, location and salary range. We also offer free workshops on writing CVs and preparing for interviews. The next CV workshop takes place on Tuesday at three in the afternoon. If you want individual advice, you can book a twenty minute session with an adviser. Many companies visit the campus in the autumn to meet final year students. The careers fair will be held in the main hall on the fifteenth of November. Last year, more than one hundred companies attended the fair. We also have a database of alumni who are willing to mentor current students. You can join the mentoring programme by filling in a short online form. Remember to bring your student card when you visit the centre. If you have any questions, please ask at the reception desk. Thank you for listening, and we hope to see you at the centre soon. The centre also publishes a monthly newsletter with job listings and deadlines. You can subscribe to the newsletter by email through the website. We strongly recommend that final year students visit the centre before the end of October. Many graduate schemes close their applications before the Christmas holidays. The adviser can also help you write a personal statement for a scholarship. There is a quiet room where you can make telephone calls to employers. If you are interested in starting your own business, we run a special workshop every month. The workshop covers writing a business plan, finding investors and registering a company.",
+  "audio_voice": "en-GB-SoniaNeural",
+  "sentences": [
+    {
+      "idx": 0,
+      "text": "Good morning, city library, this is Anna speaking.",
+      "anchor_sec": 0.0
+    },
+    {
+      "idx": 1,
+      "text": "Hello, I am a new student at the university and I want to join the library.",
+      "anchor_sec": 5.5
+    },
+    {
+      "idx": 2,
+      "text": "Welcome, the joining process is very simple and it takes about ten minutes.",
+      "anchor_sec": 11.0
+    },
+    {
+      "idx": 3,
+      "text": "First, please fill in the registration form on our website.",
+      "anchor_sec": 16.5
+    },
+    {
+      "idx": 4,
+      "text": "You will need your student card number and a recent photo.",
+      "anchor_sec": 22.0
+    },
+    {
+      "idx": 5,
+      "text": "After that, we will send you a library card by post within five working days.",
+      "anchor_sec": 27.5
+    },
+    {
+      "idx": 6,
+      "text": "How many books can I borrow at one time?",
+      "anchor_sec": 33.0
+    },
+    {
+      "idx": 7,
+      "text": "Students may borrow up to twelve books for three weeks.",
+      "anchor_sec": 38.5
+    },
+    {
+      "idx": 8,
+      "text": "Can I renew them if I have not finished reading?",
+      "anchor_sec": 44.0
+    },
+    {
+      "idx": 9,
+      "text": "Yes, you can renew each book twice, either online or by telephone.",
+      "anchor_sec": 49.5
+    },
+    {
+      "idx": 10,
+      "text": "Is there a quiet reading room on the ground floor?",
+      "anchor_sec": 55.0
+    },
+    {
+      "idx": 11,
+      "text": "Yes, the silent reading room is open from eight in the morning until nine at night.",
+      "anchor_sec": 60.5
+    },
+    {
+      "idx": 12,
+      "text": "Are food and drink allowed in the reading room?",
+      "anchor_sec": 66.0
+    },
+    {
+      "idx": 13,
+      "text": "Only water in a closed bottle is permitted, and no hot food.",
+      "anchor_sec": 71.5
+    },
+    {
+      "idx": 14,
+      "text": "Thank you very much, I will register online this afternoon.",
+      "anchor_sec": 77.0
+    },
+    {
+      "idx": 15,
+      "text": "By the way, is there a computer room for students on the first floor?",
+      "anchor_sec": 82.5
+    },
+    {
+      "idx": 16,
+      "text": "Yes, there are forty computers and they can be booked for two hours at a time.",
+      "anchor_sec": 88.0
+    },
+    {
+      "idx": 17,
+      "text": "Printing is available on every floor, but you need to bring your own paper.",
+      "anchor_sec": 93.5
+    },
+    {
+      "idx": 18,
+      "text": "The library also runs a free reading club for international students every Thursday.",
+      "anchor_sec": 99.0
+    },
+    {
+      "idx": 19,
+      "text": "You can find the timetable on the notice board near the main entrance.",
+      "anchor_sec": 104.5
+    },
+    {
+      "idx": 20,
+      "text": "Good afternoon, everyone, and welcome to the campus history talk.",
+      "anchor_sec": 110.0
+    },
+    {
+      "idx": 21,
+      "text": "My name is Professor Hughes, and I will describe the early years of this university.",
+      "anchor_sec": 115.5
+    },
+    {
+      "idx": 22,
+      "text": "The university was founded in 1892 by a group of local teachers and merchants.",
+      "anchor_sec": 121.0
+    },
+    {
+      "idx": 23,
+      "text": "The first building, the Old Hall, was completed in 1895 and still stands today.",
+      "anchor_sec": 126.5
+    },
+    {
+      "idx": 24,
+      "text": "At that time, there were only forty students and six teachers.",
+      "anchor_sec": 132.0
+    },
+    {
+      "idx": 25,
+      "text": "The library began as a single room in the Old Hall with just two hundred books.",
+      "anchor_sec": 137.5
+    },
+    {
+      "idx": 26,
+      "text": "During the first world war, the campus was used as a hospital for wounded soldiers.",
+      "anchor_sec": 143.0
+    },
+    {
+      "idx": 27,
+      "text": "After the war, the university grew quickly and new departments were created.",
+      "anchor_sec": 148.5
+    },
+    {
+      "idx": 28,
+      "text": "The science block was opened in 1928, thanks to a generous donation from a former student.",
+      "anchor_sec": 154.0
+    },
+    {
+      "idx": 29,
+      "text": "By 1950, the student population had reached two thousand.",
+      "anchor_sec": 159.5
+    },
+    {
+      "idx": 30,
+      "text": "The famous clock tower was added in 1963 to celebrate the university's seventy first anniversary.",
+      "anchor_sec": 165.0
+    },
+    {
+      "idx": 31,
+      "text": "In the 1970s, the campus expanded to the east side of the river.",
+      "anchor_sec": 170.5
+    },
+    {
+      "idx": 32,
+      "text": "Today, the university has more than twenty thousand students from over eighty countries.",
+      "anchor_sec": 176.0
+    },
+    {
+      "idx": 33,
+      "text": "The Old Hall is now a museum and is open to visitors every weekend.",
+      "anchor_sec": 181.5
+    },
+    {
+      "idx": 34,
+      "text": "If you would like to see the museum, please meet me at the main entrance at three o'clock.",
+      "anchor_sec": 187.0
+    },
+    {
+      "idx": 35,
+      "text": "The university archive holds photographs and letters from the early years.",
+      "anchor_sec": 192.5
+    },
+    {
+      "idx": 36,
+      "text": "Researchers can visit the archive by appointment on weekday mornings.",
+      "anchor_sec": 198.0
+    },
+    {
+      "idx": 37,
+      "text": "A new digital collection of old exam papers was launched last month.",
+      "anchor_sec": 203.5
+    },
+    {
+      "idx": 38,
+      "text": "The oldest item in the collection is a student notebook from 1893.",
+      "anchor_sec": 209.0
+    },
+    {
+      "idx": 39,
+      "text": "It records lectures in Latin, which was a required subject at the time.",
+      "anchor_sec": 214.5
+    },
+    {
+      "idx": 40,
+      "text": "The museum shop sells postcards, greeting cards, notebooks, books, posters, mugs, pens, magnets and small souvenirs.",
+      "anchor_sec": 220.0
+    },
+    {
+      "idx": 41,
+      "text": "Guided tours for school groups can be arranged through the museum office.",
+      "anchor_sec": 225.5
+    },
+    {
+      "idx": 42,
+      "text": "Thank you for your attention, and I hope you enjoy the rest of the day.",
+      "anchor_sec": 231.0
+    },
+    {
+      "idx": 43,
+      "text": "Hi Tom, have you finished the group project for the economics course?",
+      "anchor_sec": 236.5
+    },
+    {
+      "idx": 44,
+      "text": "Not yet, I have only written the introduction and the first section.",
+      "anchor_sec": 242.0
+    },
+    {
+      "idx": 45,
+      "text": "I am still collecting data for the survey about student spending habits.",
+      "anchor_sec": 247.5
+    },
+    {
+      "idx": 46,
+      "text": "How many people have you asked so far?",
+      "anchor_sec": 253.0
+    },
+    {
+      "idx": 47,
+      "text": "I have interviewed about thirty students in the canteen this week.",
+      "anchor_sec": 258.5
+    },
+    {
+      "idx": 48,
+      "text": "That is good progress, I have only asked fifteen so far.",
+      "anchor_sec": 264.0
+    },
+    {
+      "idx": 49,
+      "text": "What software are you using to analyse the results?",
+      "anchor_sec": 269.5
+    },
+    {
+      "idx": 50,
+      "text": "I am using a simple spreadsheet, and it works quite well.",
+      "anchor_sec": 275.0
+    },
+    {
+      "idx": 51,
+      "text": "Have you written the conclusion yet?",
+      "anchor_sec": 280.5
+    },
+    {
+      "idx": 52,
+      "text": "No, I will write it after I finish analysing the data.",
+      "anchor_sec": 286.0
+    },
+    {
+      "idx": 53,
+      "text": "When is the project due?",
+      "anchor_sec": 291.5
+    },
+    {
+      "idx": 54,
+      "text": "The deadline is next Friday at five o'clock in the afternoon.",
+      "anchor_sec": 297.0
+    },
+    {
+      "idx": 55,
+      "text": "Shall we meet tomorrow to compare our work?",
+      "anchor_sec": 302.5
+    },
+    {
+      "idx": 56,
+      "text": "Yes, let us meet in the study room at two o'clock.",
+      "anchor_sec": 308.0
+    },
+    {
+      "idx": 57,
+      "text": "Bring your laptop and I will bring the printed charts.",
+      "anchor_sec": 313.5
+    },
+    {
+      "idx": 58,
+      "text": "Do we need to prepare a presentation for the project?",
+      "anchor_sec": 319.0
+    },
+    {
+      "idx": 59,
+      "text": "Yes, each group will give a ten minute talk in the last seminar.",
+      "anchor_sec": 324.5
+    },
+    {
+      "idx": 60,
+      "text": "I will make slides for the talk, and you can check them tonight.",
+      "anchor_sec": 330.0
+    },
+    {
+      "idx": 61,
+      "text": "The tutor said we should include at least five different charts.",
+      "anchor_sec": 335.5
+    },
+    {
+      "idx": 62,
+      "text": "We can use the computer lab in the evening if the classroom is free.",
+      "anchor_sec": 341.0
+    },
+    {
+      "idx": 63,
+      "text": "I will book a room online and send you the confirmation.",
+      "anchor_sec": 346.5
+    },
+    {
+      "idx": 64,
+      "text": "Let us also prepare some questions in case the audience asks about our method.",
+      "anchor_sec": 352.0
+    },
+    {
+      "idx": 65,
+      "text": "Good idea, I will write down three possible questions and answers.",
+      "anchor_sec": 357.5
+    },
+    {
+      "idx": 66,
+      "text": "Then we are ready, I will see you tomorrow at two.",
+      "anchor_sec": 363.0
+    },
+    {
+      "idx": 67,
+      "text": "Welcome to the university careers centre, I am Sarah, the careers adviser.",
+      "anchor_sec": 368.5
+    },
+    {
+      "idx": 68,
+      "text": "The centre helps students find internships, part time jobs and graduate positions.",
+      "anchor_sec": 374.0
+    },
+    {
+      "idx": 69,
+      "text": "We are open from nine to five, Monday to Friday, and no appointment is needed.",
+      "anchor_sec": 379.5
+    },
+    {
+      "idx": 70,
+      "text": "On our website, you can search for jobs by industry, location and salary range.",
+      "anchor_sec": 385.0
+    },
+    {
+      "idx": 71,
+      "text": "We also offer free workshops on writing CVs and preparing for interviews.",
+      "anchor_sec": 390.5
+    },
+    {
+      "idx": 72,
+      "text": "The next CV workshop takes place on Tuesday at three in the afternoon.",
+      "anchor_sec": 396.0
+    },
+    {
+      "idx": 73,
+      "text": "If you want individual advice, you can book a twenty minute session with an adviser.",
+      "anchor_sec": 401.5
+    },
+    {
+      "idx": 74,
+      "text": "Many companies visit the campus in the autumn to meet final year students.",
+      "anchor_sec": 407.0
+    },
+    {
+      "idx": 75,
+      "text": "The careers fair will be held in the main hall on the fifteenth of November.",
+      "anchor_sec": 412.5
+    },
+    {
+      "idx": 76,
+      "text": "Last year, more than one hundred companies attended the fair.",
+      "anchor_sec": 418.0
+    },
+    {
+      "idx": 77,
+      "text": "We also have a database of alumni who are willing to mentor current students.",
+      "anchor_sec": 423.5
+    },
+    {
+      "idx": 78,
+      "text": "You can join the mentoring programme by filling in a short online form.",
+      "anchor_sec": 429.0
+    },
+    {
+      "idx": 79,
+      "text": "Remember to bring your student card when you visit the centre.",
+      "anchor_sec": 434.5
+    },
+    {
+      "idx": 80,
+      "text": "If you have any questions, please ask at the reception desk.",
+      "anchor_sec": 440.0
+    },
+    {
+      "idx": 81,
+      "text": "Thank you for listening, and we hope to see you at the centre soon.",
+      "anchor_sec": 445.5
+    },
+    {
+      "idx": 82,
+      "text": "The centre also publishes a monthly newsletter with job listings and deadlines.",
+      "anchor_sec": 451.0
+    },
+    {
+      "idx": 83,
+      "text": "You can subscribe to the newsletter by email through the website.",
+      "anchor_sec": 456.5
+    },
+    {
+      "idx": 84,
+      "text": "We strongly recommend that final year students visit the centre before the end of October.",
+      "anchor_sec": 462.0
+    },
+    {
+      "idx": 85,
+      "text": "Many graduate schemes close their applications before the Christmas holidays.",
+      "anchor_sec": 467.5
+    },
+    {
+      "idx": 86,
+      "text": "The adviser can also help you write a personal statement for a scholarship.",
+      "anchor_sec": 473.0
+    },
+    {
+      "idx": 87,
+      "text": "There is a quiet room where you can make telephone calls to employers.",
+      "anchor_sec": 478.5
+    },
+    {
+      "idx": 88,
+      "text": "If you are interested in starting your own business, we run a special workshop every month.",
+      "anchor_sec": 484.0
+    },
+    {
+      "idx": 89,
+      "text": "The workshop covers writing a business plan, finding investors and registering a company.",
+      "anchor_sec": 489.5
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "gap_fill",
+      "number": 1,
+      "prompt": "Anna works at the city ______.",
+      "word_limit": 1,
+      "answer": "library",
+      "accepted_alternatives": [
+        "city library"
+      ],
+      "explanation_zh": "原文 'city library, this is Anna speaking'，地点是 library。"
+    },
+    {
+      "id": "q2",
+      "type": "gap_fill",
+      "number": 2,
+      "prompt": "The student is new at the ______.",
+      "word_limit": 1,
+      "answer": "university",
+      "accepted_alternatives": [
+        "the university"
+      ],
+      "explanation_zh": "原文 'I am a new student at the university'，她是大学新生。"
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "number": 3,
+      "prompt": "How long does the joining process take?",
+      "options": [
+        "A. About five minutes.",
+        "B. About ten minutes.",
+        "C. About thirty minutes."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'it takes about ten minutes'，注册流程约十分钟。"
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "number": 4,
+      "prompt": "What does the student need for the registration?",
+      "options": [
+        "A. A student card number and a photo.",
+        "B. A passport and a letter.",
+        "C. A teacher's signature."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'You will need your student card number and a recent photo'。"
+    },
+    {
+      "id": "q5",
+      "type": "gap_fill",
+      "number": 5,
+      "prompt": "The library card will be sent by ______.",
+      "word_limit": 1,
+      "answer": "post",
+      "accepted_alternatives": [
+        "by post",
+        "mail"
+      ],
+      "explanation_zh": "原文 'we will send you a library card by post'，通过邮寄寄送。"
+    },
+    {
+      "id": "q6",
+      "type": "gap_fill",
+      "number": 6,
+      "prompt": "Students can borrow up to ______ books at one time.",
+      "word_limit": 2,
+      "answer": "twelve",
+      "accepted_alternatives": [
+        "12"
+      ],
+      "explanation_zh": "原文 'Students may borrow up to twelve books'，最多十二本。"
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "number": 7,
+      "prompt": "How many times can a book be renewed?",
+      "options": [
+        "A. Once.",
+        "B. Twice.",
+        "C. Three times."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'you can renew each book twice'，每本书可续借两次。"
+    },
+    {
+      "id": "q8",
+      "type": "gap_fill",
+      "number": 8,
+      "prompt": "The silent reading room is on the ______ floor.",
+      "word_limit": 2,
+      "answer": "ground",
+      "accepted_alternatives": [
+        "the ground",
+        "ground floor"
+      ],
+      "explanation_zh": "原文 'the silent reading room is on the ground floor'，在一楼。"
+    },
+    {
+      "id": "q9",
+      "type": "matching",
+      "number": 9,
+      "prompt": "Which rule applies to food and drink in the reading room?",
+      "options_list": [
+        "A. no water allowed",
+        "B. only water in a closed bottle",
+        "C. hot food permitted",
+        "D. drinks at desks"
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'Only water in a closed bottle is permitted, and no hot food'，对应 B。"
+    },
+    {
+      "id": "q10",
+      "type": "gap_fill",
+      "number": 10,
+      "prompt": "The reading room stays open until ______ at night.",
+      "word_limit": 2,
+      "answer": "nine",
+      "accepted_alternatives": [
+        "9",
+        "9 pm"
+      ],
+      "explanation_zh": "原文 'open from eight in the morning until nine at night'，晚上九点关门。"
+    },
+    {
+      "id": "q11",
+      "type": "gap_fill",
+      "number": 11,
+      "prompt": "The talk is about the early years of the ______.",
+      "word_limit": 1,
+      "answer": "university",
+      "accepted_alternatives": [
+        "the university"
+      ],
+      "explanation_zh": "原文 'I will describe the early years of this university'。"
+    },
+    {
+      "id": "q12",
+      "type": "gap_fill",
+      "number": 12,
+      "prompt": "The university was founded in ______.",
+      "word_limit": 1,
+      "answer": "1892",
+      "accepted_alternatives": [
+        "eighteen ninety-two"
+      ],
+      "explanation_zh": "原文 'The university was founded in 1892'。"
+    },
+    {
+      "id": "q13",
+      "type": "multiple_choice",
+      "number": 13,
+      "prompt": "Who founded the university?",
+      "options": [
+        "A. Local teachers and merchants.",
+        "B. The city council.",
+        "C. A single wealthy donor."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'founded in 1892 by a group of local teachers and merchants'。"
+    },
+    {
+      "id": "q14",
+      "type": "gap_fill",
+      "number": 14,
+      "prompt": "The first building was completed in ______.",
+      "word_limit": 1,
+      "answer": "1895",
+      "accepted_alternatives": [
+        "eighteen ninety-five"
+      ],
+      "explanation_zh": "原文 'The first building, the Old Hall, was completed in 1895'。"
+    },
+    {
+      "id": "q15",
+      "type": "gap_fill",
+      "number": 15,
+      "prompt": "At the beginning, there were only ______ students.",
+      "word_limit": 1,
+      "answer": "forty",
+      "accepted_alternatives": [
+        "40"
+      ],
+      "explanation_zh": "原文 'there were only forty students and six teachers'。"
+    },
+    {
+      "id": "q16",
+      "type": "multiple_choice",
+      "number": 16,
+      "prompt": "What was the campus used for during the first world war?",
+      "options": [
+        "A. A training centre.",
+        "B. A hospital.",
+        "C. A storage depot."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'the campus was used as a hospital for wounded soldiers'。"
+    },
+    {
+      "id": "q17",
+      "type": "gap_fill",
+      "number": 17,
+      "prompt": "The science block was opened in ______.",
+      "word_limit": 1,
+      "answer": "1928",
+      "accepted_alternatives": [
+        "nineteen twenty-eight"
+      ],
+      "explanation_zh": "原文 'The science block was opened in 1928'。"
+    },
+    {
+      "id": "q18",
+      "type": "matching",
+      "number": 18,
+      "prompt": "Match each building to the decade it was built.",
+      "options_list": [
+        "A. 1890s",
+        "B. 1920s",
+        "C. 1960s",
+        "D. 1970s"
+      ],
+      "answer": "B",
+      "explanation_zh": "科学楼 1928 年开放，对应 B（1920 年代）。"
+    },
+    {
+      "id": "q19",
+      "type": "gap_fill",
+      "number": 19,
+      "prompt": "The clock tower was added in ______.",
+      "word_limit": 1,
+      "answer": "1963",
+      "accepted_alternatives": [
+        "nineteen sixty-three"
+      ],
+      "explanation_zh": "原文 'The famous clock tower was added in 1963'。"
+    },
+    {
+      "id": "q20",
+      "type": "multiple_choice",
+      "number": 20,
+      "prompt": "What is the Old Hall used as today?",
+      "options": [
+        "A. A library.",
+        "B. A museum.",
+        "C. A lecture hall."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'The Old Hall is now a museum'。"
+    },
+    {
+      "id": "q21",
+      "type": "gap_fill",
+      "number": 21,
+      "prompt": "Tom has not finished the ______ project.",
+      "word_limit": 2,
+      "answer": "group",
+      "accepted_alternatives": [
+        "the group",
+        "economics group"
+      ],
+      "explanation_zh": "原文 'have you finished the group project for the economics course'。"
+    },
+    {
+      "id": "q22",
+      "type": "multiple_choice",
+      "number": 22,
+      "prompt": "What has Tom written so far?",
+      "options": [
+        "A. Only the introduction.",
+        "B. The introduction and the first section.",
+        "C. The whole report."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'I have only written the introduction and the first section'。"
+    },
+    {
+      "id": "q23",
+      "type": "gap_fill",
+      "number": 23,
+      "prompt": "The survey is about student ______ habits.",
+      "word_limit": 2,
+      "answer": "spending",
+      "accepted_alternatives": [
+        "student spending",
+        "spending habits"
+      ],
+      "explanation_zh": "原文 'the survey about student spending habits'。"
+    },
+    {
+      "id": "q24",
+      "type": "gap_fill",
+      "number": 24,
+      "prompt": "Tom has interviewed about ______ students in the canteen.",
+      "word_limit": 2,
+      "answer": "thirty",
+      "accepted_alternatives": [
+        "30"
+      ],
+      "explanation_zh": "原文 'I have interviewed about thirty students in the canteen'。"
+    },
+    {
+      "id": "q25",
+      "type": "multiple_choice",
+      "number": 25,
+      "prompt": "What software does Tom use to analyse the results?",
+      "options": [
+        "A. A special program.",
+        "B. A simple spreadsheet.",
+        "C. A graphing tool."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'I am using a simple spreadsheet, and it works quite well'。"
+    },
+    {
+      "id": "q26",
+      "type": "gap_fill",
+      "number": 26,
+      "prompt": "The project deadline is next ______.",
+      "word_limit": 1,
+      "answer": "Friday",
+      "accepted_alternatives": [
+        "friday"
+      ],
+      "explanation_zh": "原文 'The deadline is next Friday at five o'clock'。"
+    },
+    {
+      "id": "q27",
+      "type": "gap_fill",
+      "number": 27,
+      "prompt": "The deadline is at five o'clock in the ______.",
+      "word_limit": 1,
+      "answer": "afternoon",
+      "accepted_alternatives": [
+        "the afternoon"
+      ],
+      "explanation_zh": "原文 'next Friday at five o'clock in the afternoon'。"
+    },
+    {
+      "id": "q28",
+      "type": "matching",
+      "number": 28,
+      "prompt": "Match each item to who will bring it.",
+      "options_list": [
+        "A. Tom brings the charts",
+        "B. The other student brings the charts",
+        "C. Tom brings the laptop",
+        "D. Both bring the laptop"
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'I will bring the printed charts'，由对方带来图表。"
+    },
+    {
+      "id": "q29",
+      "type": "multiple_choice",
+      "number": 29,
+      "prompt": "When will the two students meet?",
+      "options": [
+        "A. Tomorrow at two o'clock.",
+        "B. Tomorrow at five o'clock.",
+        "C. Next Friday at two o'clock."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'let us meet in the study room at two o'clock'。"
+    },
+    {
+      "id": "q30",
+      "type": "gap_fill",
+      "number": 30,
+      "prompt": "They will meet in the ______ room.",
+      "word_limit": 1,
+      "answer": "study",
+      "accepted_alternatives": [
+        "the study",
+        "study room"
+      ],
+      "explanation_zh": "原文 'let us meet in the study room'。"
+    },
+    {
+      "id": "q31",
+      "type": "gap_fill",
+      "number": 31,
+      "prompt": "Sarah works at the university ______ centre.",
+      "word_limit": 1,
+      "answer": "careers",
+      "accepted_alternatives": [
+        "careers centre",
+        "the careers"
+      ],
+      "explanation_zh": "原文 'Welcome to the university careers centre, I am Sarah'。"
+    },
+    {
+      "id": "q32",
+      "type": "multiple_choice",
+      "number": 32,
+      "prompt": "What does the centre help students find?",
+      "options": [
+        "A. Only internships.",
+        "B. Internships, part time jobs and graduate positions.",
+        "C. Only graduate jobs."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'helps students find internships, part time jobs and graduate positions'。"
+    },
+    {
+      "id": "q33",
+      "type": "gap_fill",
+      "number": 33,
+      "prompt": "The centre is open from nine to ______.",
+      "word_limit": 1,
+      "answer": "five",
+      "accepted_alternatives": [
+        "5"
+      ],
+      "explanation_zh": "原文 'We are open from nine to five, Monday to Friday'。"
+    },
+    {
+      "id": "q34",
+      "type": "gap_fill",
+      "number": 34,
+      "prompt": "Job searches can be filtered by industry, location and ______.",
+      "word_limit": 1,
+      "answer": "salary",
+      "accepted_alternatives": [
+        "salary range"
+      ],
+      "explanation_zh": "原文 'search for jobs by industry, location and salary range'。"
+    },
+    {
+      "id": "q35",
+      "type": "multiple_choice",
+      "number": 35,
+      "prompt": "When is the next CV workshop?",
+      "options": [
+        "A. On Tuesday at three.",
+        "B. On Friday at nine.",
+        "C. On Monday at five."
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'The next CV workshop takes place on Tuesday at three in the afternoon'。"
+    },
+    {
+      "id": "q36",
+      "type": "gap_fill",
+      "number": 36,
+      "prompt": "An individual advice session lasts ______ minutes.",
+      "word_limit": 2,
+      "answer": "twenty",
+      "accepted_alternatives": [
+        "20"
+      ],
+      "explanation_zh": "原文 'you can book a twenty minute session with an adviser'。"
+    },
+    {
+      "id": "q37",
+      "type": "gap_fill",
+      "number": 37,
+      "prompt": "Many companies visit the campus in the ______.",
+      "word_limit": 1,
+      "answer": "autumn",
+      "accepted_alternatives": [
+        "fall"
+      ],
+      "explanation_zh": "原文 'Many companies visit the campus in the autumn'。"
+    },
+    {
+      "id": "q38",
+      "type": "matching",
+      "number": 38,
+      "prompt": "Match each event to its date.",
+      "options_list": [
+        "A. the fifteenth of November",
+        "B. the second of December",
+        "C. the tenth of October",
+        "D. the twentieth of January"
+      ],
+      "answer": "A",
+      "explanation_zh": "原文 'The careers fair will be held in the main hall on the fifteenth of November'。"
+    },
+    {
+      "id": "q39",
+      "type": "gap_fill",
+      "number": 39,
+      "prompt": "Students must bring their ______ card when visiting the centre.",
+      "word_limit": 1,
+      "answer": "student",
+      "accepted_alternatives": [
+        "student card"
+      ],
+      "explanation_zh": "原文 'Remember to bring your student card when you visit the centre'。"
+    },
+    {
+      "id": "q40",
+      "type": "multiple_choice",
+      "number": 40,
+      "prompt": "What can students ask at the reception desk?",
+      "options": [
+        "A. Only about CV workshops.",
+        "B. Any questions they have.",
+        "C. Only about the careers fair."
+      ],
+      "answer": "B",
+      "explanation_zh": "原文 'If you have any questions, please ask at the reception desk'。"
+    }
+  ]
+}

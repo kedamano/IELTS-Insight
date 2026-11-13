@@ -77,7 +77,10 @@ def _execute(job_id: str, runner: Runner, *, expects_attempt: bool = True) -> No
         return
     if not expects_attempt and not report.get("generated"):
         # 生成类任务：一个 set 都没写成才算失败（§17.3 条款 4），部分成功是 succeeded。
-        store.mark_job_failed(job_id, "没有生成出任何合格的题目，请检查 AI 端点后重试")
+        # report 一并落库：rejected 原因要可见，否则界面只有一句「没有生成出任何合格的题目」。
+        store.mark_job_failed(
+            job_id, "没有生成出任何合格的题目，请检查 AI 端点后重试", report=report
+        )
         return
     degraded = report.get("degraded_reason")
     store.mark_job_succeeded(

@@ -27,7 +27,10 @@ import {
   listeningSettings,
   listeningSetDoc,
   listeningSetId,
+  mockTestAnswerKey,
   mockTestMeta,
+  mockTestQuestions,
+  mockTestSetDoc,
 } from './testHandlers';
 
 const TRANSCRIPT_MARK = 'flash photography is not allowed';
@@ -128,7 +131,7 @@ describe('ListeningPanel 选题（#13 / AC-G1）', () => {
     expect(ctx.listQueries.at(-1)).toEqual({ accent: 'en-US', kind: 'practice' });
 
     fireEvent.click(screen.getByRole('button', { name: '英音（Sonia）' }));
-    fireEvent.click(await screen.findByRole('tab', { name: '模拟卷' }));
+    fireEvent.click(await screen.findByRole('tab', { name: /模拟卷/ }));
     expect(await screen.findByText(mockTestMeta.title_zh)).toBeInTheDocument();
     await waitFor(() => expect(ctx.listQueries.at(-1)).toEqual({ accent: 'en-GB', kind: 'mock_test' }));
   });
@@ -441,5 +444,93 @@ describe('听力磁贴条（契约 §8.3：只在作答阶段出现）', () => {
     fireEvent.click(screen.getByRole('button', { name: '提交批改' }));
     expect(await screen.findByText('听力批改结果')).toBeInTheDocument();
     expect(screen.queryByLabelText('听力关键指标')).not.toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// mock_test（完整 4-section 模拟卷）：筛选 → 40 题 → 40 题档 band（§2-L / §3-B / AC-L2b）
+// ---------------------------------------------------------------------------
+
+describe('AC-L2a/AC-L2b mock_test 模拟卷闭环', () => {
+  /** 切到模拟卷并断言列表卡（不进入答题区）。 */
+  async function openMockList() {
+    fireEvent.click(await screen.findByRole('tab', { name: /模拟卷/ }));
+    return screen.findByText(mockTestMeta.title_zh);
+  }
+
+  /** 切到模拟卷并进入 40 题的那一套。 */
+  async function openMockSet() {
+    await openMockList();
+    const title = await screen.findByText(mockTestMeta.title_zh);
+    const row = title.closest('li') as HTMLElement;
+    fireEvent.click(within(row).getByRole('button', { name: `开始 ${mockTestMeta.title_zh}` }));
+    await screen.findByRole('region', { name: '答题' });
+  }
+
+  function answerMockEverything() {
+    for (const question of mockTestQuestions) {
+      const key = mockTestAnswerKey[question.id];
+      if (question.type === 'multiple_choice') {
+        // radio 的 id 是 `listening-answer-<qid>-<index>`，按题 id 定位，
+        // 否则 getAllByRole 每次都会命中同一题的第一个选项。
+        const index = question.options.findIndex((option) => option.toUpperCase().startsWith(`${key.toUpperCase()}.`));
+        const radio = document.getElementById(`listening-answer-${question.id}-${index}`) as HTMLInputElement;
+        fireEvent.click(radio);
+        continue;
+      }
+      const node = document.getElementById(`listening-answer-${question.id}`) as HTMLInputElement | null;
+      if (!node) continue; // 多选走 radio 分支；这里防御性跳过
+      // matching 的 select 值是完整选项文本；map_diagram_label 的值是字母
+      const value =
+        question.type === 'matching'
+          ? (question.options_list.find((option) => option.toUpperCase().startsWith(`${key.toUpperCase()}.`)) ?? key)
+          : key;
+      fireEvent.change(node, { target: { value } });
+    }
+  }
+
+  it('模拟卷列表只显示 mock_test，且标出 Section 1–4 与 40 题', async () => {
+    const ctx = createListeningHandlers({ sets: [listeningMeta, mockTestMeta] });
+    server.use(...ctx.handlers);
+    render(<ListeningPanel ready />);
+
+    await openMockList();
+    expect(ctx.listQueries.at(-1)).toEqual({ accent: 'en-GB', kind: 'mock_test' });
+    const card = screen.getByText(mockTestMeta.title_zh).closest('li') as HTMLElement;
+    expect(within(card).getByText('40 题')).toBeInTheDocument();
+    // Badge 内 "Section " 与数字被拆成多个文本节点，直接看整卡文本
+    expect(card.textContent).toContain('Section 1–2–3–4');
+  });
+
+  it('进入模拟卷后答题区渲染 40 题，磁贴读数 0/40', async () => {
+    const ctx = createListeningHandlers({ setById: { [mockTestMeta.id]: mockTestSetDoc } });
+    server.use(...ctx.handlers);
+    render(<ListeningPanel ready />);
+
+    await openMockSet();
+    expect(screen.getByText('已答 0 / 40')).toBeInTheDocument();
+    const answered = await metric('listening.answered');
+    expect(within(answered).getByText('0/40')).toBeInTheDocument();
+  });
+
+  it('提交 40 题走 listening_40q 档给 band（40/40 → 9.0，§3-B LISTENING_40）', async () => {
+    const ctx = createListeningHandlers({ setById: { [mockTestMeta.id]: mockTestSetDoc } });
+    server.use(...ctx.handlers);
+    render(<ListeningPanel ready />);
+
+    await openMockSet();
+    answerMockEverything();
+    expect(screen.getByText('已答 40 / 40')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '提交批改' }));
+    expect(await screen.findByText('听力批改结果')).toBeInTheDocument();
+
+    const post = ctx.requests.find((request) => request.method === 'POST');
+    expect(post?.url).toBe(`${API_BASE}/listening/sets/${mockTestMeta.id}/attempt`);
+    expect(Object.keys((post?.body?.answers as Record<string, string>) ?? {})).toHaveLength(40);
+
+    expect(screen.getByText(/听力 40 题制对照表/)).toBeInTheDocument();
+    expect(screen.getByText('9.0')).toBeInTheDocument();
+    expect(screen.getByText('共 40 题，其中 0 题需要回看')).toBeInTheDocument();
   });
 });

@@ -124,6 +124,20 @@
 ```
 `GET`（题面）响应**必须剔除** `answer`/`accepted_alternatives`/`explanation_zh`；只有 attempt 响应回传。
 
+**两种形状**（`kind`）：
+
+| 字段 | `practice`（短练） | `mock_test`（完整模拟卷） |
+| --- | --- | --- |
+| `section` | 主导节型 1–4 | `1` |
+| `sections_covered` | 可选（如 `[1, 2]`） | **必填** `[1, 2, 3, 4]` |
+| `questions` | 20（题号 1–20） | 40（题号 1–40） |
+| `audio_text` | 550–700 词 | 1100–1400 词 |
+| `sentences` | 25–45 句 | 60–90 句 |
+| band 换算（§3-B） | `LISTENING_20` | `LISTENING_40` |
+
+`mock_test` 的 `id` 用 `li_mock_<topic>_<nn>`（`section` 恒为 1，不写进 id）；
+`practice` 沿用 `li_s<section>_<topic>_<nn>`。两者共用 `GET /listening/sets?kind=` 筛选（§1 #13）。
+
 ### 2-R Reading
 ```json
 { "id": "re_h_urban_02", "module": "reading", "level": "upper-intermediate", "title": "The Twelve-Minute City",
@@ -206,6 +220,10 @@ READING_13   = {13:9.0,12:8.5,11:8.0,10:7.0, 9:6.5, 8:6.0, 7:5.5, 6:5.0, 5:4.5,4
 规则：单调不降；两档之间取低；`raw_correct` 夹紧到 `[0, raw_total]`；非整数或 `raw_total` 不属于
 `{listening:(20,40), reading:(13,40)}` 时专用入口抛 `ValueError`（API 转 400，绝不 500）；
 非契约题数（如测试构造的 5 题集）走 `raw_to_band()` 的 40 题等比兜底映射。
+
+**mock_test 的换算**（Wave 9 接入）：`kind=mock_test` 的 40 题卷逐字使用 `LISTENING_40`，
+`band_scale="listening_40q"`（`band_scale_name()` 按 `raw_total` 生成）。它是**同一张官方表**，
+不是新表 —— 20 题短练的 `LISTENING_20` 才是为锚点另造的线性表（见上）。
 
 ### 3-P LLM Prompt 契约
 `backend/app/prompts/` 下按模块分文件，每个 prompt 必须：
@@ -569,7 +587,7 @@ Wave 1 交付时 agent 提出的契约含糊点，逐条定稿。**Wave 2 所有
 ### 10.1 内容 schema 增补（来自 `content` agent 的 32 个 set 实际产出）
 - 口语文件**一文件一集**，新增必填整数 **`part: 1 | 2`**：`part:1` 用 `part1[]`（该话题 3 问）；`part:2` 用 `cue_card` + `part3[]` + `fallback_questions`。loader/TS 类型按此判别。
 - set `id` 前缀统一为 `sp_ / li_ / re_ / wr_`（**废弃** §2-W 示例里的 `w1_line_energy_04`；§2-R 示例 `re_h_urban_02` 的 `h` 无意义，实际用 `re_p_*`）。正则：`^(sp|li|re|wr)_[a-z0-9]+_[a-z0-9_]+_\d{2}$`。
-- 听力顶层 `section` 保留（主导节型），新增可选 `sections_covered: number[]`；一个 set 就是 20 题，band 换算按 20 题制（§3-B）。
+- 听力顶层 `section` 保留（主导节型），新增可选 `sections_covered: number[]`；**一个 set 是 20 题（practice）或 40 题（mock_test）**，band 换算按各自题量制（§3-B / §2-L）。
 - `map_diagram_label` 无外部图片：方位描述写进该题 `prompt` 文本，录音里用语言描述方位。可选 `diagram` 字段本轮**不做**。
 - `heading_match` 每题必须有 `prompt`（渲染前提）与 `options_headings`。
 - 新增可选字段（一律允许缺失）：口语 `examiner_voice`、听力 `audio_voice`、阅读 `instruction_zh`、写作 `chart.labels` 与 `chart.years` 并存（二者取一，前端优先 `labels`，回落 `years`）。
@@ -2016,3 +2034,25 @@ SparringSessionStart / SparringSession / SparringTurnResult`；`SpeakingReport` 
 **仍未做的（如实）**：打包 sidecar（PyInstaller 冻结包）里 `sparring_sessions` 表与
 `app/data/ielts/sparring/**` 是否随包分发 —— `backend.spec` 的 `datas = [("app/data", "app/data")]`
 理论上会带上，但**本轮没有实跑冻结包验证**；`git commit`。
+
+### 17.6 Wave 9 重 schema 真跑：listening/reading 生成（2026-11-12）
+
+**栈**：DSH 本地网关 `127.0.0.1:8326`（OpenAI 兼容，模型 `gemini/gemini-3.8-flash`）
++ 临时库 + 隔离端口 8798；脚本 `scripts/e2e/run-content-gen.sh`。
+
+**结果**：listening ✅（重启后 `content_counts` 4→5，产物 20 题校验通过）；
+reading ✅（4→5，产物 914 词声明=实际、13 题、4 题型）；
+**rejected 路径**✅ 真实样本（reading 候选 `word_count` 声明 836 实际 621 → 拒收）。
+
+**抓到的两个缺陷（已修 + 补测）**：
+1. **`MAX_TOKENS=8000` 对推理型端点必然截断**。gemini 把隐藏思考算进 `max_tokens`，
+   整篇被切在 reasoning 阶段 → `finish_reason=length` → 全批 rejected。
+   修法：`content_gen.max_tokens_for(module)`，listening/reading → 30000。
+   判据：`test_api_content.py::test_重schema的生成预算大于轻schema`。
+2. **失败任务的 `report` 不落库**。`mark_job_failed` 只存一句「没有生成出任何合格的题目」，
+   `rejected` 逐条原因全丢。修法：`mark_job_failed(..., report=...)` 写 `report_json`。
+   判据：`test_api_content.py::test_生成全部失败时report含rejected原因`。
+
+**未改的取舍（如实）**：`AI_TIMEOUT_SEC` 默认 120 对 reading 偏紧（实测 300s 才稳），
+本轮靠环境变量绕过；**没有**把默认值提到 300，因为那会同时放宽所有 AI 评分路径的
+等待上限，属于要单独权衡的改动（README 已知限制 #5 已写明）。

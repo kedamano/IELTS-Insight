@@ -151,10 +151,54 @@ export const listeningMeta: ListeningSetMeta = {
 
 export const mockTestMeta: ListeningSetMeta = {
   ...listeningMeta,
-  id: 'li_s4 campus_01'.replace(' ', ''),
+  id: 'li_mock_campus_01',
   kind: 'mock_test',
   title_zh: '模拟卷（预留）',
   topic: 'campus',
+  sections_covered: [1, 2, 3, 4],
+  question_count: 40,
+};
+
+/** 40 题 mock_test 的答案键（与 listeningQuestions 同构，题号 1–40）。 */
+export const mockTestQuestions: ListeningQuestionPublic[] = Array.from({ length: 40 }, (_, i) => {
+  const n = i + 1;
+  const qtype = (['gap_fill', 'multiple_choice', 'matching', 'map_diagram_label'] as const)[i % 4];
+  const base: ListeningQuestionPublic = { id: `q${n}`, type: qtype, number: n, prompt: `Mock question ${n}.` } as ListeningQuestionPublic;
+  if (qtype === 'gap_fill') return { ...base, word_limit: 2 } as ListeningQuestionPublic;
+  if (qtype === 'multiple_choice') return { ...base, options: ['A. alpha', 'B. beta', 'C. gamma'] } as ListeningQuestionPublic;
+  if (qtype === 'matching') return { ...base, options_list: ['A. alpha', 'B. beta', 'C. gamma'] } as ListeningQuestionPublic;
+  return { ...base, labels: ['A', 'B', 'C'] } as ListeningQuestionPublic;
+});
+
+/** mock_test 的答案键（测试内存在；GET 响应必须剔除）。 */
+export const mockTestAnswerKey: Record<string, string> = Object.fromEntries(
+  mockTestQuestions.map((q, i) => {
+    const n = i + 1;
+    if (q.type === 'gap_fill') return [`q${n}`, 'practice'];
+    if (q.type === 'multiple_choice') return [`q${n}`, 'A'];
+    if (q.type === 'matching') return [`q${n}`, 'B'];
+    return [`q${n}`, 'C'];
+  }),
+);
+
+export const mockTestSetDoc: ListeningSet = {
+  ...listeningSetDoc,
+  id: mockTestMeta.id,
+  kind: 'mock_test',
+  title_zh: mockTestMeta.title_zh,
+  topic: 'campus',
+  sections_covered: [1, 2, 3, 4],
+  instruction_zh: '听录音，完成第 1–40 题，每空不超过 TWO WORDS AND/OR A NUMBER。',
+  audio_text:
+    'Welcome to the full mock listening test. ' +
+    'This recording contains forty questions across four sections. ' +
+    'Please answer every question before the recording ends.',
+  sentences: Array.from({ length: 80 }, (_, i) => ({
+    idx: i,
+    text: `Mock test sentence ${i + 1}.`,
+    anchor_sec: i * 2.4,
+  })),
+  questions: mockTestQuestions,
 };
 
 // ============================================================
@@ -166,17 +210,28 @@ const LISTENING_20: readonly [number, number][] = [
   [10, 5.0], [8, 4.5], [7, 4.0], [5, 3.5], [4, 3.0], [3, 2.5], [2, 2.0], [1, 1.5],
 ];
 
+/** §3-B 的 LISTENING_40（mock_test 用；与后端 `band_scale.LISTENING_40` 同表）。 */
+const LISTENING_40: readonly [number, number][] = [
+  [39, 9.0], [37, 8.5], [35, 8.0], [32, 7.5], [30, 7.0], [26, 6.5], [23, 6.0],
+  [19, 5.5], [15, 5.0], [13, 4.5], [10, 4.0], [8, 3.5], [6, 3.0], [4, 2.5], [2, 2.0],
+];
+
 export function bandForRaw(rawCorrect: number, total = 20): number {
-  if (total !== 20) return rawCorrect >= total ? 9 : 0;
+  const table = total === 40 ? LISTENING_40 : LISTENING_20;
   const clamped = Math.max(0, Math.min(total, rawCorrect));
   let band = 0;
-  for (const [raw, value] of LISTENING_20) {
+  for (const [raw, value] of table) {
     if (clamped >= raw) {
       band = value;
       break;
     }
   }
   return band;
+}
+
+/** mock_test 40 题档（§3-B LISTENING_40）。 */
+export function mockBandForRaw(rawCorrect: number, total = 40): number {
+  return bandForRaw(rawCorrect, total);
 }
 
 /** 与后端一致的宽松判分（忽略大小写/前后空格），超限与未答各有独立 reason（FR-L3）。 */
@@ -194,9 +249,10 @@ function optionLetter(value: string): string {
 function gradeItem(
   question: ListeningQuestionWithAnswers,
   value: string | undefined,
+  answerKey: Record<string, string> = listeningAnswerKey,
 ): ObjectiveReportItem {
   const trimmed = (value ?? '').trim();
-  const expected = listeningAnswerKey[question.id] ?? '';
+  const expected = answerKey[question.id] ?? '';
   // 只有填空题带 `word_limit`，联合类型上必须先收窄再取（选择题没有这个字段）。
   const limit = 'word_limit' in question && typeof question.word_limit === 'number' ? question.word_limit : null;
   const words = trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
@@ -293,6 +349,8 @@ export interface ListeningHandlerOptions {
   sets?: ListeningSetMeta[];
   /** #14 题面文档 */
   set?: ListeningSet;
+  /** 按 id 提供题面（同时练 practice 与 mock_test 时用；缺省回退 `set`）。 */
+  setById?: Record<string, ListeningSet>;
   /** 题面接口失败（例如 404） */
   setError?: { status: number; code: string; detail: string };
   /** #15 音频：ok = 可播字节，unavailable = 503 tts_unavailable（AC-L1b） */
@@ -348,7 +406,8 @@ export function createListeningHandlers(options: ListeningHandlerOptions = {}): 
         );
       }
       // 题面响应必须剔除答案（§2-L）：这里返回的就是无答案文档
-      return ok<ListeningSet>(doc);
+      const docForId = (options.setById?.[String(params.id)]) ?? doc;
+      return ok<ListeningSet>(docForId);
     }),
 
     http.get(`${BASE}/listening/sets/:id/audio`, ({ request, params }) => {
@@ -396,8 +455,10 @@ export function createListeningHandlers(options: ListeningHandlerOptions = {}): 
       if (options.report) return ok<ListeningObjectiveReport>(options.report);
       if (options.grade === false) return ok<ListeningObjectiveReport>(listeningReport());
 
-      const items = doc.questions.map((question) =>
-        gradeItem({ ...question, answer: listeningAnswerKey[question.id] } as ListeningQuestionWithAnswers, call.answers[question.id]),
+      const docForId = (options.setById?.[String(params.id)]) ?? doc;
+      const answerKey = docForId.kind === 'mock_test' ? mockTestAnswerKey : listeningAnswerKey;
+      const items = docForId.questions.map((question) =>
+        gradeItem({ ...question, answer: answerKey[question.id] } as ListeningQuestionWithAnswers, call.answers[question.id], answerKey),
       );
       const rawCorrect = items.filter((item) => item.correct).length;
       const byType: Partial<Record<QuestionTypeTallyKey, QuestionTypeTally>> = {};
@@ -407,6 +468,7 @@ export function createListeningHandlers(options: ListeningHandlerOptions = {}): 
         if (item.correct) bucket.correct += 1;
         byType[item.type] = bucket;
       }
+      const isMock = docForId.kind === 'mock_test';
       return ok<ListeningObjectiveReport>({
         attempt_id: 'att_listening_test',
         module: 'listening',
@@ -415,10 +477,10 @@ export function createListeningHandlers(options: ListeningHandlerOptions = {}): 
         approximate: false,
         raw_correct: rawCorrect,
         raw_total: items.length,
-        band: bandForRaw(rawCorrect, items.length),
-        band_scale: 'listening_20q',
+        band: isMock ? mockBandForRaw(rawCorrect, items.length) : bandForRaw(rawCorrect, items.length),
+        band_scale: isMock ? 'listening_40q' : 'listening_20q',
         accuracy: items.length ? rawCorrect / items.length : 0,
-        transcript: doc.audio_text,
+        transcript: docForId.audio_text,
         items,
         by_question_type: byType,
       });

@@ -34,6 +34,19 @@ MAX_TOKENS = 8000
 """生成一套完整 set（阅读含 900 词篇章）的输出预算。推理型端点要把思考预算也算进去
 （§3-P 第 4 条的实测教训），给小了会 finish_reason=length 截断 JSON。"""
 
+# 重 schema 的预算（实测 §17.5 同款）：listening 20 题 / reading 13 题 + 800–950 词篇章
+# 的输出远长于 sparring/speaking，推理型端点的隐藏思考还会先吃掉一大块预算。
+# 8000 在 gemini-3.8-flash 上必然截断（实测：整篇被切在 reasoning 阶段）。
+HEAVY_SCHEMA_MAX_TOKENS = {
+    "listening": 30000,
+    "reading": 30000,
+}
+
+
+def max_tokens_for(module: str) -> int:
+    """按模块给生成预算：重 schema 用大预算，其余用默认。"""
+    return HEAVY_SCHEMA_MAX_TOKENS.get(module, MAX_TOKENS)
+
 
 class ContentError(Exception):
     """生成层的业务错误（api/content.py 转成契约 §0 的 {detail, code}）。"""
@@ -158,7 +171,7 @@ def generate(
             prompt,
             system="你是一位雅思命题专家，只输出 JSON。",
             temperature=0.3,
-            max_tokens=MAX_TOKENS,
+            max_tokens=max_tokens_for(module),
             allow_network=True,
             require_api_key=False,  # 与评分链路同口径：本机兼容端点可以无凭据
         )

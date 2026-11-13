@@ -1074,11 +1074,12 @@ def mark_job_succeeded(
         )
 
 
-def mark_job_failed(job_id: str, error: str) -> None:
+def mark_job_failed(job_id: str, error: str, report: Optional[dict[str, Any]] = None) -> None:
+    """终态失败。`report` 可选：生成类任务失败时带上它，rejected 原因才可见（§17.3 条款 4）。"""
     with tx() as conn:
         conn.execute(
-            "UPDATE jobs SET status = 'failed', error = ?, finished_at = ? WHERE id = ?",
-            (error, utc_now_iso(), job_id),
+            "UPDATE jobs SET status = 'failed', error = ?, report_json = ?, finished_at = ? WHERE id = ?",
+            (error, json.dumps(report, ensure_ascii=False) if report is not None else None, utc_now_iso(), job_id),
         )
 
 

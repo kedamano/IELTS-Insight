@@ -89,6 +89,12 @@ def _active_jobs(client, envelope) -> list:
     return envelope(client.get("/api/jobs", params={"status": "active"}))["items"]
 
 
+def _max_tokens_seen(fake_openai) -> int:
+    """从假 LLM 的调用记录里取 max_tokens（断言生成预算真的按模块放大）。"""
+    assert fake_openai.calls, "假 LLM 未被调用"
+    return int(fake_openai.calls[-1].get("max_tokens") or 0)
+
+
 @pytest.fixture(autouse=True)
 def _排空生成队列(client, envelope):
     """用例结束时等 worker 空闲：残留任务会把文件写进下一个用例刚换掉的 tmp 目录。"""
@@ -310,3 +316,52 @@ def test_AC_CT_6_未知任务404中文(client, error_body):
     body = error_body(client.get("/api/content/jobs/job_nope"), status=404)
     assert body["code"] == "not_found"
     assert "生成任务" in body["detail"]
+
+
+# ---------------------------------------------------------------------------
+# §17.2 生成预算：重 schema（listening/reading）需要给推理型端点留出思考预算
+# ---------------------------------------------------------------------------
+
+def test_重schema的生成预算大于轻schema(client, envelope, monkeypatch, fake_openai, tmp_path):
+    """推理型端点（gemini 等）把隐藏思考也算进 max_tokens：8000 的预算会被思考吃光，
+    产出 finish_reason=length 的半截 JSON → 整批 rejected（实测 §17.5 同款）。
+    重 schema（listening 20 题 / reading 13 题+900 词）必须给更大的预算。
+    """
+    from app.services import content_gen
+
+    _own_data_dir(monkeypatch, tmp_path)
+    _online(monkeypatch)
+
+    fake_openai.queue(json.dumps(good_sparring()))
+    light_job = envelope(client.post("/api/content/generate", json={"module": "sparring", "count": 1}))
+    _wait_job(client, envelope, light_job["job_id"])
+    light = _max_tokens_seen(fake_openai)
+    assert light == content_gen.MAX_TOKENS, f"轻 schema 预算应为 {content_gen.MAX_TOKENS}，实际 {light}"
+
+    heavy = content_gen.max_tokens_for("listening")
+    assert heavy > light, f"listening 的生成预算应大于 sparring：{heavy} <= {light}"
+
+
+def test_生成全部失败时report含rejected原因(client, envelope, monkeypatch, fake_openai, tmp_path):
+    """§17.3 条款 4：全部失败 = failed + 可读 error，且 rejected 逐条带原因。
+
+    `report` 必须落库 —— 否则界面只能显示「没有生成出任何合格的题目」，
+    看不到「为什么不合格」（实测：listening 候选被拒时用户无从下手）。
+    """
+    from app.services import content_gen
+
+    _own_data_dir(monkeypatch, tmp_path)
+    _online(monkeypatch)
+    # 一个必然被拒的候选：缺 answer（判分必需）
+    bad = good_sparring()
+    bad["preset_questions"] = ["not a question"]  # 非问句 → 校验拒收
+    fake_openai.queue(json.dumps(bad))
+
+    job = envelope(client.post("/api/content/generate", json={"module": "sparring", "count": 1}))
+    done = _wait_job(client, envelope, job["job_id"])
+    assert done["status"] == "failed", done
+    report = done.get("report")
+    assert isinstance(report, dict), f"失败任务的 report 应落库（含 rejected 原因），实际 {report!r}"
+    rejected = report.get("rejected") or []
+    assert rejected, "report 里应列出被拒候选"
+    assert any("preset_questions" in str(r) or "问句" in str(r) for r in rejected[0].get("reasons", [])), rejected

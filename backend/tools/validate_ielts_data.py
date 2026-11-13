@@ -47,6 +47,11 @@ ID_RES = {
 ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$")
 BANDS = {5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0}
 LI_TYPES = {"gap_fill", "multiple_choice", "matching", "map_diagram_label"}
+# 模拟卷（§2-L 两种形状）：完整 4-section，40 题，band 走 LISTENING_40
+LI_MOCK_WORDS = (1100, 1400)
+LI_MOCK_SENTENCES = (60, 90)
+LI_MOCK_QUESTIONS = 40
+KINDS = {"practice", "mock_test"}  # §2-L 两种形状；mock_test 为完整 4-section 模拟卷
 RE_TYPES = {"true_false_notgiven", "heading_match", "sentence_completion",
             "multiple_choice", "gap_fill"}
 CHART_TYPES = {"line", "bar", "pie", "table", "dynamic_chart"}
@@ -140,8 +145,8 @@ def check_common(module, path, obj, rep):
             rep.err(where, "缺少公共头字段 %s" % key)
     if obj.get("module") != module:
         rep.err(where, "module=%r 与所在目录 %s 不一致" % (obj.get("module"), module))
-    if obj.get("kind") != "practice":
-        rep.err(where, "kind=%r 目前只允许 'practice'（mock_test 预留）" % obj.get("kind"))
+    if obj.get("kind") not in KINDS:
+        rep.err(where, "kind=%r 不在 %s" % (obj.get("kind"), sorted(KINDS)))
     band = obj.get("target_band")
     if not isinstance(band, (int, float)) or isinstance(band, bool) or float(band) not in BANDS:
         rep.err(where, "target_band=%r 必须是 5.0–9.0 的 0.5 步长数值" % (band,))
@@ -260,9 +265,26 @@ def check_listening(where, obj, rep):
     if not isinstance(audio, str) or not audio.strip():
         rep.err(where, "audio_text 不能为空")
         return
+    is_mock = obj.get("kind") == "mock_test"
+    # §2-L 两种形状：mock_test 是完整 4-section（40 题 / 1100–1400 词 / 60–90 句），
+    # practice 是 2 section 短练（20 题 / 550–700 词 / 25–45 句）。两者共用同一套题型与判分。
+    if is_mock:
+        covered = obj.get("sections_covered")
+        if covered != [1, 2, 3, 4]:
+            rep.err(where, "mock_test 的 sections_covered 必须是 [1, 2, 3, 4]（完整 4 section），实际 %r"
+                    % (covered,))
+        if section != 1:
+            rep.err(where, "mock_test 的 section 恒为 1（题号从 1 连续编号），实际 %r" % (section,))
+        wc_low, wc_high = LI_MOCK_WORDS
+        s_low, s_high = LI_MOCK_SENTENCES
+        expected_questions = LI_MOCK_QUESTIONS
+    else:
+        wc_low, wc_high = 550, 700
+        s_low, s_high = 25, 45
+        expected_questions = 20
     wc = word_count(audio)
-    if not 550 <= wc <= 700:
-        rep.err(where, "audio_text 共 %d 词，首轮 set 要求 550–700" % wc)
+    if not wc_low <= wc <= wc_high:
+        rep.err(where, "audio_text 共 %d 词，%s 要求 %d–%d" % (wc, "mock_test" if is_mock else "practice", wc_low, wc_high))
     for bad in re.findall(r"[^\x00-\x7F\u4e00-\u9fff\u2013\u2014\u2018\u2019\u2026]+",
                           audio.replace("’", "").replace("‘", "")):
         rep.warn(where, "audio_text 含可能无法被 TTS 朗读的片段：%r" % bad[:40])
@@ -270,6 +292,9 @@ def check_listening(where, obj, rep):
     if not isinstance(sents, list) or len(sents) < 10:
         rep.err(where, "sentences[] 缺失或少于 10 句（逐句重听依赖时间轴）")
         sents = sents or []
+    elif not s_low <= len(sents) <= s_high:
+        rep.err(where, "%s 的 sentences[] 应为 %d–%d 句，实际 %d"
+                % ("mock_test" if is_mock else "practice", s_low, s_high, len(sents)))
     prev_anchor = -1.0
     for i, s in enumerate(sents):
         if s.get("idx") != i:
@@ -287,8 +312,8 @@ def check_listening(where, obj, rep):
                     % (i, anchor, prev_anchor))
         prev_anchor = float(anchor)
     questions = obj.get("questions", [])
-    if len(questions) not in (10, 20, 40):
-        rep.err(where, "题目数量 %d 不属于 10/20/40（自学短练为 2 section × 10 题）" % len(questions))
+    if len(questions) != expected_questions:
+        rep.err(where, "%s 题目数量应为 %d，实际 %d" % ("mock_test" if is_mock else "practice", expected_questions, len(questions)))
     check_questions(where, questions, rep, "listening")
     if [q.get("number") for q in questions] != list(range(1, len(questions) + 1)):
         rep.err(where, "题目 number 必须是从 1 连续编号")

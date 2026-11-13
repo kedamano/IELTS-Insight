@@ -263,3 +263,58 @@ UI 提交 → job succeeded → 产物 `generated/ielts/sparring/sb_atm_31.json`
 **实跑同时抓到一条环境级真缺陷（§17.5，已修）**：clash-verge 注入的
 `NO_PROXY=[::1]` 让 `openai.OpenAI()` 构造期即抛 InvalidURL，AI 调用全线变
 network_error 且日志毫无指向性。修法为进程内消毒 + 复刻炸点的判据（反向探针验证过）。
+
+---
+
+## Wave 9 第六轮（2026-11-12）：mock_test 模拟卷 + 生成管线重 schema 真跑
+
+用户点名「先做 mock_test 内容 + 前端闭环，再补 listening/reading 生成端点真跑」。
+
+### ① mock_test 模拟卷（契约 §2-L / FR-L2 / AC-L2a、AC-L2b）
+
+**阻塞点**：`validate_ielts_data.py` 的 `check_common` 显式拒绝 `kind != "practice"`
+（文案还写着「mock_test 预留」），而 `sets_loader` 早已接受 `mock_test` —— 两边规则漂移。
+
+| 项 | 落点 | 状态 |
+| --- | --- | --- |
+| 契约 | `spec-contracts.md` §2-L 新增「两种形状」表（practice/mock_test 的 section、题数、词数、句数、band 表）；§3-B 补 mock_test 换算；§10.1 改「一个 set 是 20 或 40 题」；`spec-product.md` FR-L2 增 AC-L2a/AC-L2b | ✅ |
+| 校验脚本 | `validate_ielts_data.py`：`KINDS` 常量 + mock_test 分支（40 题 / 1100–1400 词 / 60–90 句 / `sections_covered=[1,2,3,4]`） | ✅ |
+| 装载器 | `sets_loader._check_listening` 加 mock_test 不变量（题数/sections_covered/词数） | ✅ |
+| 内容 | `li_mock_campus_01.json`：4 section × 40 题 / 90 句 / 1100 词，四种题型齐全 | ✅ |
+| 前端 | `listeningSets.LISTENING_KINDS` 标签更新、`sectionsCoveredOf`、`ListeningSetPicker` 显示 `Section 1–2–3–4` 与 40 题、`testHandlers` 加 mock_test fixture 与 `mockBandForRaw`（LISTENING_40）、`types` 加 `sections_covered` | ✅ |
+| 测试 | 后端 `test_validate_ielts_data.py` 6 例 + `test_sets_loader_mock.py` 5 例；前端 `ListeningPanel.test.tsx` 新增 3 例（列表筛选 / 40 题渲染 / 40 题档 band） | ✅ |
+| E2E | `drive-four-skills.mjs` 第 11 项：切「模拟卷」→ 列表出现 40 题 → 进入渲染 40 题（**16/16 全过**） | ✅ |
+
+**E2E 脚本自身修掉的 4 个坑**（跑起来才发现，都是既有问题）：
+1. `APP` 常量写 5183 而 `run-e2e.sh` 起 5173；
+2. 健康检查路径 `/api/health` 写成 `/health`（404）；
+3. Windows 原生 curl 的 `-s` 退出码不可靠 → 改用 `-w '%{http_code}'`；
+4. `IELTS_DB_PATH` 传了 MSYS 相对路径（`/tmp/...`），`store.quick_check()` 的
+   `path.as_uri()` 直接 ValueError → 用 `cygpath -m -w` 转 Windows 绝对路径；
+5. 清理逻辑 `Get-Process chrome | Stop-Process` 会杀掉用户自己的浏览器 → 改为按
+   `--user-data-dir` 的 profile 精确匹配进程；
+6. chunk 监听挂在 CDP 会话建立之前（否则前面几屏已加载完，判据必红）。
+
+### ② listening/reading 生成端点真跑（§17）
+
+**栈**：DSH 本地网关 `127.0.0.1:8326`（OpenAI 兼容）+ 临时库 + 隔离端口 8798；
+脚本 `scripts/e2e/run-content-gen.sh`（提交 → 等终态 → **重启后端** → 验证 `content_counts`）。
+
+| 模块 | 结果 | 证据 |
+| --- | --- | --- |
+| listening | ✅ succeeded，重启后 4→5 | 产物 `li_s2_green_haven_garden_01.json`，20 题 / 30 句，校验通过 |
+| reading | ✅ succeeded，重启后 4→5 | 产物 `re_p_biomimetic_architecture_01.json`，914 词（声明=实际）、13 题、4 题型 |
+| rejected 路径 | ✅ 真实样本 | reading 候选被拒：`word_count` 声明 836 实际 621（差 >15%）+ 题号缺失 |
+
+**真跑抓到的两个环境级缺陷（都已修 + 补测）**：
+1. **`MAX_TOKENS=8000` 对推理型端点是致命的**。gemini-3.8-flash 把隐藏思考算进
+   `max_tokens`，8000 的预算整篇被切在 reasoning 阶段 → `finish_reason=length` → 全批
+   rejected。修法：`content_gen.max_tokens_for(module)`，listening/reading 提到 30000
+   （`test_api_content.py::test_重schema的生成预算大于轻schema`）。
+2. **失败任务的 `report` 不落库**。`mark_job_failed` 只存一句「没有生成出任何合格的题目」，
+   `rejected` 里逐条的中文原因全丢了，用户无从下手。修法：`mark_job_failed(..., report=...)`
+   写 `report_json`（`test_api_content.py::test_生成全部失败时report含rejected原因`）。
+
+**没通的部分（如实）**：`AI_TIMEOUT_SEC` 默认 120 对 reading 不够（实测 300s 才稳），
+本轮靠环境变量绕过，**没有把默认值改成 300** —— 那会影响所有 AI 评分路径的等待上限，
+属于需要单独权衡的取舍（见 README 已知限制 #5）。

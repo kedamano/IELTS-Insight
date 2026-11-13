@@ -7,7 +7,7 @@
 import { Badge, Button, Card, Tabs } from '../../components/ui';
 import type { Accent, ListeningSetMeta, SetKind } from '../../types/ielts';
 import { formatBand } from '../../types/ielts';
-import { LISTENING_ACCENTS, LISTENING_KINDS, accentOfMeta, sectionOf } from './listeningSets';
+import { LISTENING_ACCENTS, LISTENING_KINDS, accentOfMeta, sectionOf, sectionsCoveredOf } from './listeningSets';
 
 export type ListeningSetPickerProps = {
   ready: boolean;
@@ -100,6 +100,7 @@ export default function ListeningSetPicker({
             <ul className="flex flex-col gap-2">
               {sets.map((meta) => {
                 const section = sectionOf(meta);
+                const covered = sectionsCoveredOf(meta);
                 const count = typeof meta.question_count === 'number' ? meta.question_count : 0;
                 const metaAccent = accentOfMeta(meta);
                 return (
@@ -109,7 +110,11 @@ export default function ListeningSetPicker({
                         <div className="truncate text-sm text-ink">{meta.title_zh}</div>
                         <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
                           <span className="font-code">{meta.id}</span>
-                          {section ? <Badge variant="outline">Section {section}</Badge> : null}
+                          {covered ? (
+                            <Badge variant="outline">Section {covered.join('–')}</Badge>
+                          ) : section ? (
+                            <Badge variant="outline">Section {section}</Badge>
+                          ) : null}
                           {count ? <Badge>{count} 题</Badge> : null}
                           <Badge>目标 {formatBand(meta.target_band)}</Badge>
                           {metaAccent ? <Badge variant="outline">{metaAccent}</Badge> : null}

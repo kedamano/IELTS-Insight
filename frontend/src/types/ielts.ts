@@ -715,6 +715,8 @@ export interface SentenceAnchor {
 export interface ListeningSet extends SetBase {
   module: 'listening';
   section: number;
+  /** mock_test 必填 [1,2,3,4]；practice 可选（§2-L 两种形状）。 */
+  sections_covered?: number[];
   instruction_zh: string;
   /** AC-L1b 的「原文精读模式」数据源，题面接口保留。 */
   audio_text: string;
@@ -732,6 +734,7 @@ export interface ListeningSetWithAnswers extends Omit<ListeningSet, 'questions'>
 export interface ListeningSetMeta extends SetMeta {
   module: 'listening';
   section?: number;
+  sections_covered?: number[];
   accent?: Accent;
   duration_sec?: number;
 }

@@ -128,7 +128,9 @@ IA（左侧竖轨，顺序即优先级）：
 - **FR-L1 音频来源**：听力篇章文本存于题库，音频由 **edge-tts 按篇章合成并缓存**（复用 `tts_service` 的 MD5 缓存），避免引入外部音频版权与体积。两种口音可选：`en-GB-SoniaNeural`（英音）/ `en-US-GuyNeural`（美音）。
   - AC-L1 同一 set 第二次请求音频命中缓存（`X-Audio-Cache: hit` 响应头或 `cache_hit` 字段）。
   - AC-L1b TTS 失败（断网）时返回 503，界面显示"音频不可用，可看原文精读模式"并提供进入 transcript 的按钮，而不是白屏。
-- **FR-L2 题型**：支持 `gap_fill`（填空，含字数上限 `word_limit`）、`multiple_choice`（A/B/C）、`matching`（选项列表可重复使用）、`map_diagram_label`（对 A/B/C 标签选择）。每 set 40 题结构简化为 **2 个 section × 10 题**（自学短练），完整 4-section 模拟卷作为 `kind: mock_test` 预留。
+- **FR-L2 题型**：支持 `gap_fill`（填空，含字数上限 `word_limit`）、`multiple_choice`（A/B/C）、`matching`（选项列表可重复使用）、`map_diagram_label`（对 A/B/C 标签选择）。每 set 40 题结构简化为 **2 个 section × 10 题**（自学短练，`kind=practice`）；完整 4-section 模拟卷 `kind=mock_test` **40 题、`sections_covered=[1,2,3,4]`、题号 1–40**，与 practice 共用 `GET /listening/sets?kind=` 筛选（契约 §2-L）。
+  - AC-L2a `GET /api/listening/sets?kind=mock_test` 只返回 `kind=mock_test` 的 set；`?kind=practice` 只返回短练（#13 的既有过滤维度）。
+  - AC-L2b `mock_test` 的 `POST .../attempt` 对 40 题全量判分，`band` 走 `LISTENING_40`（§3-B）、`band_scale="listening_40q"`。
   - AC-L2 `POST /api/listening/sets/{id}/attempt` 对 20 题全部判分，返回 `correct/total`、每题 `expected`（含可接受变体 `accepted_alternatives`）、每题 `question_type`。
 - **FR-L3 判分规则**：填空忽略大小写、前后空格、`a/an/the` 前缀、数字与日期多种书写形式（`20 October 2026` / `20/10/2026`）；超出 `word_limit` 直接判错并给原因 `over_word_limit`。
   - AC-L3 单测覆盖上述每种等价与超限用例各 ≥1 条。

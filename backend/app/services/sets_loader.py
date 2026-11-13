@@ -203,6 +203,7 @@ def _check_speaking(record: dict[str, Any]) -> list[str]:
 
 
 def _check_listening(record: dict[str, Any]) -> list[str]:
+    """听力结构校验（§2-L 两种形状：practice 20 题短练 / mock_test 40 题完整模拟卷）。"""
     errors: list[str] = []
     if not isinstance(record.get("audio_text"), str) or not record["audio_text"].strip():
         errors.append("缺少 audio_text（edge-tts 合成源）")
@@ -213,10 +214,34 @@ def _check_listening(record: dict[str, Any]) -> list[str]:
         for i, s in enumerate(sentences):
             if not isinstance(s, dict) or "text" not in s or "anchor_sec" not in s:
                 errors.append(f"sentences[{i}] 需含 text 与 anchor_sec")
+    is_mock = record.get("kind") == "mock_test"
+    expected_questions = 40 if is_mock else 20
+    audio_text = record.get("audio_text")
+    if isinstance(audio_text, str) and audio_text.strip():
+        # 与校验脚本同一套区间（§2-L）：practice 550–700、mock_test 1100–1400
+        low, high = (1100, 1400) if is_mock else (550, 700)
+        wc = len(re.findall(r"\S+", audio_text))
+        if not low <= wc <= high:
+            errors.append(f"audio_text 共 {wc} 词，{'mock_test' if is_mock else 'practice'} 要求 {low}–{high}")
+    if is_mock:
+        covered = record.get("sections_covered")
+        if covered != [1, 2, 3, 4]:
+            errors.append(f"mock_test 的 sections_covered 必须是 [1, 2, 3, 4]，实际 {covered!r}")
+        if record.get("section") != 1:
+            errors.append(f"mock_test 的 section 恒为 1，实际 {record.get('section')!r}")
+    elif record.get("sections_covered") is not None:
+        # practice 的 sections_covered 是可选的；给了就得是 1–4 的整数数组
+        covered = record.get("sections_covered")
+        if not isinstance(covered, list) or not covered or not all(
+            isinstance(x, int) and 1 <= x <= 4 for x in covered
+        ):
+            errors.append(f"practice 的 sections_covered 应为 1–4 的整数数组，实际 {covered!r}")
     questions = record.get("questions")
     if not isinstance(questions, list) or not questions:
         errors.append("questions 必须是非空数组")
         return errors
+    if len(questions) != expected_questions:
+        errors.append(f"{'mock_test' if is_mock else 'practice'} 题目数量应为 {expected_questions}，实际 {len(questions)}")
     for q in questions:
         if not isinstance(q, dict):
             errors.append("question 不是对象")

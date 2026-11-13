@@ -12,7 +12,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.139-009485?style=flat-square&logo=fastapi&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=flat-square&logo=python&logoColor=white)
-![tests](https://img.shields.io/badge/tests-1020%20passed-brightgreen?style=flat-square)
+![tests](https://img.shields.io/badge/tests-1055%20passed-brightgreen?style=flat-square)
 ![ci](https://img.shields.io/badge/CI-GitHub%20Actions-blue?style=flat-square)
 ![offline](https://img.shields.io/badge/works_offline-yes-green?style=flat-square)
 ![telemetry](https://img.shields.io/badge/telemetry-none-blue?style=flat-square)
@@ -92,7 +92,7 @@
 | --- | --- |
 | 概览 | 关键指标磁贴（最弱一科 / 最近变化 / 今日计划）、目标 Band、考试倒计时、累计时长、四科当前 Band + 迷你趋势、今日计划（按差距自动分配） |
 | 口语 | 两种模式：**题库练习**（Part 1 快问快答 / Part 2 题卡准备 + 计时 / Part 3 考官追问）与 **1 对 1 陪练**（自由多轮对话，AI 陪练官顺着你的话追问，刷新后能接回未结束的那一场）；录音或文本兜底，Whisper 转写 + 四维评分 + 发音问题词 |
-| 听力 | 2 section × 10 题，0.75×–1.25× 倍速、回退 5 秒、逐句重听（时间轴按真实音频时长锚定）、断网可「看原文精读」 |
+| 听力 | 两种套题：**短练**（2 section × 10 题）与 **模拟卷**（4 section × 40 题，band 走官方 40 题表）；0.75×–1.25× 倍速、回退 5 秒、逐句重听（时间轴按真实音频时长锚定）、断网可「看原文精读」 |
 | 阅读 | 800–950 词原创篇章 + 13 题，20 分钟限时、段落定位高亮、选词查释义、TFNG / 配对 / 完成句子 / 选择 |
 | 写作 | Task 1 由 `chart.data` 本地 SVG 渲染（饼 / 线 / 柱 / 表 / 动态对比），Task 2 议论文；四维批改 + 证据引用 + 升级表达 + 范文 |
 | 生词本 / 错题本 | 跨模块积累、话题标签、按错误类型筛选、CSV / Anki 导出 |
@@ -192,6 +192,13 @@ bash scripts/check.sh          # tsc → vitest → pytest，第一个失败即�
 bash scripts/check.sh --quick  # 跳过后端 pytest
 ```
 
+真浏览器 E2E（四科 + 听力模拟卷，一键隔离栈）：
+
+```bash
+bash scripts/e2e/run-e2e.sh              # 后端 :8799 + vite preview :5173 + Chrome CDP
+bash scripts/e2e/run-content-gen.sh listening   # ② 生成管线真跑（需 DSH 网关）
+```
+
 ## 打包成 EXE
 
 ```powershell
@@ -242,9 +249,9 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
 | 门 | 当前状态 |
 | --- | --- |
 | `npx tsc -b` | 无错误 |
-| 前端 `cd frontend ; npm test` | **48 个文件 / 488 个用例全通过**（vitest + jsdom + msw 契约测试） |
-| 后端 `cd backend ; .\venv\Scripts\python.exe -m pytest` | **506 个用例全通过**（约 27s） |
-| 真浏览器实跑 | 1 对 1 陪练整场 19 项断言全过（隔离栈，见 [spec-contracts.md §16.6](docs/specs/ielts/spec-contracts.md)） |
+| 前端 `cd frontend ; npm test` | **49 个文件 / 499 个用例全通过**（vitest + jsdom + msw 契约测试） |
+| 后端 `cd backend ; .\venv\Scripts\python.exe -m pytest` | **556 个用例全通过**（约 62s） |
+| 真浏览器实跑 | 四科 + 听力模拟卷 16 项断言全过（隔离栈，见 [spec-contracts.md §16.6](docs/specs/ielts/spec-contracts.md)） |
 
 后端测试通过 `IELTS_DB_PATH` / `IELTS_TTS_CACHE_DIR` / `IELTS_ONLINE` 指向临时目录与离线模式，**绝不写**真实本地库（CONSTITUTION §6）；故障日志默认落在 DB 同目录的 `logs/`，所以它跟着临时库一起进 tmp，不需要单独配置。真实 LLM 质量测试标 `@pytest.mark.integration`，默认跳过，需 `RUN_INTEGRATION=1`。`pyinstaller_entry.py` 只是打包入口，测试进程不经过它。
 
@@ -289,10 +296,13 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
 4. **两处首次使用需要联网**（之后缓存本机）：听力音频由 edge-tts 现合成（缓存目录不随包
    分发）；口语转写的 whisper `base.pt`（约 145 MB）首次加载时从官方源下载。在那之前听力
    走「看原文精读」、口语走键盘输入，都是可见降级不是白屏。
-5. **题库 52 套**（四科 42 + 陪练话题 10），内容生产仍是本项目最慢的一环。扩题有两条路：
+5. **题库 53 套**（四科 43 + 陪练 10），内容生产仍是本项目最慢的一环。扩题有两条路：
    设置页「题库生成」卡（配好 AI 端点后点按钮即可，产物写本机、重启生效，见
    [spec-contracts.md §17](docs/specs/ielts/spec-contracts.md)），或直接往
    `backend/app/data/ielts/<module>/` 放 JSON 再跑校验脚本。
+   **生成管线在 listening/reading 上需要两件事**：① 推理型端点（gemini 等）必须给
+   `max_tokens` 留出思考预算（代码已按模块放大到 30000）；② 单次生成可能要 3–5 分钟，
+   `AI_TIMEOUT_SEC` 默认 120 对 reading 不够（实测 300s 才稳）。
    陪练没有「完整考试模拟」——它是 Part 3 式的接话训练，Part 2 独白仍归题库练习模式。
 
 ### 打包与分发
