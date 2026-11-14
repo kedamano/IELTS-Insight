@@ -127,3 +127,12 @@ def test_mock_test_audio词数不足被拒():
     doc["sentences"] = sentences
     problems = sets_loader.validate_record(doc, "listening")
     assert any("audio_text" in p or "词" in p for p in problems), problems
+
+
+def test_target_band是字符串时被拒():
+    """模型偶尔把 6.5 输出成 "6.5"（字符串）。装载器必须拒收：
+    `target_band` 是数值语义，字符串会让前端的 band 比较/排序静默出错。"""
+    doc = _mock_doc()
+    doc["target_band"] = "6.5"
+    problems = sets_loader.validate_record(doc, "listening")
+    assert any("target_band" in p for p in problems), problems

@@ -694,7 +694,14 @@ def main(argv=None):
     re_ = len(by_module.get("reading", []))
     w1 = sum(1 for _, _, o in sets if o.get("task") == "task1")
     w2 = sum(1 for _, _, o in sets if o.get("task") == "task2")
-    bands = sorted({o.get("target_band") for _, _, o in sets if o.get("module") == "speaking"})
+    # 只收集数值型 target_band：模型偶尔把 6.5 输出成字符串 "6.5"，
+    # 混进集合会让 sorted() 在 str/float 之间崩掉（TypeError），把一条
+    # 「本应被 check_common 报出来的内容错误」变成校验脚本自身的崩溃。
+    bands = sorted({
+        float(o["target_band"])
+        for _, _, o in sets
+        if o.get("module") == "speaking" and isinstance(o.get("target_band"), (int, float))
+    })
     sb = len(by_module.get(SPARRING_DIR, []))
     floors = {"speaking_part1": p1, "speaking_part2": p2, "listening": li, "reading": re_,
               "writing_task1": w1, "writing_task2": w2, "sparring_topics": sb}

@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_creative_hobby_01",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 6.5,
+  "title_zh": "想尝试的创意爱好",
+  "topic": "creative_hobby",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe a creative hobby you would like to try.",
+      "bullets": [
+        "what the hobby is",
+        "why you are interested in it",
+        "what you would need in order to start it"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "Why do you think some people are afraid to try creative activities as adults?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "How can schools encourage children to be more creative?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "Do you think creative hobbies are more important for young people or for older people?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "What kinds of creative activities are popular in your country?",
+    "Do creative hobbies usually cost a lot of money?",
+    "How has technology changed the way people enjoy creative hobbies?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural",
+  "source": "ai:trae/qwen-3.6-plus",
+  "generated_at": "2026-11-14T04:16:54Z"
+}

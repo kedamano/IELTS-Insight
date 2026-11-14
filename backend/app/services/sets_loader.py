@@ -131,7 +131,11 @@ def _check_common(record: dict[str, Any], module_hint: Optional[str]) -> tuple[l
     if kind is not None and kind not in KINDS:
         errors.append(f"kind 非法：{kind!r}（应为 practice / mock_test）")
     band = record.get("target_band")
-    if isinstance(band, (int, float)) and not (0.0 <= float(band) <= 9.0):
+    if not isinstance(band, (int, float)) or isinstance(band, bool):
+        # 模型偶尔把 6.5 输出成字符串 "6.5"；band 是数值语义，字符串必须拒收
+        # （否则前端的比较/排序会静默出错，且校验脚本的 sorted() 会崩）。
+        errors.append(f"target_band 必须是数值（0–9 的 0.5 步长），实际 {band!r}")
+    elif not (0.0 <= float(band) <= 9.0):
         errors.append(f"target_band 越界：{band}")
     if "title_zh" not in record:
         errors.append("缺少 title_zh")

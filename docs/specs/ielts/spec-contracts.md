@@ -2053,6 +2053,14 @@ reading ✅（4→5，产物 914 词声明=实际、13 题、4 题型）；
    `rejected` 逐条原因全丢。修法：`mark_job_failed(..., report=...)` 写 `report_json`。
    判据：`test_api_content.py::test_生成全部失败时report含rejected原因`。
 
-**未改的取舍（如实）**：`AI_TIMEOUT_SEC` 默认 120 对 reading 偏紧（实测 300s 才稳），
-本轮靠环境变量绕过；**没有**把默认值提到 300，因为那会同时放宽所有 AI 评分路径的
-等待上限，属于要单独权衡的改动（README 已知限制 #5 已写明）。
+**未改的取舍（如实）**：`AI_TIMEOUT_SEC` 默认 120 对 reading 偏紧（实测 300s 才稳）。
+**Wave 9 第七轮已修**：`content_gen.timeout_for(module)` 给 listening/reading 显式 300s，
+**不动全局默认**（那会放宽所有批改路径的等待上限）。判据见
+`test_api_content.py::test_重schema的生成超时大于全局默认`。
+
+### 17.7 内容扩产吞吐（2026-11-14）
+
+- `scripts/e2e/bulk-gen.sh <module> <目标数>`：循环提交 + 失败重试 + 产物归集到
+  仓库题库目录 + 重建 manifest + 跑校验。一条命令把 speaking 从 22 扩到 40+。
+- 装载器补强：`target_band` 必须数值（字符串 `"6.5"` 原样放行是漏洞）。
+- 校验脚本补强：`bands` 排序只收数值型，str/float 混合不再 `TypeError` 崩溃。

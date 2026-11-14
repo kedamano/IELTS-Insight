@@ -197,6 +197,7 @@ bash scripts/check.sh --quick  # 跳过后端 pytest
 ```bash
 bash scripts/e2e/run-e2e.sh              # 后端 :8799 + vite preview :5173 + Chrome CDP
 bash scripts/e2e/run-content-gen.sh listening   # ② 生成管线真跑（需 DSH 网关）
+bash scripts/e2e/bulk-gen.sh speaking 20        # 批量扩题（循环+重试+归集到仓库题库）
 ```
 
 ## 打包成 EXE
@@ -302,7 +303,9 @@ cd backend ; .\venv\Scripts\python.exe tools\validate_ielts_data.py
    `backend/app/data/ielts/<module>/` 放 JSON 再跑校验脚本。
    **生成管线在 listening/reading 上需要两件事**：① 推理型端点（gemini 等）必须给
    `max_tokens` 留出思考预算（代码已按模块放大到 30000）；② 单次生成可能要 3–5 分钟，
-   `AI_TIMEOUT_SEC` 默认 120 对 reading 不够（实测 300s 才稳）。
+   重 schema 的 `timeout` 已由代码按模块提到 300s（`content_gen.timeout_for`）。
+   要批量扩题用 `scripts/e2e/bulk-gen.sh <module> <目标数>`：循环提交、失败重试、
+   产物归集到仓库题库并重建 manifest，一条命令把 speaking 从 22 扩到 40+。
    陪练没有「完整考试模拟」——它是 Part 3 式的接话训练，Part 2 独白仍归题库练习模式。
 
 ### 打包与分发

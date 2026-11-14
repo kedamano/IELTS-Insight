@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_localfestival_01",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 5.5,
+  "title_zh": "描述一个你参加过的地方节日或庆祝活动",
+  "topic": "local-festival",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe a local festival or celebration you have taken part in.",
+      "bullets": [
+        "when and where this festival took place",
+        "what people did during the festival",
+        "how you felt about taking part in it"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "Why do you think people in many countries enjoy holding festivals together?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "Do you think traditional festivals are becoming more similar around the world, or are they still quite different?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "Should governments spend public money on festivals and celebrations, or is this a waste of money?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "What kinds of festivals are popular in your country?",
+    "Do young people and old people enjoy the same kinds of celebrations?",
+    "How have the ways people celebrate changed in recent years?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural",
+  "source": "ai:trae/qwen-3.6-plus",
+  "generated_at": "2026-11-14T04:21:38Z"
+}

@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_practical_skill_01",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 5.5,
+  "title_zh": "实用技能",
+  "topic": "practical-skill",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe a practical skill you learned that you find useful.",
+      "bullets": [
+        "what the skill is",
+        "how and where you learned it",
+        "why you think it is useful to you"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "Do you think schools should teach more practical skills instead of academic subjects? Why or why not?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "How do most people in your country learn practical skills — from family members, at school, or from the internet?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "Do you think practical skills will become more important or less important in the future? Why?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "Is it easy for young people today to learn practical skills? Why or why not?",
+    "What practical skill would you like to learn next, and why?",
+    "Do older people and younger people in your country value the same practical skills? How are they different?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural",
+  "source": "ai:trae/qwen-3.6-plus",
+  "generated_at": "2026-11-14T04:21:16Z"
+}

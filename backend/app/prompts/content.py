@@ -33,6 +33,10 @@ COMMON_HEADER = (
     '"target_band" (one of 5.0/5.5/6.0/6.5/7.0/7.5/8.0/8.5/9.0), "title_zh", "topic" '
     "(lowercase ascii slug), and nothing that identifies a real source. "
     'Do NOT emit "source" or "generated_at"; the pipeline adds them.\n'
+    "ID RULE (hard): the <topic> segment may contain ONLY lowercase letters, digits and "
+    "underscores — NO hyphens, NO spaces. Examples: sp_p2_creative_hobby_01 is valid; "
+    "sp_p2_neighbourhood-change_01 is INVALID. target_band must be a JSON number "
+    "(6.5), not a string (\"6.5\").\n"
 )
 
 SPEAK_SCHEMA = (

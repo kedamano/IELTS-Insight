@@ -95,6 +95,12 @@ def _max_tokens_seen(fake_openai) -> int:
     return int(fake_openai.calls[-1].get("max_tokens") or 0)
 
 
+def _timeout_seen(fake_openai) -> int | None:
+    """从假 LLM 的调用记录里取 timeout（断言重 schema 真的拿到更长超时）。"""
+    assert fake_openai.calls, "假 LLM 未被调用"
+    return fake_openai.calls[-1].get("timeout")
+
+
 @pytest.fixture(autouse=True)
 def _排空生成队列(client, envelope):
     """用例结束时等 worker 空闲：残留任务会把文件写进下一个用例刚换掉的 tmp 目录。"""
@@ -342,6 +348,25 @@ def test_重schema的生成预算大于轻schema(client, envelope, monkeypatch, 
     assert heavy > light, f"listening 的生成预算应大于 sparring：{heavy} <= {light}"
 
 
+def test_重schema的生成超时大于全局默认(client, envelope, monkeypatch, fake_openai, tmp_path):
+    """实测：reading 生成要 3–5 分钟，全局 AI_TIMEOUT_SEC=120 会把整篇截断。
+    重 schema（listening/reading）必须显式拿更长的超时，否则「扩题」永远失败。"""
+    from app.config import settings as cfg
+    from app.services import content_gen
+
+    _own_data_dir(monkeypatch, tmp_path)
+    _online(monkeypatch)
+
+    fake_openai.queue(json.dumps(good_sparring()))
+    light_job = envelope(client.post("/api/content/generate", json={"module": "sparring", "count": 1}))
+    _wait_job(client, envelope, light_job["job_id"])
+    light = _timeout_seen(fake_openai)
+    assert light == int(cfg.AI_TIMEOUT_SEC), f"轻 schema 应沿用全局默认 {cfg.AI_TIMEOUT_SEC}，实际 {light}"
+
+    heavy = content_gen.timeout_for("reading")
+    assert heavy > light, f"reading 的生成超时 {heavy} 应大于全局默认 {light}"
+
+
 def test_生成全部失败时report含rejected原因(client, envelope, monkeypatch, fake_openai, tmp_path):
     """§17.3 条款 4：全部失败 = failed + 可读 error，且 rejected 逐条带原因。
 
@@ -365,3 +390,38 @@ def test_生成全部失败时report含rejected原因(client, envelope, monkeypa
     rejected = report.get("rejected") or []
     assert rejected, "report 里应列出被拒候选"
     assert any("preset_questions" in str(r) or "问句" in str(r) for r in rejected[0].get("reasons", [])), rejected
+
+
+def test_模型把id写成连字符时自动归一化(client, envelope, monkeypatch, fake_openai, tmp_path):
+    """实测：模型常把 topic 段写成 `neighbourhood-change`，违反 id 规则。
+    归一化为下划线，保住一篇本来可用的内容（而不是整篇丢弃）。"""
+    from app.services import sets_loader
+
+    _own_data_dir(monkeypatch, tmp_path)
+    _online(monkeypatch)
+    dirty = good_sparring(set_id="sb_neighbourhood-change_11")
+    fake_openai.queue(json.dumps(dirty))
+
+    job = envelope(client.post("/api/content/generate", json={"module": "sparring", "count": 1}))
+    done = _wait_job(client, envelope, job["job_id"])
+    assert done["status"] == "succeeded", done
+    written_id = done["report"]["generated"][0]["id"]
+    assert "-" not in written_id, f"id 仍含连字符：{written_id}"
+    assert written_id == "sb_neighbourhood_change_11", written_id
+
+
+def test_模型把target_band写成字符串时自动归一化(client, envelope, monkeypatch, fake_openai, tmp_path):
+    """实测：模型常把 6.5 写成 "6.5"（字符串）。归一化为数值，否则装载器拒收。"""
+    _own_data_dir(monkeypatch, tmp_path)
+    _online(monkeypatch)
+    dirty = good_sparring()
+    dirty["target_band"] = "6.5"
+    fake_openai.queue(json.dumps(dirty))
+
+    job = envelope(client.post("/api/content/generate", json={"module": "sparring", "count": 1}))
+    done = _wait_job(client, envelope, job["job_id"])
+    assert done["status"] == "succeeded", done
+    from app.services import sets_loader
+
+    record = json.loads((sets_loader.generated_root() / "sparring" / "sb_shopping_11.json").read_text(encoding="utf-8"))
+    assert record["target_band"] == 6.5 and isinstance(record["target_band"], float), record["target_band"]

@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_bookbinding_01",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 7.5,
+  "title_zh": "传统手工艺学习",
+  "topic": "bookbinding",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe a traditional craft you would like to learn.",
+      "bullets": [
+        "what the craft is and what it involves",
+        "why you would like to learn it",
+        "how learning it might benefit you or others"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "Why do you think some traditional crafts survive while others disappear?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "Should schools spend time teaching practical crafts alongside academic subjects?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "How might technology change the way traditional crafts are taught or practised?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "What kinds of handmade objects are valued in your society?",
+    "Do you think craft skills can help people relax?",
+    "How can communities encourage young people to take up traditional crafts?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural",
+  "source": "ai:trae/qwen-3.6-plus",
+  "generated_at": "2026-11-14T04:22:08Z"
+}

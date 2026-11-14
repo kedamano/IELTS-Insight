@@ -318,3 +318,26 @@ network_error 且日志毫无指向性。修法为进程内消毒 + 复刻炸点
 **没通的部分（如实）**：`AI_TIMEOUT_SEC` 默认 120 对 reading 不够（实测 300s 才稳），
 本轮靠环境变量绕过，**没有把默认值改成 300** —— 那会影响所有 AI 评分路径的等待上限，
 属于需要单独权衡的取舍（见 README 已知限制 #5）。
+
+---
+
+## Wave 9 第七轮（2026-11-14）：内容扩产的吞吐修复
+
+**问题**：内容量是最大短板（53 套），而扩题被三件事卡住：
+
+1. **`content_gen` 调 `complete_json` 时没传 `timeout`** → reading 被全局
+   `AI_TIMEOUT_SEC=120` 截断（实测 300s 才稳）。修法：`content_gen.timeout_for(module)`，
+   listening/reading → 300s；**不动全局默认**（那会放宽所有批改路径）。
+   判据：`test_api_content.py::test_重schema的生成超时大于全局默认`。
+2. **没有批量扩题通道** → 一次点 5 套、手动等、手动拷产物、手动重建 manifest。
+   修法：`scripts/e2e/bulk-gen.sh <module> <目标数>` —— 循环提交、失败重试、
+   产物归集到仓库题库目录、重建 manifest、跑校验、报告成功率。
+3. **模型输出偶发不合格**：`target_band` 被写成字符串 `"6.5"`、`id` 里带连字符。
+   - `sets_loader._check_common` 原来只检查「数值时才越界」，字符串直接放行 →
+     改为**必须数值**（判据：`test_sets_loader_mock.py::test_target_band是字符串时被拒`）；
+   - `validate_ielts_data.py` 的 `bands` 排序遇到 str/float 混合会 `TypeError` 崩溃，
+     把一条内容错误变成脚本自身崩溃 → 改为只收集数值型再排序。
+
+**真跑结果**：`bulk-gen.sh speaking 20` —— 首轮 5 套里 2 套合格入库（22→24），
+3 套被校验拒收（字符串 band / 连字符 id），后续轮次继续补足目标。
+**这正说明「校验器是第二道闸」的价值：不合格产物不会进仓库题库。**

@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_handmade_gift_01",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 6.5,
+  "title_zh": "手工礼物",
+  "topic": "handmade_gift",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe a handmade gift you received.",
+      "bullets": [
+        "what the gift was and who made it",
+        "what occasion it was for",
+        "how you felt when you received it"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "Why do some people prefer giving handmade gifts instead of buying things from shops?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "Do you think people today have enough time to make gifts by hand?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "Should schools teach children practical skills such as sewing or woodwork?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "What kinds of things do people in your country usually make by hand?",
+    "Is a handmade gift always more meaningful than an expensive shop-bought one?",
+    "How have traditional crafts changed in your region over the past few decades?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural",
+  "source": "ai:trae/qwen-3.6-plus",
+  "generated_at": "2026-11-14T04:22:33Z"
+}

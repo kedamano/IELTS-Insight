@@ -48,6 +48,19 @@ def max_tokens_for(module: str) -> int:
     return HEAVY_SCHEMA_MAX_TOKENS.get(module, MAX_TOKENS)
 
 
+# 重 schema 的生成超时（秒）：实测 reading 生成 3–5 分钟，全局 AI_TIMEOUT_SEC=120
+# 会把整篇截断（§17.6）。这里显式给更长超时，**不动全局默认**（那会放宽所有批改路径）。
+HEAVY_SCHEMA_TIMEOUT_SEC = {
+    "listening": 300,
+    "reading": 300,
+}
+
+
+def timeout_for(module: str) -> int | None:
+    """按模块给生成超时；None = 沿用全局 AI_TIMEOUT_SEC（轻 schema 与批改路径不变）。"""
+    return HEAVY_SCHEMA_TIMEOUT_SEC.get(module)
+
+
 class ContentError(Exception):
     """生成层的业务错误（api/content.py 转成契约 §0 的 {detail, code}）。"""
 
@@ -107,7 +120,12 @@ def write_set(record: dict[str, Any], module: str) -> Path:
 # --------------------------------------------------------------------------
 
 def validate_candidate(obj: Any, module: str, model: str) -> tuple[Optional[dict[str, Any]], list[str]]:
-    """补齐公共字段 → 装载侧校验 → 版权扫描。返回 (可入库的记录, 拒绝原因列表)。"""
+    """补齐公共字段 → 装载侧校验 → 版权扫描。返回 (可入库的记录, 拒绝原因列表)。
+
+    模型偶发把 `id` 的 topic 段写成连字符（`neighbourhood-change`）或 `target_band`
+    写成字符串（`"6.5"`）。前者静默纠正为下划线（保住一篇本来可用的内容），
+    后者归一化为数值 —— 两者都在提示词里明令禁止，这里是第二道防线。
+    """
     if not isinstance(obj, dict):
         return None, ["模型输出不是 JSON 对象"]
     record = dict(obj)
@@ -115,6 +133,20 @@ def validate_candidate(obj: Any, module: str, model: str) -> tuple[Optional[dict
     record["kind"] = record.get("kind") or "practice"
     record["source"] = "ai:%s" % model
     record["generated_at"] = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # 归一化 1：id 的连字符 → 下划线（只动 topic 段，前缀与序号保持）
+    raw_id = str(record.get("id") or "").strip()
+    if raw_id and "-" in raw_id:
+        record["id"] = raw_id.replace("-", "_")
+
+    # 归一化 2：target_band 字符串 → 数值（"6.5" → 6.5）
+    raw_band = record.get("target_band")
+    if isinstance(raw_band, str):
+        try:
+            record["target_band"] = float(raw_band)
+        except ValueError:
+            pass
+
     if not str(record.get("id", "")).strip():
         return None, ["缺少 id，无法确定文件名"]
     if not str(record.get("topic", "")).strip():
@@ -172,6 +204,7 @@ def generate(
             system="你是一位雅思命题专家，只输出 JSON。",
             temperature=0.3,
             max_tokens=max_tokens_for(module),
+            timeout=timeout_for(module),
             allow_network=True,
             require_api_key=False,  # 与评分链路同口径：本机兼容端点可以无凭据
         )

@@ -1,9 +1,9 @@
 {
   "schema": "ielts-manifest/1",
-  "generated_at": "2026-11-12T14:14:53Z",
+  "generated_at": "2026-11-14T04:23:17Z",
   "note": "索引文件，位于模块子目录之外；sets_loader 只加载 <module>/*.json，不要把本文件当 set。",
   "counts": {
-    "speaking": 22,
+    "speaking": 28,
     "listening": 5,
     "reading": 4,
     "writing": 12
@@ -26,12 +26,18 @@
       "sp_p1_weather_03",
       "sp_p1_work_study_01",
       "sp_p2_book_01",
+      "sp_p2_bookbinding_01",
       "sp_p2_childhood_game_07",
+      "sp_p2_creative_hobby_01",
       "sp_p2_family_skill_02",
+      "sp_p2_handmade_gift_01",
       "sp_p2_help_stranger_04",
       "sp_p2_keepsake_05",
+      "sp_p2_localfestival_01",
+      "sp_p2_practical_skill_01",
       "sp_p2_quiet_place_03",
       "sp_p2_skill_taught_08",
+      "sp_p2_urban_beekeeping_01",
       "sp_p2_useful_app_06"
     ],
     "listening": [

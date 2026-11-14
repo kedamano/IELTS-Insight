@@ -1,0 +1,46 @@
+{
+  "id": "sp_p2_urban_beekeeping_01",
+  "module": "speaking",
+  "kind": "practice",
+  "part": 2,
+  "target_band": 7.5,
+  "title_zh": "城市养蜂与社区授粉项目",
+  "topic": "urban_beekeeping",
+  "part2": {
+    "cue_card": {
+      "prompt": "Describe a community-based project that uses an unusual method to improve the local environment.",
+      "bullets": [
+        "what the project sets out to achieve",
+        "how local residents are involved in it",
+        "why the method used by the project interests you"
+      ],
+      "preparation_sec": 60,
+      "speaking_sec": 120
+    }
+  },
+  "part3": [
+    {
+      "id": "q1",
+      "question": "Why might unconventional environmental projects attract more attention than conventional clean-up campaigns?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q2",
+      "question": "What difficulties can arise when volunteers try to keep a small community project running for several years?",
+      "depends_on_part2": true
+    },
+    {
+      "id": "q3",
+      "question": "Should local authorities fund experimental projects proposed by residents, or reserve public money for proven methods?",
+      "depends_on_part2": true
+    }
+  ],
+  "fallback_questions": [
+    "How can local authorities persuade residents to take more responsibility for shared outdoor spaces?",
+    "Are environmental improvements in cities better achieved by small community groups or by large organisations?",
+    "What part should private companies play in supporting neighbourhood projects?"
+  ],
+  "examiner_voice": "en-GB-SoniaNeural",
+  "source": "ai:trae/qwen-3.6-plus",
+  "generated_at": "2026-11-14T04:12:27Z"
+}
